@@ -3,6 +3,7 @@ import { LogOut, FileText, Loader2 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, onValue, set, push, remove } from 'firebase/database';
 
+// আপনার ফাইলের নামের সাথে মিলিয়ে সঠিক ইম্পোর্ট পাথ
 import Calendar from './components/Calendar';
 import Modal from './components/Modal';
 import LoginModal from './components/LoginModal';
@@ -22,7 +23,6 @@ const firebaseConfig = {
   appId: "1:693393079621:web:7430ac858d1a25e601522c"
 };
 
-// ফায়ারবেজ ইনিশিয়ালাইজেশন
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
 
@@ -62,7 +62,6 @@ const App: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
-  // ফায়ারবেজ থেকে ডেটা লোড করা
   useEffect(() => {
     const bookingsRef = ref(db, 'bookings');
     const unsubscribe = onValue(bookingsRef, (snapshot) => {
@@ -89,16 +88,18 @@ const App: React.FC = () => {
         id = newRef.key as string;
       }
       await set(ref(db, `bookings/${id}`), { ...booking, id });
-      closeBookingModal();
+      setShowBookingModal(false);
+      setEditingBooking(null);
     } catch (e) {
-      alert("সেভ করা সম্ভব হয়নি। ইন্টারনেট কানেকশন চেক করুন।");
+      alert("সেভ করা সম্ভব হয়নি।");
     }
   };
 
   const handleDeleteBooking = async (id: string) => {
     try {
       await remove(ref(db, `bookings/${id}`));
-      closeBookingModal();
+      setShowBookingModal(false);
+      setEditingBooking(null);
     } catch (e) {
       alert("মুছে ফেলা সম্ভব হয়নি।");
     }
