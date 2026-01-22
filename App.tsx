@@ -4,12 +4,12 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, onValue, set, push, remove } from 'firebase/database';
 
 // আপনার ফাইলের নামের সাথে মিলিয়ে সঠিক ইম্পোর্ট পাথ
-import Calendar from './components/Calendar';
-import Modal from './components/Modal';
-import LoginModal from './components/LoginModal';
-import BookingModal from './components/BookingModal';
-import ViewBookingModal from './components/ViewBookingModal';
-import ReportManager from './components/ReportManager';
+import Calendar from './components/Calendar.tsx';
+import Modal from './components/Modal.tsx';
+import LoginModal from './components/LoginModal.tsx';
+import BookingModal from './components/BookingModal.tsx';
+import ViewBookingModal from './components/ViewBookingModal.tsx';
+import ReportManager from './components/ReportManager.tsx';
 import { Booking } from './types.ts';
 
 // আপনার নতুন ফায়ারবেজ কনফিগারেশন
