@@ -10,7 +10,7 @@ import LoginModal from './components/LoginModal';
 import BookingModal from './components/BookingModal';
 import ViewBookingModal from './components/ViewBookingModal';
 import ReportManager from './components/ReportManager';
-import { Booking } from './types';
+import { Booking } from './types.ts';
 
 // আপনার নতুন ফায়ারবেজ কনফিগারেশন
 const firebaseConfig = {
