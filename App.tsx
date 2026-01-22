@@ -3,16 +3,16 @@ import { LogOut, FileText, Loader2 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, onValue, set, push, remove } from 'firebase/database';
 
-// আপনার ফাইলের নামের সাথে মিলিয়ে সঠিক ইম্পোর্ট পাথ
-import Calendar from './components/Calendar.tsx';
-import Modal from './components/Modal.tsx';
-import LoginModal from './components/LoginModal.tsx';
-import BookingModal from './components/BookingModal.tsx';
-import ViewBookingModal from './components/ViewBookingModal.tsx';
-import ReportManager from './components/ReportManager.tsx';
-import { Booking } from './types.ts';
+// সংশোধিত ইম্পোর্ট পাথ (এক্সটেনশন ছাড়া)
+import Calendar from './components/Calendar';
+import Modal from './components/Modal';
+import LoginModal from './components/LoginModal';
+import BookingModal from './components/BookingModal';
+import ViewBookingModal from './components/ViewBookingModal';
+import ReportManager from './components/ReportManager';
+import { Booking } from './types';
 
-// আপনার নতুন ফায়ারবেজ কনফিগারেশন
+// আপনার ফায়ারবেজ কনফিগারেশন
 const firebaseConfig = {
   apiKey: "AIzaSyAM6-aTpbyk7RIOUviQJAIcAJiH2Dp9eTY",
   authDomain: "projectby56-791ca.firebaseapp.com",
@@ -29,13 +29,13 @@ const db = getDatabase(app);
 const LoadingScreen: React.FC = () => {
   return (
     <div className="fixed inset-0 z-[200] bg-slate-100 flex flex-col items-center p-6 text-center animate-in fade-in duration-500">
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-sm:w-full">
         <div className="relative mb-8">
           <div className="w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2rem] shadow-2xl border border-slate-200/50 flex items-center justify-center p-5 animate-logo-pulse overflow-hidden">
             <img src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" alt="Logo" className="w-full h-full object-contain mix-blend-multiply rounded-2xl" />
           </div>
         </div>
-        <div className="space-y-4 w-full">
+        <div className="space-y-4 w-full px-4">
           <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none">Microbus Schedule</h1>
           <p className="text-[10px] md:text-xs font-black text-indigo-600 tracking-[0.3em] uppercase opacity-90">Area HQ Barishal</p>
           <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
