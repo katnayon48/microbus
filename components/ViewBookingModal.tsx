@@ -31,7 +31,7 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking }) => {
         <img 
           src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
           alt="Watermark" 
-          className="w-48 md:w-64 object-contain mix-blend-multiply" 
+          className="w-40 md:w-52 object-contain mix-blend-multiply" 
         />
       </div>
 

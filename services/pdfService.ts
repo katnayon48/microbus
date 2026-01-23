@@ -334,16 +334,28 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
 
       const rTitle = 'RECEIVER INFORMATION';
       doc.setFont('helvetica', 'bold');
-      doc.text(rTitle, 130, handoffY);
-      doc.line(130, handoffY + 1, 130 + doc.getTextWidth(rTitle), handoffY + 1);
+      // Shift receiver info further right (from 130 to 145)
+      doc.text(rTitle, 145, handoffY);
+      doc.line(145, handoffY + 1, 145 + doc.getTextWidth(rTitle), handoffY + 1);
       const rBaseY = handoffY + 25;
-      doc.line(130, rBaseY - 1, 180, rBaseY - 1);
+      doc.line(145, rBaseY - 1, 195, rBaseY - 1);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Army No: ${handoff.receiverArmyNo.toUpperCase()}`, 130, rBaseY + 5);
-      doc.text(`Rank: ${handoff.receiverRank.toUpperCase()}`, 130, rBaseY + 10);
-      doc.text(`Name: ${handoff.receiverName.toUpperCase()}`, 130, rBaseY + 15);
-      doc.text(`Date: ${currentDateStr}`, 130, rBaseY + 20);
+      doc.text(`Army No: ${handoff.receiverArmyNo.toUpperCase()}`, 145, rBaseY + 5);
+      doc.text(`Rank: ${handoff.receiverRank.toUpperCase()}`, 145, rBaseY + 10);
+      doc.text(`Name: ${handoff.receiverName.toUpperCase()}`, 145, rBaseY + 15);
+      doc.text(`Date: ${currentDateStr}`, 145, rBaseY + 20);
     }
+
+    // Centered COUNTERSIGN label
+    const countersignY = handoff ? handoffY + 65 : finalTableY + 30;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    const csText = "COUNTERSIGN";
+    doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
+    const csWidth = doc.getTextWidth(csText);
+    doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
 
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(8);
@@ -367,11 +379,25 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text("DETAILED BOOKING REPORT", 148, 15, { align: 'center' });
+    const titleText = "DETAILED BOOKING REPORT";
+    doc.text(titleText, 148, 15, { align: 'center' });
+    
+    // Calculate width for main title underline
+    const titleWidth = doc.getTextWidth(titleText);
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(148 - (titleWidth / 2), 16.5, 148 + (titleWidth / 2), 16.5);
     
     if (startDate && endDate) {
       doc.setFontSize(10);
-      doc.text(`Period: ${format(parseISO(startDate), DATE_FORMAT)} to ${format(parseISO(endDate), DATE_FORMAT)}`, 148, 22, { align: 'center' });
+      const periodText = `Period: ${format(parseISO(startDate), DATE_FORMAT)} to ${format(parseISO(endDate), DATE_FORMAT)}`;
+      doc.text(periodText, 148, 22, { align: 'center' });
+      
+      // Calculate width for period underline
+      const periodWidth = doc.getTextWidth(periodText);
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(0, 0, 0);
+      doc.line(148 - (periodWidth / 2), 23.5, 148 + (periodWidth / 2), 23.5);
     }
 
     const headers = fields.map(f => BOOKING_FIELDS.find(bf => bf.value === f)?.label || f.toUpperCase());
@@ -393,8 +419,15 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
         });
       }),
       theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-      headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255] }
+      styles: { 
+        fontSize: 8, 
+        cellPadding: 2, 
+        halign: 'center', 
+        textColor: [0, 0, 0],
+        lineColor: [0, 0, 0], // Black borders
+        lineWidth: 0.1 
+      },
+      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
     });
 
     drawDeveloperFooter(doc, 190);

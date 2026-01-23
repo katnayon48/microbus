@@ -121,7 +121,7 @@ const Calendar: React.FC<CalendarProps> = ({
               }}
               className="flex items-center gap-0.5 md:gap-2 px-1 py-1 rounded-lg hover:bg-slate-200/60 transition-all active:scale-95 group"
             >
-              <h2 className="text-[11px] md:text-3xl font-black text-slate-900 tracking-tight uppercase whitespace-nowrap">
+              <h2 className="text-[10px] md:text-2xl font-black text-slate-900 tracking-tight uppercase whitespace-nowrap">
                 {format(currentDate, 'MMM yyyy')}
               </h2>
               <ChevronDown size={10} className="text-slate-400 group-hover:text-indigo-600 transition-colors md:w-5 md:h-5" />
@@ -182,7 +182,7 @@ const Calendar: React.FC<CalendarProps> = ({
           <img 
             src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
             alt="Watermark" 
-            className="w-[280px] md:w-[520px] object-contain mix-blend-multiply" 
+            className="w-[220px] md:w-[380px] object-contain mix-blend-multiply" 
           />
         </div>
 
