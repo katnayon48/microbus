@@ -172,7 +172,8 @@ const Calendar: React.FC<CalendarProps> = ({
               className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-black text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-md active:scale-95 transition-all whitespace-nowrap"
             >
               <FileText size={10} className="md:w-4 md:h-4 shrink-0" />
-              <span>GENERATE REPORT</span>
+              <span className="md:hidden">REPORT</span>
+              <span className="hidden md:inline">GENERATE REPORT</span>
             </button>
           )}
         </div>
