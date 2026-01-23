@@ -1,4 +1,3 @@
-
 export type DurationType = 'Full Day' | 'Half Day';
 export type FareStatusType = 'Paid' | 'Unpaid';
 export type GarrisonStatusType = 'In Garrison' | 'Out Garrison';
