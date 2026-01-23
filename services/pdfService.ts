@@ -97,6 +97,7 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
   doc.setFont('helvetica', 'normal');
   doc.text('Software Developed By', centerX, isSlip ? startY + 7 : startY + 4, { align: 'center' });
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5); // Explicitly ensure the developer name is same size as the line above
   doc.text('1815124 CPL (CLK) BILLAL, ASC', centerX, isSlip ? startY + 10 : startY + 7, { align: 'center' });
 };
 
@@ -207,9 +208,6 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
       doc.addImage(sealInfo.data, 'PNG', 190 - drawWidth, finalY + 40, drawWidth, drawHeight);
     }
     
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(8);
-    doc.text(`Generated on ${format(new Date(), 'dd-MM-yyyy HH:mm')}`, 105, 272, { align: 'center' });
     drawDeveloperFooter(doc, 278, true);
     
     doc.save(`Slip_${(booking.rankName || 'User').replace(/\s+/g, '_')}.pdf`);
@@ -344,22 +342,19 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       doc.text(`Rank: ${handoff.receiverRank.toUpperCase()}`, 145, rBaseY + 10);
       doc.text(`Name: ${handoff.receiverName.toUpperCase()}`, 145, rBaseY + 15);
       doc.text(`Date: ${currentDateStr}`, 145, rBaseY + 20);
+
+      // Centered COUNTERSIGN label - Only shown if personnel info is provided
+      const countersignY = handoffY + 65;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      const csText = "COUNTERSIGN";
+      doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
+      const csWidth = doc.getTextWidth(csText);
+      doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
     }
 
-    // Centered COUNTERSIGN label
-    const countersignY = handoff ? handoffY + 65 : finalTableY + 30;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    const csText = "COUNTERSIGN";
-    doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
-    const csWidth = doc.getTextWidth(csText);
-    doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(8);
-    doc.text(`Generated on ${format(new Date(), 'dd-MM-yyyy HH:mm')}`, 105, 282, { align: 'center' });
     drawDeveloperFooter(doc, 288);
     
     doc.save(`Monthly_Slip_${monthYearText.replace(/\s+/g, '_') || 'Report'}.pdf`);
