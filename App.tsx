@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { LogOut, FileText, Loader2, ArrowLeft } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, onValue, set, push, remove } from 'firebase/database';
 
+// ইম্পোর্ট পাথগুলো ঠিক করা হয়েছে (কোনো .tsx এক্সটেনশন নেই)
 import Calendar from './components/Calendar';
 import Modal from './components/Modal';
 import LoginModal from './components/LoginModal';
@@ -12,7 +12,7 @@ import ViewBookingModal from './components/ViewBookingModal';
 import ReportManager from './components/ReportManager';
 import { Booking } from './types';
 
-// আপনার নতুন ফায়ারবেজ কনফিগারেশন
+// ফায়ারবেজ কনফিগারেশন
 const firebaseConfig = {
   apiKey: "AIzaSyAM6-aTpbyk7RIOUviQJAIcAJiH2Dp9eTY",
   authDomain: "projectby56-791ca.firebaseapp.com",
@@ -23,7 +23,6 @@ const firebaseConfig = {
   appId: "1:693393079621:web:7430ac858d1a25e601522c"
 };
 
-// ফায়ারবেজ ইনিশিয়ালাইজেশন
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
 
@@ -157,7 +156,6 @@ const App: React.FC = () => {
       
       <div className={`flex flex-col bg-slate-100 text-slate-900 font-inter h-[100dvh] overflow-hidden transition-all duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
         <header className="bg-white border-b border-slate-200 px-2 md:px-6 py-1 md:py-1.5 grid grid-cols-[1fr_auto_1fr] items-center sticky top-0 z-50 shadow-sm shrink-0">
-          {/* Left: Back Button or Logo */}
           <section className="flex justify-start">
             {view === 'reports' ? (
               <button 
@@ -171,7 +169,6 @@ const App: React.FC = () => {
             )}
           </section>
 
-          {/* Center: Title and Subtitle */}
           <div className="text-center px-2 flex flex-col justify-center">
             <h1 className="text-[14px] sm:text-2xl md:text-[28px] font-black text-slate-900 tracking-tight uppercase leading-tight whitespace-nowrap">
               {view === 'reports' ? 'Report Center' : 'MICROBUS SCHEDULE'}
@@ -181,7 +178,6 @@ const App: React.FC = () => {
             </p>
           </div>
 
-          {/* Right: Admin Actions and Mirror Logo */}
           <div className="flex items-center justify-end gap-2">
             {isAdmin && (
               <div className="flex items-center gap-2">
