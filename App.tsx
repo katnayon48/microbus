@@ -197,7 +197,7 @@ const App: React.FC = () => {
 
         <main className="p-2 md:p-4 flex flex-col gap-2 md:gap-4 flex-1 overflow-hidden min-h-0">
           {view === 'calendar' ? (
-            <div className="flex flex-col gap-2 md:gap-4 h-full animate-in fade-in slide-in-from-bottom-2 duration-500 min-h-0">
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-500 min-h-0">
               <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200 border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
                 <Calendar 
                   currentDate={currentDate} 
@@ -207,20 +207,9 @@ const App: React.FC = () => {
                   onDateClick={handleDateClick} 
                   onDateDoubleClick={handleDateDoubleClick}
                   onLoginClick={() => setShowLoginModal(true)}
+                  onReportClick={() => setView('reports')}
                 />
               </div>
-
-              {isAdmin && (
-                <div className="flex justify-center shrink-0 pb-1">
-                  <button 
-                    onClick={() => setView('reports')} 
-                    className="flex items-center gap-2 md:gap-4 bg-indigo-600 text-white px-6 md:px-10 py-3 md:py-4 rounded-xl md:rounded-2xl font-black uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all active:scale-95 group text-[10px] md:text-sm"
-                  >
-                    <FileText size={16} className="md:w-6 md:h-6" /> 
-                    Report Manager
-                  </button>
-                </div>
-              )}
             </div>
           ) : (
             <div className="max-w-5xl mx-auto w-full h-full overflow-y-auto animate-in fade-in slide-in-from-right-4 duration-500 custom-scrollbar">

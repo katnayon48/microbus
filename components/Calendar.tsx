@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, ChevronDown, CalendarDays, LogIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, ChevronDown, CalendarDays, LogIn, FileText } from 'lucide-react';
 import { format, addMonths, subMonths, isToday, startOfYear, addYears, subYears, setMonth, setYear } from 'date-fns';
 import { getCalendarDays } from '../utils/dateUtils';
 import { Booking } from '../types';
@@ -14,6 +14,7 @@ interface CalendarProps {
   onDateClick: (date: Date, existing?: Booking) => void;
   onDateDoubleClick?: (date: Date) => void;
   onLoginClick?: () => void;
+  onReportClick?: () => void;
 }
 
 const Calendar: React.FC<CalendarProps> = ({ 
@@ -23,7 +24,8 @@ const Calendar: React.FC<CalendarProps> = ({
   isAdmin, 
   onDateClick,
   onDateDoubleClick,
-  onLoginClick
+  onLoginClick,
+  onReportClick
 }) => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(currentDate.getFullYear());
@@ -153,8 +155,8 @@ const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
 
-        {/* Right Section: Login Button */}
-        <div className="flex justify-end">
+        {/* Right Section: Login or Report Manager Button */}
+        <div className="flex justify-end items-center gap-2">
           {!isAdmin && onLoginClick && (
             <button 
               onClick={onLoginClick}
@@ -162,6 +164,15 @@ const Calendar: React.FC<CalendarProps> = ({
             >
               <LogIn size={10} className="md:w-4 md:h-4 shrink-0" />
               <span>Login</span>
+            </button>
+          )}
+          {isAdmin && onReportClick && (
+            <button 
+              onClick={onReportClick}
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-black text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-md active:scale-95 transition-all whitespace-nowrap"
+            >
+              <FileText size={10} className="md:w-4 md:h-4 shrink-0" />
+              <span>GENERATE REPORT</span>
             </button>
           )}
         </div>
