@@ -10,9 +10,6 @@ const LOGO_URL = "https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg";
 const PAID_SEAL_URL = "https://i.ibb.co.com/Qv2Y07rG/IMG-0753.webp";
 const UNPAID_SEAL_URL = "https://i.ibb.co.com/QjTgvXHt/IMG-0754.jpg";
 
-/**
- * Loads the logo and crops it into a circle for the header.
- */
 const loadCircularLogo = (): Promise<string | null> => {
   return new Promise((resolve) => {
     const timeout = setTimeout(() => resolve(null), 4000);
@@ -47,9 +44,6 @@ const loadCircularLogo = (): Promise<string | null> => {
   });
 };
 
-/**
- * Loads an image and returns its base64 data along with its natural dimensions.
- */
 const loadOriginalImage = (url: string): Promise<{data: string, width: number, height: number} | null> => {
   return new Promise((resolve) => {
     const timeout = setTimeout(() => resolve(null), 4000);
@@ -82,9 +76,9 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
   
-  doc.setTextColor(0, 0, 0); 
+  doc.setTextColor(100, 100, 100); 
   doc.setFontSize(6);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('helvetica', 'normal');
   
   if (isSlip) {
     doc.text('AUTO GENERATED SLIP', centerX, startY, { align: 'center' });
@@ -94,10 +88,8 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
   }
   
   doc.setFontSize(5);
-  doc.setFont('helvetica', 'normal');
   doc.text('Software Developed By', centerX, isSlip ? startY + 7 : startY + 4, { align: 'center' });
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(5); // Explicitly ensure the developer name is same size as the line above
+  doc.setFontSize(5); 
   doc.text('1815124 CPL (CLK) BILLAL, ASC', centerX, isSlip ? startY + 10 : startY + 7, { align: 'center' });
 };
 
@@ -106,6 +98,8 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
 
   try {
     const doc = new jsPDF();
+    doc.setFont('helvetica');
+
     const sealUrl = booking.isExempt ? null : (booking.fareStatus === 'Paid' ? PAID_SEAL_URL : UNPAID_SEAL_URL);
 
     const [logoData, sealInfo] = await Promise.all([
@@ -127,8 +121,9 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('PAYMENT SLIP', 115, 20, { align: 'center' });
+    doc.text('E-PAYMENT SLIP', 115, 20, { align: 'center' });
     doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
     doc.text('MICROBUS TRANSPORT SERVICE - AREA HQ BARISHAL', 115, 30, { align: 'center' });
     
     doc.setTextColor(0, 0, 0);
@@ -152,18 +147,19 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
       body: [
         ['Rank and Name', ':', (booking.rankName || 'N/A').toUpperCase()],
         ['Unit', ':', (booking.unit || 'N/A').toUpperCase()],
-        ['Mobile Number', ':', (booking.mobileNumber || 'N/A').toUpperCase()],
-        ['Garrison Status', ':', (booking.garrisonStatus || 'N/A').toUpperCase()],
-        ['Destination', ':', (booking.destination || 'N/A').toUpperCase()],
-        ['Duration', ':', (booking.duration || 'N/A').toUpperCase()],
+        ['Mobile Number', ':', (booking.mobileNumber || 'N/A')],
+        ['Garrison Status', ':', (booking.garrisonStatus || 'N/A')],
+        ['Destination', ':', (booking.destination || 'N/A')],
+        ['Duration', ':', (booking.duration || 'N/A')],
         ['Date Range', ':', dateRangeValue],
         ['Out Time', ':', booking.outTime || 'N/A'],
         ['In Time', ':', booking.inTime || 'N/A'],
         ['Payment Received By', ':', (receivedBy || 'N/A').toUpperCase()],
-        ['Remarks', ':', (booking.remarks || 'None').toUpperCase()],
+        ['Remarks', ':', (booking.remarks || 'None')],
       ],
       theme: 'plain',
       styles: { 
+        font: 'helvetica',
         fontSize: 12, 
         cellPadding: { top: 3, bottom: 3, left: 1, right: 1 }, 
         textColor: [0, 0, 0],
@@ -189,9 +185,10 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     doc.setTextColor(0, 0, 0);
     doc.text('TOTAL FARE:', margin + 5, finalY + 23);
     
+    // Updated logic: Show the fare amount even if unpaid. Only show 'NOT REQUIRED' if exempt.
     const fareDisplayText = booking.isExempt 
       ? 'NOT REQUIRED' 
-      : (booking.fareStatus === 'Unpaid' ? 'UNPAID' : `BDT ${(booking.fare || 0).toLocaleString()}.00`);
+      : `BDT ${(booking.fare || 0).toLocaleString()}.00`;
       
     doc.text(fareDisplayText, 190 - 5, finalY + 23, { align: 'right' });
 
@@ -213,7 +210,7 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     doc.save(`Slip_${(booking.rankName || 'User').replace(/\s+/g, '_')}.pdf`);
   } catch (error) { 
     console.error("PDF generation failed:", error); 
-    alert("Error generating PDF.");
+    alert("Error generating PDF. Please ensure all fields are correct.");
   }
 };
 
@@ -232,6 +229,8 @@ const filterByRange = (bookings: Booking[], start: string, end: string) => {
 export const generatePaymentSlip = async (bookings: Booking[], startDate: string, endDate: string, handoff?: HandoffInfo) => {
   try {
     const doc = new jsPDF();
+    doc.setFont('helvetica');
+
     const filtered = filterByRange(bookings, startDate, endDate);
     const mainHeading = "MONTHLY PAYMENT SLIP - CIVIL MICROBUS";
     let monthYearText = "";
@@ -273,14 +272,22 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       ],
       body: filtered.map((b, i) => {
         const totalDays = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
+        
+        // Updated logic: Show the fare amount even if unpaid in the monthly table.
         const fareVal = b.isExempt 
           ? 'EXEMPTED' 
-          : (b.fareStatus === 'Unpaid' ? 'UNPAID' : b.fare.toLocaleString());
+          : b.fare.toLocaleString();
           
         return [
-          i + 1, b.rankName.toUpperCase(), b.unit.toUpperCase(),
-          format(parseISO(b.startDate), DATE_FORMAT), format(parseISO(b.endDate), DATE_FORMAT), totalDays, b.duration.toUpperCase(),
-          fareVal, (b.remarks || '-').toUpperCase()
+          i + 1, 
+          (b.rankName || '').toUpperCase(), 
+          (b.unit || '').toUpperCase(),
+          format(parseISO(b.startDate), DATE_FORMAT), 
+          format(parseISO(b.endDate), DATE_FORMAT), 
+          totalDays, 
+          b.duration,
+          fareVal, 
+          (b.remarks || '-')
         ];
       }),
       foot: [[
@@ -294,9 +301,19 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
         textColor: [0, 0, 0],       
         fontSize: 9, 
         halign: 'center',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        font: 'helvetica'
       },
-      styles: { fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.1, halign: 'center', textColor: [0, 0, 0], overflow: 'visible' },
+      styles: { 
+        font: 'helvetica',
+        fontSize: 9, 
+        cellPadding: 1.5, 
+        lineColor: [0, 0, 0], 
+        lineWidth: 0.1, 
+        halign: 'center', 
+        textColor: [0, 0, 0], 
+        overflow: 'visible' 
+      },
       columnStyles: {
         0: { cellWidth: 10 }, 
         1: { cellWidth: 45 }, 
@@ -317,38 +334,36 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
 
     if (handoff) {
       doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
       doc.setLineWidth(0.3);
       const pTitle = 'PROVIDER INFORMATION';
-      doc.setFont('helvetica', 'bold');
       doc.text(pTitle, 10, handoffY);
       doc.line(10, handoffY + 1, 10 + doc.getTextWidth(pTitle), handoffY + 1);
       const pBaseY = handoffY + 25; 
       doc.line(10, pBaseY - 1, 60, pBaseY - 1); 
       doc.setFont('helvetica', 'normal');
-      doc.text(`Army No: ${handoff.providerArmyNo.toUpperCase()}`, 10, pBaseY + 5);
+      doc.text(`Army No: ${handoff.providerArmyNo}`, 10, pBaseY + 5);
       doc.text(`Rank: ${handoff.providerRank.toUpperCase()}`, 10, pBaseY + 10);
       doc.text(`Name: ${handoff.providerName.toUpperCase()}`, 10, pBaseY + 15);
       doc.text(`Date: ${currentDateStr}`, 10, pBaseY + 20);
 
       const rTitle = 'RECEIVER INFORMATION';
       doc.setFont('helvetica', 'bold');
-      // Shift receiver info further right (from 130 to 145)
       doc.text(rTitle, 145, handoffY);
       doc.line(145, handoffY + 1, 145 + doc.getTextWidth(rTitle), handoffY + 1);
       const rBaseY = handoffY + 25;
       doc.line(145, rBaseY - 1, 195, rBaseY - 1);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Army No: ${handoff.receiverArmyNo.toUpperCase()}`, 145, rBaseY + 5);
+      doc.text(`Army No: ${handoff.receiverArmyNo}`, 145, rBaseY + 5);
       doc.text(`Rank: ${handoff.receiverRank.toUpperCase()}`, 145, rBaseY + 10);
       doc.text(`Name: ${handoff.receiverName.toUpperCase()}`, 145, rBaseY + 15);
       doc.text(`Date: ${currentDateStr}`, 145, rBaseY + 20);
 
-      // Centered COUNTERSIGN label - Only shown if personnel info is provided
       const countersignY = handoffY + 65;
       const pageWidth = doc.internal.pageSize.getWidth();
-      doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
       const csText = "COUNTERSIGN";
       doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
       const csWidth = doc.getTextWidth(csText);
@@ -364,12 +379,11 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
   }
 };
 
-/**
- * Generates a detailed report with selected fields.
- */
 export const generateOverallReport = async (bookings: Booking[], startDate: string, endDate: string, fields: BookingField[]) => {
   try {
     const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFont('helvetica');
+
     const filtered = filterByRange(bookings, startDate, endDate);
     
     doc.setFontSize(16);
@@ -377,7 +391,6 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
     const titleText = "DETAILED BOOKING REPORT";
     doc.text(titleText, 148, 15, { align: 'center' });
     
-    // Calculate width for main title underline
     const titleWidth = doc.getTextWidth(titleText);
     doc.setLineWidth(0.5);
     doc.setDrawColor(0, 0, 0);
@@ -385,10 +398,10 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
     
     if (startDate && endDate) {
       doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
       const periodText = `Period: ${format(parseISO(startDate), DATE_FORMAT)} to ${format(parseISO(endDate), DATE_FORMAT)}`;
       doc.text(periodText, 148, 22, { align: 'center' });
       
-      // Calculate width for period underline
       const periodWidth = doc.getTextWidth(periodText);
       doc.setLineWidth(0.3);
       doc.setDrawColor(0, 0, 0);
@@ -410,19 +423,30 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
             return dateVal ? format(parseISO(dateVal as string), DATE_FORMAT) : '-';
           }
           const val = b[field as keyof Booking];
-          return (val ?? '-').toString().toUpperCase();
+          const textVal = (val ?? '-').toString();
+          // Ensure Rank/Name and Unit are uppercase in overall report too
+          if (field === 'rankName' || field === 'unit') {
+            return textVal.toUpperCase();
+          }
+          return textVal;
         });
       }),
       theme: 'grid',
       styles: { 
+        font: 'helvetica',
         fontSize: 8, 
         cellPadding: 2, 
         halign: 'center', 
         textColor: [0, 0, 0],
-        lineColor: [0, 0, 0], // Black borders
+        lineColor: [0, 0, 0], 
         lineWidth: 0.1 
       },
-      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+      headStyles: { 
+        fillColor: [220, 220, 220], 
+        textColor: [0, 0, 0], 
+        fontStyle: 'bold',
+        font: 'helvetica'
+      }
     });
 
     drawDeveloperFooter(doc, 190);
