@@ -1,8 +1,7 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Booking, BookingField, HandoffInfo } from '../types';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { format, parseISO, differenceInDays, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { BOOKING_FIELDS } from '../constants';
 
 const DATE_FORMAT = 'dd-MM-yyyy';
@@ -183,9 +182,9 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text('TOTAL FARE:', margin + 5, finalY + 23);
     
-    // Updated logic: Show the fare amount even if unpaid. Only show 'NOT REQUIRED' if exempt.
+    doc.text('TOTAL FARE:', 140, finalY + 23, { align: 'right' });
+    
     const fareDisplayText = booking.isExempt 
       ? 'NOT REQUIRED' 
       : `BDT ${(booking.fare || 0).toLocaleString()}.00`;
@@ -210,7 +209,7 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     doc.save(`Slip_${(booking.rankName || 'User').replace(/\s+/g, '_')}.pdf`);
   } catch (error) { 
     console.error("PDF generation failed:", error); 
-    alert("Error generating PDF. Please ensure all fields are correct.");
+    alert("Error generating PDF.");
   }
 };
 
@@ -272,11 +271,7 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       ],
       body: filtered.map((b, i) => {
         const totalDays = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
-        
-        // Updated logic: Show the fare amount even if unpaid in the monthly table.
-        const fareVal = b.isExempt 
-          ? 'EXEMPTED' 
-          : b.fare.toLocaleString();
+        const fareVal = b.isExempt ? 'EXEMPTED' : b.fare.toLocaleString();
           
         return [
           i + 1, 
@@ -291,7 +286,7 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
         ];
       }),
       foot: [[
-        { content: 'TOTAL FARE', colSpan: 7, styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
+        { content: 'TOTAL FARE', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
         { content: totalFare.toLocaleString(), styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
         { content: '', styles: { fillColor: [220, 220, 220], lineWidth: 0.1 } }
       ]],
@@ -316,8 +311,8 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       },
       columnStyles: {
         0: { cellWidth: 10 }, 
-        1: { cellWidth: 45 }, 
-        2: { cellWidth: 32 },
+        1: { cellWidth: 45, halign: 'left' }, 
+        2: { cellWidth: 32, halign: 'left' }, 
         3: { cellWidth: 20 }, 
         4: { cellWidth: 20 },
         5: { cellWidth: 12 }, 
@@ -410,49 +405,203 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
 
     const headers = fields.map(f => BOOKING_FIELDS.find(bf => bf.value === f)?.label || f.toUpperCase());
     
+    const colStyles: any = {};
+    fields.forEach((f, index) => {
+      if (f === 'rankName' || f === 'unit' || f === 'destination' || f === 'remarks') {
+        colStyles[index] = { halign: 'left' };
+      } else {
+        colStyles[index] = { halign: 'center' };
+      }
+    });
+
     autoTable(doc, {
       startY: 30,
       head: [headers],
       body: filtered.map(b => {
-        return fields.map(field => {
-          if (field === 'totalDays') {
-             return differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
+        return fields.map(f => {
+          if (f === 'totalDays') {
+            return differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
           }
-          if (field === 'startDate' || field === 'endDate') {
-            const dateVal = b[field as keyof Booking];
-            return dateVal ? format(parseISO(dateVal as string), DATE_FORMAT) : '-';
+          if (f === 'startDate' || f === 'endDate') {
+            return b[f as keyof Booking] ? format(parseISO(b[f as keyof Booking] as string), DATE_FORMAT) : 'N/A';
           }
-          const val = b[field as keyof Booking];
-          const textVal = (val ?? '-').toString();
-          // Ensure Rank/Name and Unit are uppercase in overall report too
-          if (field === 'rankName' || field === 'unit') {
-            return textVal.toUpperCase();
+          if (f === 'fare') {
+            return b.isExempt ? 'EXEMPTED' : (b.fare || 0).toLocaleString();
           }
-          return textVal;
+          const val = b[f as keyof Booking];
+          return val === undefined || val === null ? '' : val.toString();
         });
       }),
       theme: 'grid',
-      styles: { 
-        font: 'helvetica',
-        fontSize: 8, 
-        cellPadding: 2, 
-        halign: 'center', 
-        textColor: [0, 0, 0],
-        lineColor: [0, 0, 0], 
-        lineWidth: 0.1 
-      },
       headStyles: { 
         fillColor: [220, 220, 220], 
         textColor: [0, 0, 0], 
+        fontSize: 9, 
         fontStyle: 'bold',
+        halign: 'center',
         font: 'helvetica'
-      }
+      },
+      styles: { 
+        font: 'helvetica',
+        fontSize: 8, 
+        cellPadding: 1.5, 
+        textColor: [0, 0, 0], 
+        lineColor: [0, 0, 0], 
+        lineWidth: 0.1 
+      },
+      columnStyles: colStyles,
+      margin: { left: 10, right: 10 }
     });
 
-    drawDeveloperFooter(doc, 190);
-    doc.save(`Detailed_Report_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+    drawDeveloperFooter(doc, 200);
+    
+    doc.save(`Detailed_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   } catch (error) {
-    console.error("Report generation failed:", error);
+    console.error("Overall report generation failed:", error);
     alert("Error generating report.");
+  }
+};
+
+export const generateTripSummaryReport = async (bookings: Booking[], start: string, end: string, withGraph: boolean) => {
+  try {
+    const doc = new jsPDF();
+    doc.setFont('helvetica');
+
+    const startDate = startOfMonth(parseISO(start));
+    const endDate = endOfMonth(parseISO(end));
+    const months = eachMonthOfInterval({ start: startDate, end: endDate });
+
+    const stats = months.map(m => {
+      const monthBookings = bookings.filter(b => {
+        if (b.isSpecialNote) return false;
+        const bStart = parseISO(b.startDate);
+        const bEnd = parseISO(b.endDate);
+        return isWithinInterval(m, { start: bStart, end: bEnd }) || 
+               isWithinInterval(bStart, { start: startOfMonth(m), end: endOfMonth(m) });
+      });
+      return {
+        label: format(m, 'MMM yyyy').toUpperCase(),
+        count: monthBookings.length
+      };
+    });
+
+    const totalTripsSum = stats.reduce((sum, s) => sum + s.count, 0);
+
+    // Header Section
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setDrawColor(0, 0, 0); // Black color for underlines
+    
+    // Line 1: TRIP SUMMARY REPORT
+    const title1 = 'TRIP SUMMARY REPORT';
+    doc.text(title1, 105, 15, { align: 'center' });
+    const title1Width = doc.getTextWidth(title1);
+    doc.setLineWidth(0.5);
+    doc.line(105 - (title1Width / 2), 17, 105 + (title1Width / 2), 17);
+
+    // Line 2: CIVIL MICROBUS (AREA HQ BARISHAL)
+    const title2 = 'CIVIL MICROBUS (AREA HQ BARISHAL)';
+    doc.text(title2, 105, 25, { align: 'center' });
+    const title2Width = doc.getTextWidth(title2);
+    doc.line(105 - (title2Width / 2), 27, 105 + (title2Width / 2), 27);
+
+    // Period Info
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Period: ${format(startDate, 'MMM yyyy')} to ${format(endDate, 'MMM yyyy')}`, 105, 34, { align: 'center' });
+    
+    // Separator line
+    doc.setLineWidth(0.3);
+    doc.line(20, 38, 190, 38);
+
+    let nextY = 48;
+
+    if (withGraph && stats.length > 0) {
+      const chartHeight = 80;
+      const chartWidth = 160;
+      const marginX = 25;
+      const baseY = nextY + chartHeight;
+      const maxScale = 30;
+
+      // Draw Grid Lines & Labels - Darkened for better visibility
+      doc.setDrawColor(180, 180, 180); // Darker gray for grid lines
+      doc.setLineWidth(0.2); // Slightly thicker line
+      doc.setFontSize(8);
+      doc.setTextColor(60, 60, 60); // Darker gray for labels
+
+      [0, 10, 20, 30].forEach(val => {
+        const yPos = baseY - (val / maxScale) * chartHeight;
+        doc.line(marginX, yPos, marginX + chartWidth, yPos);
+        doc.text(val.toString(), marginX - 5, yPos + 1.5, { align: 'right' });
+        doc.text(val.toString(), marginX + chartWidth + 2, yPos + 1.5);
+      });
+
+      // Draw Bars
+      const barSpacing = chartWidth / stats.length;
+      const barWidth = Math.min(barSpacing * 0.7, 15);
+      
+      stats.forEach((s, i) => {
+        const h = Math.min((s.count / maxScale) * chartHeight, chartHeight);
+        const x = marginX + (i * barSpacing) + (barSpacing - barWidth) / 2;
+        
+        // Bar
+        doc.setFillColor(16, 185, 129); // Emerald-600 color
+        if (h > 0) doc.rect(x, baseY - h, barWidth, h, 'F');
+        
+        // Label
+        doc.setFontSize(6);
+        doc.setTextColor(60, 60, 60);
+        doc.text(s.label.split(' ')[0], x + barWidth/2, baseY + 5, { align: 'center' });
+        if (s.count > 0) {
+          doc.setTextColor(0, 0, 0); // Black for numerical values
+          doc.setFont('helvetica', 'bold');
+          doc.text(s.count.toString(), x + barWidth/2, baseY - h - 2, { align: 'center' });
+          doc.setFont('helvetica', 'normal');
+        }
+      });
+
+      nextY = baseY + 20;
+    }
+
+    // Data Table
+    autoTable(doc, {
+      startY: nextY,
+      head: [['MONTHLY TRIPS', 'TOTAL TRIPS']],
+      body: stats.map(s => [s.label, s.count]),
+      foot: [['SUBTOTAL', totalTripsSum.toString()]],
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [220, 220, 220], // Light ash color
+        textColor: [0, 0, 0],       // Black text
+        halign: 'center',
+        fontStyle: 'bold',
+        lineColor: [0, 0, 0],       // Black border
+        lineWidth: 0.1
+      },
+      footStyles: {
+        fillColor: [220, 220, 220], // Light ash color
+        textColor: [0, 0, 0],       // Black text
+        halign: 'center',
+        fontStyle: 'bold',
+        lineColor: [0, 0, 0],       // Black border
+        lineWidth: 0.1
+      },
+      styles: { 
+        fontSize: 10, 
+        halign: 'center',
+        lineColor: [0, 0, 0],       // All borders black
+        lineWidth: 0.1,
+        textColor: [0, 0, 0],
+        font: 'helvetica'
+      },
+      columnStyles: { 0: { halign: 'left' } },
+      margin: { left: 40, right: 40 }
+    });
+
+    drawDeveloperFooter(doc, 285);
+    doc.save(`Trip_Summary_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  } catch (error) {
+    console.error("Trip Summary generation failed:", error);
+    alert("Error generating summary PDF.");
   }
 };

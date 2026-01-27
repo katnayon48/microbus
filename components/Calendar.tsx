@@ -191,12 +191,12 @@ const Calendar: React.FC<CalendarProps> = ({
                 className={`flex flex-col transition-all relative group z-10 border-r border-b border-white/5 min-h-0
                   ${day.isCurrentMonth ? 'bg-white/[0.02]' : 'bg-black/60 opacity-20'}
                   ${isAdmin ? 'cursor-pointer hover:bg-white/5' : day.bookings.length > 0 ? 'cursor-pointer hover:bg-white/[0.04]' : 'cursor-default'}
-                  ${isTodayDate ? 'bg-emerald-950/20 ring-1 ring-emerald-500/30' : ''}
+                  ${isTodayDate ? 'today-glow bg-emerald-950/40 shadow-[inset_0_0_20px_rgba(212,175,55,0.1)]' : ''}
                 `}
               >
-                <div className="flex justify-between items-start p-0.5 md:p-1.5 mb-0 shrink-0">
+                <div className="flex justify-between items-start p-0.5 md:p-1.5 mb-0 shrink-0 relative z-20">
                   <span className={`text-[9px] md:text-sm font-black w-4 h-4 md:w-8 md:h-8 flex items-center justify-center rounded md:rounded-xl transition-all
-                    ${isTodayDate ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/50' : day.isCurrentMonth ? 'text-slate-100' : 'text-slate-500'}`}>
+                    ${isTodayDate ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/50 ring-2 ring-emerald-400/20' : day.isCurrentMonth ? 'text-slate-100' : 'text-slate-500'}`}>
                     {format(day.date, 'd')}
                   </span>
                   {isAdmin && day.isCurrentMonth && (
@@ -205,7 +205,7 @@ const Calendar: React.FC<CalendarProps> = ({
                     </button>
                   )}
                 </div>
-                <div className="flex flex-col gap-1 overflow-hidden flex-1 px-0.5 md:px-1 pb-1 justify-center">
+                <div className="flex flex-col gap-1 overflow-hidden flex-1 px-0.5 md:px-1 pb-1 justify-center relative z-20">
                   {day.bookings.slice(0, 2).map(booking => {
                     const isUnpaid = booking.fareStatus === 'Unpaid';
                     const isSpecial = booking.isSpecialNote;

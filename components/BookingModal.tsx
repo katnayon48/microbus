@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Booking, DurationType, GarrisonStatusType } from '../types';
 import { Trash2, User, Landmark, MapPin, Calendar, Clock, Banknote, Wallet, AlignLeft, FileDown, Shield, CheckCircle2, Circle, X, Check, UserPlus, StickyNote, Phone } from 'lucide-react';
@@ -312,7 +311,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 <label className={labelClasses}><MapPin size={12} className="text-emerald-500" /> Destination</label>
                 <div className="relative group">
                   <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
-                  <input required name="destination" value={formData.destination || ''} onChange={handleChange} className={inputClasses} placeholder="Enter travel destination..." />
+                  <input name="destination" value={formData.destination || ''} onChange={handleChange} className={inputClasses} placeholder="Enter travel destination (Optional)" />
                 </div>
               </div>
 
@@ -467,7 +466,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
              </div>
              <div>
                 <p className="text-xs font-black text-white uppercase tracking-tight">Payment Received By</p>
-                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Enter name for PDF slip</p>
+                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Enter name for PDF slip</p>
              </div>
           </div>
           <div className="relative group">
