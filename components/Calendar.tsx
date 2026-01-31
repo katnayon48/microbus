@@ -191,16 +191,16 @@ const Calendar: React.FC<CalendarProps> = ({
           {!isAdmin && (
             <button 
               onClick={onStatsClick}
-              className="flex items-center justify-center px-2 md:px-4 py-1 md:py-2.5 bg-black text-white rounded-lg md:rounded-xl hover:bg-black/80 transition-all active:scale-[0.97] relative overflow-hidden group border border-white/20 shadow-lg shrink-0"
+              className="flex items-center justify-center px-2 md:px-4 py-1 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10"
               title="View Statistics"
             >
-              <span className="text-[7px] md:text-[10px] font-black uppercase tracking-widest relative z-10">STATE</span>
+              <span>STATE</span>
             </button>
           )}
           {!isAdmin && onLoginClick && (
             <button 
               onClick={onLoginClick}
-              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-emerald-600 text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0"
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-emerald-600 text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/20"
             >
               <LogIn size={10} className="md:w-4 md:h-4 shrink-0" />
               <span>Login</span>

@@ -266,13 +266,13 @@ const App: React.FC = () => {
           <footer className="px-6 h-8 border-t border-white/10 bg-[#0a1128]/95 backdrop-blur-sm flex items-center justify-center overflow-hidden shrink-0 z-50">
             <div key={footerState} className="animate-footer-wipe flex items-center justify-center gap-2 min-w-max">
               {footerState === 0 ? (
-                <span className="text-[8px] md:text-[10px] text-white font-black uppercase tracking-[0.1em] md:tracking-[0.2em] whitespace-nowrap drop-shadow-md">
+                <span className="text-[8px] md:text-[16px] text-white font-black uppercase tracking-[0.1em] md:tracking-[0.15em] whitespace-nowrap drop-shadow-md">
                   DEVELOPED BY CPL (CLK) BILLAL, ASC
                 </span>
               ) : (
                 <div className="flex items-center gap-2 text-white">
-                  <Phone size={10} className="text-white drop-shadow-sm md:w-[12px] md:h-[12px]" />
-                  <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] whitespace-nowrap drop-shadow-md">
+                  <Phone size={10} className="text-white drop-shadow-sm md:w-[16px] md:h-[16px]" />
+                  <span className="text-[8px] md:text-[16px] font-black uppercase tracking-[0.1em] md:tracking-[0.15em] whitespace-nowrap drop-shadow-md">
                     01783413333
                   </span>
                 </div>
