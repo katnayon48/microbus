@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { LogOut, FileText, Loader2, ArrowLeft } from 'lucide-react';
+import { LogOut, FileText, Loader2, ArrowLeft, Phone } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getDatabase, ref, onValue, set, push, remove } from 'firebase/database';
 
@@ -9,6 +10,7 @@ import LoginModal from './components/LoginModal';
 import BookingModal from './components/BookingModal';
 import ViewBookingModal from './components/ViewBookingModal';
 import ReportManager from './components/ReportManager';
+import TripStats from './components/TripStats';
 import { Booking } from './types';
 
 const firebaseConfig = {
@@ -71,11 +73,14 @@ const App: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [pendingDateAfterLogin, setPendingDateAfterLogin] = useState<Date | undefined>();
+  
+  const [footerState, setFooterState] = useState(0); 
 
   useEffect(() => {
     const startTime = Date.now();
@@ -107,6 +112,13 @@ const App: React.FC = () => {
       console.error("Database setup error:", e);
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFooterState(prev => (prev === 0 ? 1 : 0));
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSaveBooking = async (booking: Booking) => {
@@ -225,7 +237,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <main className="p-2 md:p-4 flex flex-col gap-2 md:gap-4 flex-1 overflow-hidden min-h-0 relative z-10">
+        <main className="p-1 md:p-2 flex flex-col gap-1 md:gap-2 flex-1 overflow-hidden min-h-0 relative z-10">
           {view === 'calendar' ? (
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-0">
               <div className="bg-[#062c1e] rounded-2xl md:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden flex flex-col flex-1 min-h-0">
@@ -237,24 +249,44 @@ const App: React.FC = () => {
                   onDateClick={handleDateClick} 
                   onDateDoubleClick={handleDateDoubleClick}
                   onLoginClick={() => setShowLoginModal(true)}
+                  onStatsClick={() => setShowStatsModal(true)}
                   onReportClick={() => setView('reports')}
                   isAppLoading={isLoading}
                 />
               </div>
             </div>
           ) : (
-            <div className="max-w-5xl mx-auto w-full h-full overflow-y-auto animate-in fade-in slide-in-from-right-4 duration-300 custom-scrollbar">
+            <div className="max-w-5xl mx-auto w-full h-full overflow-y-auto animate-in fade-in slide-in-from-right-4 duration-300 custom-scrollbar p-2">
               <ReportManager bookings={bookings} onBack={() => setView('calendar')} />
             </div>
           )}
         </main>
 
-        <footer className="px-4 py-2 md:py-3 border-t border-white/10 bg-[#0a1128]/90 backdrop-blur-sm flex items-center justify-center text-[7px] md:text-[9px] text-white font-black uppercase tracking-[0.3em] shrink-0 z-50">
-          DEVELOPED BY 1815124 CPL (CLK) BILLAL, ASC
-        </footer>
+        {view === 'calendar' && (
+          <footer className="px-6 h-8 border-t border-white/10 bg-[#0a1128]/95 backdrop-blur-sm flex items-center justify-center overflow-hidden shrink-0 z-50">
+            <div key={footerState} className="animate-footer-wipe flex items-center justify-center gap-2 min-w-max">
+              {footerState === 0 ? (
+                <span className="text-[8px] md:text-[10px] text-white font-black uppercase tracking-[0.1em] md:tracking-[0.2em] whitespace-nowrap drop-shadow-md">
+                  DEVELOPED BY CPL (CLK) BILLAL, ASC
+                </span>
+              ) : (
+                <div className="flex items-center gap-2 text-white">
+                  <Phone size={10} className="text-white drop-shadow-sm md:w-[12px] md:h-[12px]" />
+                  <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] whitespace-nowrap drop-shadow-md">
+                    01783413333
+                  </span>
+                </div>
+              )}
+            </div>
+          </footer>
+        )}
 
         <Modal isOpen={showLoginModal} onClose={closeLoginModal} title="Security Access" variant="dark">
           <LoginModal onLogin={handleLoginSuccess} onClose={closeLoginModal} />
+        </Modal>
+
+        <Modal isOpen={showStatsModal} onClose={() => setShowStatsModal(false)} title="Trip Statistics" variant="dark" size="max-w-4xl">
+          <TripStats bookings={bookings} />
         </Modal>
         
         <Modal isOpen={showBookingModal} onClose={closeBookingModal} title={editingBooking ? 'Modify Entry' : 'New Reservation'} variant="dark">

@@ -1,7 +1,8 @@
+
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Booking, BookingField, HandoffInfo } from '../types';
-import { format, parseISO, differenceInDays, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, parseISO, differenceInDays, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval, max, min } from 'date-fns';
 import { BOOKING_FIELDS } from '../constants';
 
 const DATE_FORMAT = 'dd-MM-yyyy';
@@ -151,8 +152,8 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
         ['Destination', ':', (booking.destination || 'N/A')],
         ['Duration', ':', (booking.duration || 'N/A')],
         ['Date Range', ':', dateRangeValue],
-        ['Out Time', ':', booking.outTime || 'N/A'],
-        ['In Time', ':', booking.inTime || 'N/A'],
+        ['Out Time', ':', booking.outTime ? `${booking.outTime} hrs` : 'N/A'],
+        ['In Time', ':', booking.inTime ? `${booking.inTime} hrs` : 'N/A'],
         ['Payment Received By', ':', (receivedBy || 'N/A').toUpperCase()],
         ['Remarks', ':', (booking.remarks || 'None')],
       ],
@@ -428,6 +429,10 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
           if (f === 'fare') {
             return b.isExempt ? 'EXEMPTED' : (b.fare || 0).toLocaleString();
           }
+          if (f === 'outTime' || f === 'inTime') {
+            const val = b[f as keyof Booking];
+            return val ? `${val} hrs` : 'N/A';
+          }
           const val = b[f as keyof Booking];
           return val === undefined || val === null ? '' : val.toString();
         });
@@ -472,20 +477,31 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
     const months = eachMonthOfInterval({ start: startDate, end: endDate });
 
     const stats = months.map(m => {
-      const monthBookings = bookings.filter(b => {
-        if (b.isSpecialNote) return false;
+      const mStart = startOfMonth(m);
+      const mEnd = endOfMonth(m);
+      let monthTotalDays = 0;
+
+      bookings.forEach(b => {
+        if (b.isSpecialNote) return;
         const bStart = parseISO(b.startDate);
         const bEnd = parseISO(b.endDate);
-        return isWithinInterval(m, { start: bStart, end: bEnd }) || 
-               isWithinInterval(bStart, { start: startOfMonth(m), end: endOfMonth(m) });
+
+        const overlapStart = max([bStart, mStart]);
+        const overlapEnd = min([bEnd, mEnd]);
+
+        if (overlapStart <= overlapEnd) {
+          const days = differenceInDays(overlapEnd, overlapStart) + 1;
+          monthTotalDays += days;
+        }
       });
+
       return {
         label: format(m, 'MMM yyyy').toUpperCase(),
-        count: monthBookings.length
+        count: monthTotalDays
       };
     });
 
-    const totalTripsSum = stats.reduce((sum, s) => sum + s.count, 0);
+    const totalDaysSum = stats.reduce((sum, s) => sum + s.count, 0);
 
     // Header Section
     doc.setFontSize(16);
@@ -505,10 +521,14 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
     const title2Width = doc.getTextWidth(title2);
     doc.line(105 - (title2Width / 2), 27, 105 + (title2Width / 2), 27);
 
-    // Period Info
+    // Period Info - Uppercase, Bold, Underlined
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Period: ${format(startDate, 'MMM yyyy')} to ${format(endDate, 'MMM yyyy')}`, 105, 34, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    const periodText = `PERIOD: ${format(startDate, 'MMM yyyy').toUpperCase()} TO ${format(endDate, 'MMM yyyy').toUpperCase()}`;
+    doc.text(periodText, 105, 34, { align: 'center' });
+    const periodWidth = doc.getTextWidth(periodText);
+    doc.setLineWidth(0.3);
+    doc.line(105 - (periodWidth / 2), 35.5, 105 + (periodWidth / 2), 35.5);
     
     // Separator line
     doc.setLineWidth(0.3);
@@ -521,7 +541,7 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
       const chartWidth = 160;
       const marginX = 25;
       const baseY = nextY + chartHeight;
-      const maxScale = 30;
+      const maxScale = 25; // Matched with UI
 
       // Draw Grid Lines & Labels - Darkened for better visibility
       doc.setDrawColor(180, 180, 180); // Darker gray for grid lines
@@ -529,7 +549,7 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
       doc.setFontSize(8);
       doc.setTextColor(60, 60, 60); // Darker gray for labels
 
-      [0, 10, 20, 30].forEach(val => {
+      [0, 10, 20, 25].forEach(val => { // Matched with UI
         const yPos = baseY - (val / maxScale) * chartHeight;
         doc.line(marginX, yPos, marginX + chartWidth, yPos);
         doc.text(val.toString(), marginX - 5, yPos + 1.5, { align: 'right' });
@@ -566,9 +586,9 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
     // Data Table
     autoTable(doc, {
       startY: nextY,
-      head: [['MONTHLY TRIPS', 'TOTAL TRIPS']],
+      head: [['MONTHLY PERIOD', 'TOTAL DAYS']],
       body: stats.map(s => [s.label, s.count]),
-      foot: [['SUBTOTAL', totalTripsSum.toString()]],
+      foot: [['SUBTOTAL DAYS', totalDaysSum.toString()]],
       theme: 'grid',
       headStyles: { 
         fillColor: [220, 220, 220], // Light ash color

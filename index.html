@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,11 +43,11 @@
         }
         
         @keyframes bar-grow {
-            0% { transform: scaleY(0); opacity: 0; }
-            100% { transform: scaleY(1); opacity: 1; }
+            0% { transform: scaleY(0); }
+            100% { transform: scaleY(1); }
         }
         .animate-bar-grow {
-            animation: bar-grow 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation: bar-grow 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             transform-origin: bottom;
         }
         
@@ -81,6 +82,22 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        @keyframes stats-reveal {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.9) translateY(40px) perspective(1000px) rotateX(-10deg);
+                filter: blur(10px) brightness(0.5);
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1) translateY(0) perspective(1000px) rotateX(0deg);
+                filter: blur(0) brightness(1);
+            }
+        }
+        .animate-stats-reveal {
+            animation: stats-reveal 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
         
         .today-glow {
             position: relative;
@@ -111,7 +128,7 @@
         .today-glow::after {
             content: '';
             position: absolute;
-            inset: 2px;
+            inset: 3px;
             background: #062c1e;
             z-index: -1;
             border-radius: inherit;
@@ -129,6 +146,17 @@
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #10b98166;
+        }
+
+        /* Footer Wipe Animation */
+        @keyframes footer-wipe {
+            0% { clip-path: inset(0 100% 0 0); }
+            8% { clip-path: inset(0 0 0 0); }
+            92% { clip-path: inset(0 0 0 0); }
+            100% { clip-path: inset(0 0 0 100%); }
+        }
+        .animate-footer-wipe {
+            animation: footer-wipe 5s ease-in-out infinite;
         }
     </style>
     <script type="importmap">

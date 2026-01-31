@@ -8,9 +8,17 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   variant?: 'light' | 'dark';
+  size?: string; // e.g., 'max-w-xl', 'max-w-4xl'
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, variant = 'light' }) => {
+const Modal: React.FC<ModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children, 
+  variant = 'light',
+  size = 'max-w-xl'
+}) => {
   if (!isOpen) return null;
 
   const isDark = variant === 'dark';
@@ -22,7 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, variant
           ${isDark 
             ? 'bg-[#062c1e] border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]' 
             : 'bg-slate-50 border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)]'} 
-          rounded-3xl w-full max-w-xl overflow-hidden flex flex-col max-h-[92vh] border animate-in zoom-in-95 duration-200
+          rounded-3xl w-full ${size} overflow-hidden flex flex-col max-h-[92vh] border animate-in zoom-in-95 duration-200
         `}
       >
         <div className={`px-8 py-5 border-b flex items-center justify-between shrink-0 ${isDark ? 'border-white/5 bg-black/20' : 'border-slate-200 bg-slate-50'}`}>

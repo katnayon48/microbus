@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, ChevronDown, CalendarDays, LogIn, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, ChevronDown, CalendarDays, LogIn, FileText, BarChart3 } from 'lucide-react';
 import { format, addMonths, subMonths, isToday, setMonth, setYear } from 'date-fns';
 import { getCalendarDays } from '../utils/dateUtils';
 import { Booking } from '../types';
@@ -14,6 +15,7 @@ interface CalendarProps {
   onDateDoubleClick?: (date: Date) => void;
   onLoginClick?: () => void;
   onReportClick?: () => void;
+  onStatsClick?: () => void;
   isAppLoading?: boolean; 
 }
 
@@ -26,6 +28,7 @@ const Calendar: React.FC<CalendarProps> = ({
   onDateDoubleClick,
   onLoginClick,
   onReportClick,
+  onStatsClick,
   isAppLoading = false
 }) => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -71,27 +74,69 @@ const Calendar: React.FC<CalendarProps> = ({
   };
 
   const renderBookingContent = (booking: Booking) => {
+    const fontSizeClasses = "text-[8px] md:text-[10px] font-black uppercase";
+
     if (booking.isSpecialNote) {
       return (
         <div className="flex items-center justify-center w-full px-1">
-          <span className="block font-black text-center break-words leading-[1.2]">
+          <span className={`block text-center break-words leading-[1.1] ${fontSizeClasses}`}>
             {booking.remarks || 'SPECIAL NOTE'}
           </span>
         </div>
       );
     }
 
-    const fullName = booking.rankName || '';
-    const parts = fullName.trim().split(/\s+/);
-    if (parts.length <= 1) return <span className="block font-black">{fullName}</span>;
+    const fullName = (booking.rankName || '').trim();
+    const parts = fullName.split(/\s+/);
     
-    const name = parts.pop();
-    const rank = parts.join(' ');
+    let rank = '';
+    let nameString = '';
+
+    // Smart split for military/common ranks
+    if (parts.length >= 2) {
+      const first = parts[0].toUpperCase();
+      const second = parts[1].toUpperCase();
+      
+      // Detect 2-word ranks (LT COL, MAJ GEN, BRIG GEN, LT GEN, SUB MAJ)
+      if ((first === 'LT' || first === 'MAJ' || first === 'BRIG' || first === 'SUB') && 
+          (second === 'COL' || second === 'GEN' || second === 'MAJ' || second === 'CDR')) {
+        rank = parts.slice(0, 2).join(' ');
+        nameString = parts.slice(2).join(' ');
+      } else {
+        rank = parts[0];
+        nameString = parts.slice(1).join(' ');
+      }
+    } else {
+      nameString = fullName;
+    }
+
+    // Fallback if split results in empty name
+    if (!nameString && rank) {
+      nameString = rank;
+      rank = '';
+    }
+
+    const nameParts = nameString.split(/\s+/).filter(p => p.length > 0);
     
     return (
-      <div className="flex flex-col items-center justify-center w-full">
-        <span className="block font-black mb-0.5">{rank}</span>
-        <span className="block font-black">{name}</span>
+      <div className="flex flex-col items-center justify-center w-full overflow-hidden px-0.5">
+        {rank && (
+          <span className={`block leading-none mb-0.5 truncate w-full text-center ${fontSizeClasses}`}>
+            {rank}
+          </span>
+        )}
+        <div className="flex flex-col items-center w-full">
+          {nameParts.slice(0, 2).map((word, idx) => (
+            <span key={idx} className={`block leading-tight break-all text-center w-full ${fontSizeClasses}`}>
+              {word}
+            </span>
+          ))}
+          {nameParts.length > 2 && (
+             <span className={`block leading-tight truncate text-center w-full ${fontSizeClasses}`}>
+               ...
+             </span>
+          )}
+        </div>
       </div>
     );
   };
@@ -103,12 +148,12 @@ const Calendar: React.FC<CalendarProps> = ({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <div className="grid grid-cols-3 items-center px-3 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1 md:gap-2">
-        <div className="flex items-center gap-1 md:gap-4 overflow-hidden">
-          <div className="w-6 h-6 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-900/20 shrink-0">
+      <div className="grid grid-cols-3 items-center px-2 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1">
+        <div className="flex items-center gap-1 md:gap-4 overflow-hidden shrink-0">
+          <div className="hidden sm:flex w-6 h-6 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-emerald-600 items-center justify-center text-white shadow-lg shadow-emerald-900/20 shrink-0">
             <CalendarIcon size={12} className="md:w-5 md:h-5" />
           </div>
-          <div className="relative flex items-center">
+          <div className="relative flex items-center shrink-0">
             <button 
               onClick={() => {
                 setPickerYear(currentDate.getFullYear());
@@ -123,7 +168,8 @@ const Calendar: React.FC<CalendarProps> = ({
             </button>
           </div>
         </div>
-        <div className="flex items-center justify-center">
+        
+        <div className="flex items-center justify-center min-w-0">
           <div className="flex items-center gap-0.5 md:gap-2 bg-white/5 p-0.5 md:p-1 rounded-lg md:rounded-xl border border-white/10 shadow-sm shrink-0">
             <button 
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
@@ -133,7 +179,7 @@ const Calendar: React.FC<CalendarProps> = ({
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-6 md:px-20 py-1 md:py-2 text-[8px] md:text-xs font-black text-slate-300 hover:text-emerald-400 transition-all uppercase tracking-wider"
+              className="px-3 md:px-20 py-1 md:py-2 text-[8px] md:text-xs font-black text-slate-300 hover:text-emerald-400 transition-all uppercase tracking-wider"
             >
               Today
             </button>
@@ -145,11 +191,21 @@ const Calendar: React.FC<CalendarProps> = ({
             </button>
           </div>
         </div>
-        <div className="flex justify-end items-center gap-2">
+
+        <div className="flex justify-end items-center gap-1 md:gap-2 shrink-0">
+          {!isAdmin && (
+            <button 
+              onClick={onStatsClick}
+              className="flex items-center justify-center px-2 md:px-4 py-1 md:py-2.5 bg-black text-white rounded-lg md:rounded-xl hover:bg-black/80 transition-all active:scale-[0.97] relative overflow-hidden group border border-white/20 shadow-lg shrink-0"
+              title="View Statistics"
+            >
+              <span className="text-[7px] md:text-[10px] font-black uppercase tracking-widest relative z-10">STATE</span>
+            </button>
+          )}
           {!isAdmin && onLoginClick && (
             <button 
               onClick={onLoginClick}
-              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-emerald-600 text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-md active:scale-95 transition-all whitespace-nowrap"
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-emerald-600 text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0"
             >
               <LogIn size={10} className="md:w-4 md:h-4 shrink-0" />
               <span>Login</span>
@@ -158,7 +214,7 @@ const Calendar: React.FC<CalendarProps> = ({
           {isAdmin && onReportClick && (
             <button 
               onClick={onReportClick}
-              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-white text-emerald-900 rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap"
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-white text-emerald-900 rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0"
             >
               <FileText size={10} className="md:w-4 md:h-4 shrink-0" />
               <span className="md:hidden">REPORT</span>
@@ -211,10 +267,10 @@ const Calendar: React.FC<CalendarProps> = ({
                     const isSpecial = booking.isSpecialNote;
                     return (
                       <div key={booking.id} onClick={(e) => { e.stopPropagation(); onDateClick(day.date, booking); }}
-                        className={`relative px-1 py-1 md:py-2 min-h-[30px] md:min-h-[44px] flex items-center justify-center select-none border-y border-transparent rounded-md md:rounded-lg shadow-md overflow-hidden cursor-pointer z-20 border border-white/20 transition-opacity duration-300
+                        className={`relative px-0.5 py-1 md:py-2 min-h-[30px] md:min-h-[44px] flex items-center justify-center select-none border-y border-transparent rounded-md md:rounded-lg shadow-md overflow-hidden cursor-pointer z-20 border border-white/20 transition-opacity duration-300
                           ${!isAppLoading ? 'animate-booking-pop' : 'opacity-0'}
                           ${isSpecial ? 'bg-amber-500 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(245,158,11,0.3)]' : isUnpaid ? 'bg-rose-600 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(225,29,72,0.3)]' : 'bg-emerald-600 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(16,185,129,0.3)]'}`}>
-                        <div className="text-[10px] md:text-[11px] font-black uppercase tracking-tight leading-[1.2] text-center w-full">
+                        <div className="w-full">
                           {renderBookingContent(booking)}
                         </div>
                       </div>

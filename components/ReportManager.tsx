@@ -1,9 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import { FileText, Table, ChevronLeft, ChevronRight, Calendar as CalendarIcon, UserCheck, ArrowRight, ArrowLeft, BarChart3, TrendingUp, Download, BarChart } from 'lucide-react';
 import { Booking, BookingField, HandoffInfo } from '../types';
 import { generatePaymentSlip, generateOverallReport, generateTripSummaryReport } from '../services/pdfService';
 import { BOOKING_FIELDS } from '../constants';
-import { startOfMonth, endOfMonth, subMonths, format, parseISO, getYear, getMonth, startOfYear, endOfYear } from 'date-fns';
+import { startOfMonth, endOfMonth, subMonths, format, parseISO, getYear, getMonth, startOfYear, endOfYear, differenceInDays, isWithinInterval, max, min } from 'date-fns';
 
 interface ReportManagerProps {
   bookings: Booking[];
@@ -12,20 +13,19 @@ interface ReportManagerProps {
 
 type ReportStep = 'dashboard' | 'payment-slip-range' | 'handoff-prompt' | 'handoff-form' | 'detailed-setup' | 'trip-summary' | 'summary-download-range' | 'graph-choice';
 
-// 12 Distinct Premium Gradients for each month
-const MONTH_COLORS = [
-  'from-emerald-400 via-emerald-500 to-emerald-600', // Jan
-  'from-cyan-400 via-cyan-500 to-cyan-600',       // Feb
-  'from-blue-400 via-blue-500 to-blue-600',       // Mar
-  'from-indigo-400 via-indigo-500 to-indigo-600', // Apr
-  'from-violet-400 via-violet-500 to-violet-600', // May
-  'from-fuchsia-400 via-fuchsia-500 to-fuchsia-600', // Jun
-  'from-rose-400 via-rose-500 to-rose-600',       // Jul
-  'from-orange-400 via-orange-500 to-orange-600', // Aug
-  'from-amber-400 via-amber-500 to-amber-600',    // Sep
-  'from-yellow-400 via-yellow-500 to-yellow-600', // Oct
-  'from-lime-400 via-lime-500 to-lime-600',       // Nov
-  'from-teal-400 via-teal-500 to-teal-600'        // Dec
+const MONTH_BAR_STYLES = [
+  { color: '#10b981', gradient: 'linear-gradient(to top, #065f46, #10b981)' },
+  { color: '#06b6d4', gradient: 'linear-gradient(to top, #164e63, #06b6d4)' },
+  { color: '#3b82f6', gradient: 'linear-gradient(to top, #1e3a8a, #3b82f6)' },
+  { color: '#6366f1', gradient: 'linear-gradient(to top, #312e81, #6366f1)' },
+  { color: '#8b5cf6', gradient: 'linear-gradient(to top, #4c1d95, #8b5cf6)' },
+  { color: '#d946ef', gradient: 'linear-gradient(to top, #701a75, #d946ef)' },
+  { color: '#f43f5e', gradient: 'linear-gradient(to top, #881337, #f43f5e)' },
+  { color: '#f97316', gradient: 'linear-gradient(to top, #7c2d12, #f97316)' },
+  { color: '#f59e0b', gradient: 'linear-gradient(to top, #78350f, #f59e0b)' },
+  { color: '#eab308', gradient: 'linear-gradient(to top, #713f12, #eab308)' },
+  { color: '#84cc16', gradient: 'linear-gradient(to top, #365314, #84cc16)' },
+  { color: '#14b8a6', gradient: 'linear-gradient(to top, #134e4a, #14b8a6)' }
 ];
 
 const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack }) => {
@@ -64,26 +64,39 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack }) => {
     const statsArray = Array(12).fill(0).map((_, i) => ({
       month: format(new Date(selectedYear, i, 1), 'MMM'),
       count: 0,
-      color: MONTH_COLORS[i]
+      style: MONTH_BAR_STYLES[i]
     }));
     
-    bookings.forEach(b => {
-      if (b.isSpecialNote) return;
-      try {
-        const startDate = parseISO(b.startDate);
-        if (getYear(startDate) === selectedYear) {
-          const monthIndex = getMonth(startDate);
-          if (monthIndex >= 0 && monthIndex < 12) {
-            statsArray[monthIndex].count++;
+    for (let m = 0; m < 12; m++) {
+      const monthStart = startOfMonth(new Date(selectedYear, m, 1));
+      const monthEnd = endOfMonth(new Date(selectedYear, m, 1));
+      let totalDaysInMonth = 0;
+
+      bookings.forEach(b => {
+        if (b.isSpecialNote) return;
+        try {
+          const bookingStart = parseISO(b.startDate);
+          const bookingEnd = parseISO(b.endDate);
+          
+          const overlapStart = max([bookingStart, monthStart]);
+          const overlapEnd = min([bookingEnd, monthEnd]);
+
+          if (overlapStart <= overlapEnd) {
+            const days = differenceInDays(overlapEnd, overlapStart) + 1;
+            totalDaysInMonth += days;
           }
-        }
-      } catch (err) {}
-    });
+        } catch (err) {}
+      });
+      
+      statsArray[m].count = totalDaysInMonth;
+    }
     
     return statsArray;
   }, [bookings, selectedYear]);
 
-  const maxScale = 30;
+  // Set max scale to 25 as requested
+  const maxScale = 25;
+  const scaleValues = [25, 20, 10, 0];
 
   const toggleField = (field: BookingField) => {
     setSelectedFields(prev => 
@@ -229,7 +242,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack }) => {
           <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-1 shrink-0 mb-1">
             <StepHeader 
               title="Trip Statistics" 
-              subtitle={`Annual Overview for ${selectedYear}`} 
+              subtitle={`Total Days Booked per Month (${selectedYear})`} 
               onBackStep={() => setActiveStep('dashboard')} 
             />
             <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/10 self-end md:self-center shadow-lg">
@@ -239,22 +252,21 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack }) => {
             </div>
           </div>
           
-          <div className="w-full bg-[#062c1e] p-3 md:p-6 rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-2xl relative flex flex-col flex-1 overflow-hidden">
+          <div className="w-full bg-[#062c1e] p-3 md:p-6 rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-2xl relative flex flex-col flex-1 overflow-hidden min-h-0">
             <div className="flex items-center gap-3 mb-4 md:mb-6 shrink-0">
                <div className="w-8 h-8 bg-emerald-500/10 text-emerald-500 rounded-lg flex items-center justify-center">
                   <TrendingUp size={18} />
                </div>
                <div>
-                  <h3 className="text-sm md:text-lg font-black text-white uppercase tracking-tight">Monthly Trip Volume</h3>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">Record Analysis for {selectedYear}</p>
+                  <h3 className="text-sm md:text-lg font-black text-white uppercase tracking-tight">MONTH WISE TRIP STATISTICS</h3>
+                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">Trip Analysis for {selectedYear}</p>
                </div>
             </div>
 
-            {/* Increased pt-16 to give enough room for labels without hitting the header */}
-            <div className="flex items-end gap-1 md:gap-4 relative group flex-1 pt-16 pb-10 min-h-0">
+            <div className="flex items-end gap-1 md:gap-4 relative group flex-1 pt-12 pb-6 min-h-0">
               {/* Left Scale */}
-              <div className="flex flex-col justify-between h-full text-right pr-1 md:pr-2 select-none border-r border-white/5 pb-8">
-                 {[30, 20, 10, 0].map(val => (
+              <div className="flex flex-col justify-between h-full text-right pr-1 md:pr-2 select-none border-r border-white/5 pb-6">
+                 {scaleValues.map(val => (
                    <div key={`l-${val}`} className="flex items-center justify-end gap-1">
                      <span className="text-[8px] md:text-[10px] font-black text-slate-500">{val}</span>
                      <div className="w-1 h-[1px] bg-slate-600"></div>
@@ -263,30 +275,34 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack }) => {
               </div>
 
               {/* Chart */}
-              <div className="flex-1 relative h-full flex items-end justify-between gap-1 md:gap-4 px-1 md:px-2 border-b-2 border-white/10 pb-8">
-                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-[0.05] px-2 pb-8">
-                    <div className="w-full border-t border-white"></div>
-                    <div className="w-full border-t border-white"></div>
-                    <div className="w-full border-t border-white"></div>
-                    <div className="w-full"></div>
+              <div className="flex-1 relative h-full flex items-end justify-between gap-1 md:gap-4 px-1 md:px-2 border-b-2 border-white/10 pb-6">
+                 {/* Horizontal Grid Lines */}
+                 <div className="absolute inset-0 flex flex-col pointer-events-none opacity-[0.05] px-2 pb-6">
+                    <div className="absolute left-0 right-0 border-t border-white" style={{ bottom: '100%' }}></div>
+                    <div className="absolute left-0 right-0 border-t border-white" style={{ bottom: '80%' }}></div>
+                    <div className="absolute left-0 right-0 border-t border-white" style={{ bottom: '40%' }}></div>
+                    <div className="absolute left-0 right-0" style={{ bottom: '0%' }}></div>
                  </div>
 
                  {monthlyStats.map((stat, i) => {
-                   const heightPercent = (stat.count / maxScale) * 100;
+                   const heightPercent = Math.min((stat.count / maxScale) * 100, 100);
+                   const finalHeight = Math.max(heightPercent, stat.count > 0 ? 3 : 0);
                    return (
                      <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative z-10 h-full justify-end">
                         <div 
-                          className={`w-full max-w-[20px] md:max-w-[48px] bg-gradient-to-t ${stat.color} rounded-t-sm md:rounded-t-lg shadow-lg animate-bar-grow transition-all cursor-default border-x border-t border-white/10 hover:brightness-125`}
+                          className="w-full max-w-[20px] md:max-w-[48px] rounded-t-sm md:rounded-t-lg shadow-lg animate-bar-grow transition-all cursor-default border-x border-t border-white/10 hover:brightness-125 block"
                           style={{ 
-                            height: `${Math.max(heightPercent, stat.count > 0 ? 3 : 0)}%`,
-                            animationDelay: `${i * 60}ms`
+                            height: `${finalHeight}%`,
+                            animationDelay: `${i * 80}ms`,
+                            background: stat.style.gradient,
+                            backgroundColor: stat.style.color
                           }}
                         ></div>
-                        <span className="absolute -bottom-7 text-[7px] md:text-[10px] font-black text-slate-400 uppercase tracking-tight group-hover/bar:text-white transition-colors">
+                        <span className="absolute -bottom-6 text-[7px] md:text-[10px] font-black text-slate-400 uppercase tracking-tight group-hover/bar:text-white transition-colors">
                           {stat.month}
                         </span>
                         {stat.count > 0 && (
-                          <span className="absolute -top-8 md:-top-11 text-[10px] md:text-[14px] font-black text-white bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-md z-30 shadow-sm border border-white/10">
+                          <span className="absolute -top-7 md:-top-10 text-[10px] md:text-[12px] font-black text-white bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-md z-30 shadow-sm border border-white/10 whitespace-nowrap">
                             {stat.count}
                           </span>
                         )}
@@ -296,8 +312,8 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack }) => {
               </div>
 
               {/* Right Scale */}
-              <div className="flex flex-col justify-between h-full text-left pl-1 md:pl-2 select-none border-l border-white/5 pb-8">
-                 {[30, 20, 10, 0].map(val => (
+              <div className="flex flex-col justify-between h-full text-left pl-1 md:pl-2 select-none border-l border-white/5 pb-6">
+                 {scaleValues.map(val => (
                    <div key={`r-${val}`} className="flex items-center gap-1">
                      <div className="w-1 h-[1px] bg-slate-600"></div>
                      <span className="text-[8px] md:text-[10px] font-black text-slate-500">{val}</span>
@@ -309,21 +325,20 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack }) => {
             <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between shrink-0">
                <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
                   <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div>
-                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Overview</span>
+                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Trip Statistics</span>
                </div>
                <div className="px-4 py-1.5 bg-emerald-600/10 rounded-xl border border-emerald-500/20">
                   <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <BarChart3 size={12} /> Annual Total: {monthlyStats.reduce((a, b) => a + b.count, 0)}
+                    <BarChart3 size={12} /> Total Booked Days: {monthlyStats.reduce((a, b) => a + b.count, 0)}
                   </span>
                </div>
             </div>
           </div>
 
-          {/* Premium Emerald Green Button */}
-          <div className="mt-2 flex flex-col items-center animate-in fade-in slide-in-from-top-2 duration-500 shrink-0 pb-4">
+          <div className="mt-2 flex flex-col items-center shrink-0 pb-4">
             <button
               onClick={() => setActiveStep('summary-download-range')}
-              className="flex items-center gap-2 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 group border border-white/10"
+              className="flex items-center gap-2 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-[0.98] group border border-white/10"
             >
               <Download size={16} />
               Download Trip Summary
@@ -384,7 +399,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack }) => {
       )}
 
       {activeStep === 'handoff-prompt' && (
-        <div className="animate-in fade-in zoom-in-95 duration-500 max-w-md mx-auto text-center space-y-6 py-12">
+        <div className="animate-in fade-in zoom-in-95 duration-500 max-md:max-w-md mx-auto text-center space-y-6 py-12">
           <div className="w-14 h-14 bg-emerald-600/10 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto"><UserCheck size={24} /></div>
           <div className="space-y-1">
             <h3 className="text-lg font-black text-white uppercase tracking-tight">Add Signatures?</h3>
