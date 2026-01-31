@@ -116,26 +116,21 @@ const Calendar: React.FC<CalendarProps> = ({
       rank = '';
     }
 
-    const nameParts = nameString.split(/\s+/).filter(p => p.length > 0);
+    const nameWords = nameString.split(/\s+/).filter(p => p.length > 0);
     
     return (
       <div className="flex flex-col items-center justify-center w-full overflow-hidden px-0.5">
         {rank && (
-          <span className={`block leading-none mb-0.5 truncate w-full text-center ${fontSizeClasses}`}>
+          <span className={`block leading-none mb-0.5 w-full text-center whitespace-nowrap ${fontSizeClasses}`}>
             {rank}
           </span>
         )}
         <div className="flex flex-col items-center w-full">
-          {nameParts.slice(0, 2).map((word, idx) => (
-            <span key={idx} className={`block leading-tight break-all text-center w-full ${fontSizeClasses}`}>
+          {nameWords.map((word, idx) => (
+            <span key={idx} className={`block leading-tight text-center w-full whitespace-nowrap ${fontSizeClasses}`}>
               {word}
             </span>
           ))}
-          {nameParts.length > 2 && (
-             <span className={`block leading-tight truncate text-center w-full ${fontSizeClasses}`}>
-               ...
-             </span>
-          )}
         </div>
       </div>
     );

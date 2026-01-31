@@ -285,7 +285,7 @@ const App: React.FC = () => {
           <LoginModal onLogin={handleLoginSuccess} onClose={closeLoginModal} />
         </Modal>
 
-        <Modal isOpen={showStatsModal} onClose={() => setShowStatsModal(false)} title="Trip Statistics" variant="dark" size="max-w-4xl">
+        <Modal isOpen={showStatsModal} onClose={() => setShowStatsModal(false)} title="Trip Statistics" variant="dark" size="max-w-full">
           <TripStats bookings={bookings} />
         </Modal>
         

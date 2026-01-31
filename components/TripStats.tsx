@@ -65,38 +65,38 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings }) => {
   const scaleValues = [25, 20, 10, 0];
 
   return (
-    <div className="flex flex-col w-full h-full max-h-[85vh] overflow-hidden animate-stats-reveal">
-      <div className="w-full flex items-center justify-between gap-2 mb-4 shrink-0">
-         <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
-               <TrendingUp size={24} />
+    <div className="flex flex-col w-full h-full overflow-hidden animate-stats-reveal">
+      <div className="w-full flex items-center justify-between gap-2 mb-2 md:mb-4 shrink-0 px-1">
+         <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-7 h-7 md:w-10 md:h-10 bg-emerald-500/10 text-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center shadow-inner">
+               <TrendingUp size={16} md:size={24} />
             </div>
-            <div>
-               <h3 className="text-sm md:text-xl font-black text-white uppercase tracking-tight">MONTH WISE TRIP STATISTICS</h3>
-               <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Trip Analysis for {selectedYear}</p>
+            <div className="min-w-0">
+               <h3 className="text-[10px] md:text-xl font-black text-white uppercase tracking-tight truncate">TRIP STATISTICS</h3>
+               <p className="text-[6px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] truncate">{selectedYear} Analysis</p>
             </div>
          </div>
-         <div className="flex items-center gap-1 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-lg">
-            <button onClick={() => setSelectedYear(y => y - 1)} className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90"><ChevronLeft size={20} /></button>
-            <span className="text-sm font-black text-white min-w-[60px] text-center tracking-widest">{selectedYear}</span>
-            <button onClick={() => setSelectedYear(y => y + 1)} className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90"><ChevronRight size={20} /></button>
+         <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg md:rounded-xl border border-white/10 shadow-lg shrink-0">
+            <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 md:p-1.5 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90"><ChevronLeft size={14} md:size={20} /></button>
+            <span className="text-[9px] md:text-sm font-black text-white min-w-[30px] md:min-w-[60px] text-center tracking-widest">{selectedYear}</span>
+            <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 md:p-1.5 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90"><ChevronRight size={14} md:size={20} /></button>
          </div>
       </div>
 
-      <div className="w-full bg-[#062c1e] p-4 md:p-10 rounded-[2rem] md:rounded-[3rem] border-2 border-white/5 shadow-2xl relative flex flex-col h-[480px] md:h-[600px] lg:h-[650px] overflow-hidden shrink-0">
-        <div className="flex items-end gap-1 md:gap-6 relative group flex-1 pt-12 pb-12 min-h-0 h-full">
+      <div className="w-full bg-[#062c1e] p-2 md:p-6 lg:p-8 rounded-xl md:rounded-[2.5rem] border-2 border-white/5 shadow-2xl relative flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="flex items-end gap-1 md:gap-4 relative group flex-1 pt-4 md:pt-8 pb-6 md:pb-10 min-h-0 h-full">
           {/* Left Scale */}
-          <div className="flex flex-col justify-between h-full text-right pr-2 md:pr-4 select-none border-r border-white/5">
+          <div className="flex flex-col justify-between h-full text-right pr-1 md:pr-4 select-none border-r border-white/5">
              {scaleValues.map(val => (
-               <div key={`l-${val}`} className="flex items-center justify-end gap-2 relative">
-                 <span className="text-[10px] md:text-[12px] font-black text-slate-500">{val}</span>
-                 <div className="w-2 h-[1px] bg-slate-600"></div>
+               <div key={`l-${val}`} className="flex items-center justify-end gap-1 md:gap-2 relative">
+                 <span className="text-[7px] md:text-[12px] font-black text-slate-500">{val}</span>
+                 <div className="w-1 md:w-2 h-[1px] bg-slate-600"></div>
                </div>
              ))}
           </div>
 
           {/* Chart Area */}
-          <div className="flex-1 relative h-full flex items-end justify-between gap-1 md:gap-6 px-2 md:px-4 border-b-2 border-white/10">
+          <div className="flex-1 relative h-full flex items-end justify-between gap-1 md:gap-4 px-1 md:px-4 border-b-2 border-white/10">
              {/* Horizontal Grid Lines */}
              <div className="absolute inset-0 flex flex-col pointer-events-none opacity-[0.05] px-4">
                 <div className="absolute left-0 right-0 border-t border-white" style={{ bottom: '100%' }}></div>
@@ -107,11 +107,11 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings }) => {
 
              {monthlyStats.map((stat, i) => {
                const heightPercent = Math.min((stat.count / maxScale) * 100, 100);
-               const finalHeight = Math.max(heightPercent, stat.count > 0 ? 4 : 0);
+               const finalHeight = Math.max(heightPercent, stat.count > 0 ? 3 : 0);
                return (
                  <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative z-10 h-full justify-end">
                     <div 
-                      className="w-full max-w-[28px] md:max-w-[64px] lg:max-w-[80px] rounded-t-md md:rounded-t-2xl shadow-2xl animate-bar-grow transition-all cursor-default border-x border-t border-white/10 hover:brightness-125 z-10"
+                      className="w-full max-w-[12px] md:max-w-[56px] rounded-t-sm md:rounded-t-xl shadow-2xl animate-bar-grow transition-all cursor-default border-x border-t border-white/10 hover:brightness-125 z-10"
                       style={{ 
                         height: `${finalHeight}%`,
                         animationDelay: `${i * 80}ms`,
@@ -119,14 +119,14 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings }) => {
                         backgroundColor: stat.style.color
                       }}
                     ></div>
-                    <span className="absolute -bottom-10 text-[8px] md:text-[12px] font-black text-slate-400 uppercase tracking-tight group-hover/bar:text-white transition-colors">
+                    <span className="absolute -bottom-5 md:-bottom-8 text-[5px] md:text-[11px] font-black text-slate-400 uppercase tracking-tight group-hover/bar:text-white transition-colors">
                       {stat.month}
                     </span>
                     {stat.count > 0 && (
                       <span 
-                        className="absolute font-black text-white bg-black/70 px-2 md:px-4 py-1 rounded-lg backdrop-blur-lg z-30 shadow-xl border border-white/10 whitespace-nowrap text-[10px] md:text-[14px] animate-in fade-in zoom-in duration-500"
+                        className="absolute font-black text-white bg-black/70 px-1 md:px-3 py-0.5 rounded md:rounded-lg backdrop-blur-lg z-30 shadow-xl border border-white/10 whitespace-nowrap text-[6px] md:text-[13px] animate-in fade-in zoom-in duration-500"
                         style={{ 
-                          bottom: `calc(${finalHeight}% + 10px)`,
+                          bottom: `calc(${finalHeight}% + 4px)`,
                           animationDelay: `${(i * 80) + 400}ms`
                         }}
                       >
@@ -139,30 +139,29 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings }) => {
           </div>
 
           {/* Right Scale */}
-          <div className="flex flex-col justify-between h-full text-left pl-2 md:pl-4 select-none border-l border-white/5">
+          <div className="flex flex-col justify-between h-full text-left pl-1 md:pl-4 select-none border-l border-white/5">
              {scaleValues.map(val => (
-               <div key={`r-${val}`} className="flex items-center gap-2">
-                 <div className="w-2 h-[1px] bg-slate-600"></div>
-                 <span className="text-[10px] md:text-[12px] font-black text-slate-500">{val}</span>
+               <div key={`r-${val}`} className="flex items-center gap-1 md:gap-2">
+                 <div className="w-1 md:w-2 h-[1px] bg-slate-600"></div>
+                 <span className="text-[7px] md:text-[12px] font-black text-slate-500">{val}</span>
                </div>
              ))}
           </div>
         </div>
         
-        {/* Footer info inside chart area */}
-        <div className="mt-8 md:mt-12 pt-4 md:pt-6 border-t border-white/5 flex items-center justify-between shrink-0 gap-2">
-           <div className="flex items-center gap-1.5 md:gap-3 px-2 md:px-4 py-1.5 md:py-2 bg-white/5 rounded-lg md:rounded-xl border border-white/5 min-w-0">
-              <div className="w-2 md:w-3.5 h-2 md:h-3.5 bg-emerald-500 rounded-sm shrink-0"></div>
-              <span className="text-[7px] md:text-[12px] font-black text-white uppercase tracking-widest truncate">Trip Statistics</span>
+        {/* Footer Summary */}
+        <div className="mt-2 md:mt-6 pt-2 md:pt-4 border-t border-white/5 flex items-center justify-between shrink-0 gap-2">
+           <div className="flex items-center gap-1 md:gap-3 px-1.5 md:px-4 py-0.5 md:py-2 bg-white/5 rounded-lg border border-white/5 min-w-0">
+              <div className="w-1.5 md:w-3 h-1.5 md:h-3 bg-emerald-500 rounded-sm shrink-0"></div>
+              <span className="text-[6px] md:text-[11px] font-black text-white uppercase tracking-widest truncate">Monthly Usage</span>
            </div>
-           <div className="px-3 md:px-6 py-1.5 md:py-2.5 bg-emerald-600/10 rounded-lg md:rounded-2xl border border-emerald-500/20 shadow-lg min-w-0">
-              <span className="text-[7px] md:text-[14px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1.5 md:gap-3 truncate">
-                <BarChart3 size={10} className="md:w-[18px] md:h-[18px]" /> Total Days: {monthlyStats.reduce((a, b) => a + b.count, 0)}
+           <div className="px-2 md:px-5 py-1 md:py-2 bg-emerald-600/10 rounded-lg md:rounded-xl border border-emerald-500/20 shadow-lg min-w-0">
+              <span className="text-[7px] md:text-[13px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1 md:gap-2 truncate">
+                <BarChart3 size={10} md:size={16} /> Total: {monthlyStats.reduce((a, b) => a + b.count, 0)} Days
               </span>
            </div>
         </div>
       </div>
-      <div className="pb-4"></div>
     </div>
   );
 };
