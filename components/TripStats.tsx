@@ -65,8 +65,8 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings }) => {
   const scaleValues = [25, 20, 10, 0];
 
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden animate-stats-reveal">
-      <div className="w-full flex items-center justify-between gap-2 mb-2 md:mb-4 shrink-0 px-1">
+    <div className="flex flex-col w-full h-full overflow-hidden animate-stats-reveal relative">
+      <div className="w-full flex items-center justify-between gap-2 mb-2 md:mb-4 shrink-0 px-1 relative z-10">
          <div className="flex items-center gap-2 md:gap-3">
             <div className="w-7 h-7 md:w-10 md:h-10 bg-emerald-500/10 text-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center shadow-inner">
                <TrendingUp size={16} md:size={24} />
@@ -84,7 +84,16 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings }) => {
       </div>
 
       <div className="w-full bg-[#062c1e] p-2 md:p-6 lg:p-8 rounded-xl md:rounded-[2.5rem] border-2 border-white/5 shadow-2xl relative flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="flex items-end gap-1 md:gap-4 relative group flex-1 pt-4 md:pt-8 pb-6 md:pb-10 min-h-0 h-full">
+        {/* Watermark Logo */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.05]">
+          <img 
+            src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
+            alt="Watermark" 
+            className="w-[240px] md:w-[480px] h-[240px] md:h-[480px] object-cover rounded-full" 
+          />
+        </div>
+
+        <div className="flex items-end gap-1 md:gap-4 relative group flex-1 pt-4 md:pt-8 pb-6 md:pb-10 min-h-0 h-full z-10">
           {/* Left Scale */}
           <div className="flex flex-col justify-between h-full text-right pr-1 md:pr-4 select-none border-r border-white/5">
              {scaleValues.map(val => (
@@ -150,7 +159,7 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings }) => {
         </div>
         
         {/* Footer Summary */}
-        <div className="mt-2 md:mt-6 pt-2 md:pt-4 border-t border-white/5 flex items-center justify-between shrink-0 gap-2">
+        <div className="mt-2 md:mt-6 pt-2 md:pt-4 border-t border-white/5 flex items-center justify-between shrink-0 gap-2 z-10">
            <div className="flex items-center gap-1 md:gap-3 px-1.5 md:px-4 py-0.5 md:py-2 bg-white/5 rounded-lg border border-white/5 min-w-0">
               <div className="w-1.5 md:w-3 h-1.5 md:h-3 bg-emerald-500 rounded-sm shrink-0"></div>
               <span className="text-[6px] md:text-[11px] font-black text-white uppercase tracking-widest truncate">Monthly Usage</span>
