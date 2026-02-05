@@ -74,11 +74,11 @@ const Calendar: React.FC<CalendarProps> = ({
   };
 
   const renderBookingContent = (booking: Booking) => {
-    const fontSizeClasses = "text-[8px] md:text-[14px] font-black uppercase";
+    const fontSizeClasses = "text-[8px] md:text-[10px] font-black uppercase";
 
     if (booking.isSpecialNote) {
       return (
-        <div className="flex items-center justify-center w-full px-1 py-1">
+        <div className="flex items-center justify-center w-full px-1">
           <span className={`block text-center break-words leading-[1.1] ${fontSizeClasses}`}>
             {booking.remarks || 'SPECIAL NOTE'}
           </span>
@@ -92,10 +92,12 @@ const Calendar: React.FC<CalendarProps> = ({
     let rank = '';
     let nameString = '';
 
+    // Smart split for military/common ranks
     if (parts.length >= 2) {
       const first = parts[0].toUpperCase();
       const second = parts[1].toUpperCase();
       
+      // Detect 2-word ranks (LT COL, MAJ GEN, BRIG GEN, LT GEN, SUB MAJ)
       if ((first === 'LT' || first === 'MAJ' || first === 'BRIG' || first === 'SUB') && 
           (second === 'COL' || second === 'GEN' || second === 'MAJ' || second === 'CDR')) {
         rank = parts.slice(0, 2).join(' ');
@@ -108,6 +110,7 @@ const Calendar: React.FC<CalendarProps> = ({
       nameString = fullName;
     }
 
+    // Fallback if split results in empty name
     if (!nameString && rank) {
       nameString = rank;
       rank = '';
@@ -116,9 +119,9 @@ const Calendar: React.FC<CalendarProps> = ({
     const nameWords = nameString.split(/\s+/).filter(p => p.length > 0);
     
     return (
-      <div className="flex flex-col items-center justify-center w-full overflow-hidden px-1 py-0.5 md:py-1">
+      <div className="flex flex-col items-center justify-center w-full overflow-hidden px-0.5">
         {rank && (
-          <span className={`block leading-tight w-full text-center whitespace-nowrap ${fontSizeClasses}`}>
+          <span className={`block leading-none mb-0.5 w-full text-center whitespace-nowrap ${fontSizeClasses}`}>
             {rank}
           </span>
         )}
@@ -140,7 +143,6 @@ const Calendar: React.FC<CalendarProps> = ({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Header */}
       <div className="grid grid-cols-3 items-center px-2 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1">
         <div className="flex items-center gap-1 md:gap-4 overflow-hidden shrink-0">
           <div className="hidden sm:flex w-6 h-6 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-emerald-600 items-center justify-center text-white shadow-lg shadow-emerald-900/20 shrink-0">
@@ -217,7 +219,6 @@ const Calendar: React.FC<CalendarProps> = ({
         </div>
       </div>
 
-      {/* Weekdays */}
       <div className="grid grid-cols-7 border-b border-white/5 bg-black/40 shrink-0">
         {weekDays.map(day => (
           <div key={day} className="py-1 md:py-2 text-center text-[8px] md:text-[10px] font-black text-white uppercase tracking-[0.1em] md:tracking-[0.2em] border-r border-white/5 last:border-r-0">
@@ -226,10 +227,9 @@ const Calendar: React.FC<CalendarProps> = ({
         ))}
       </div>
 
-      {/* Calendar Grid */}
       <div className="flex-1 relative overflow-hidden bg-[#062c1e] min-h-0">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.05]">
-          <img src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" alt="Logo Watermark" className="w-[220px] md:w-[380px] h-[220px] md:h-[380px] object-cover rounded-full" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+          <img src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" alt="Watermark" className="w-[220px] md:w-[380px] h-[220px] md:h-[380px] object-cover rounded-full opacity-[0.05]" />
         </div>
         <div className="absolute inset-0 grid grid-cols-7 auto-rows-fr border-t border-l border-white/5 shadow-[inset_0_0_120px_rgba(0,0,0,0.9)]">
           {days.map((day, idx) => {
@@ -245,8 +245,7 @@ const Calendar: React.FC<CalendarProps> = ({
                   ${isTodayDate ? 'today-glow bg-emerald-950/40 shadow-[inset_0_0_20px_rgba(212,175,55,0.1)]' : ''}
                 `}
               >
-                {/* Day Header */}
-                <div className="flex justify-between items-start p-1 md:p-1.5 mb-0 shrink-0 relative z-30 bg-transparent">
+                <div className="flex justify-between items-start p-0.5 md:p-1.5 mb-0 shrink-0 relative z-20">
                   <span className={`text-[9px] md:text-sm font-black w-4 h-4 md:w-8 md:h-8 flex items-center justify-center rounded md:rounded-xl transition-all
                     ${isTodayDate ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/50 ring-2 ring-emerald-400/20' : day.isCurrentMonth ? 'text-slate-100' : 'text-slate-500'}`}>
                     {format(day.date, 'd')}
@@ -257,57 +256,24 @@ const Calendar: React.FC<CalendarProps> = ({
                     </button>
                   )}
                 </div>
-                
-                {/* Bookings Container */}
-                <div className="flex flex-col gap-0 flex-1 px-1 md:px-2 pb-1 justify-start items-center relative z-20 mt-1 md:-mt-8">
-                  {day.bookings.slice(0, 2).map((booking, bIdx) => {
+                <div className="flex flex-col gap-1 overflow-hidden flex-1 px-0.5 md:px-1 pb-1 justify-center relative z-20">
+                  {day.bookings.slice(0, 2).map(booking => {
                     const isUnpaid = booking.fareStatus === 'Unpaid';
                     const isSpecial = booking.isSpecialNote;
-                    const animationDelay = `${(idx * 40) + (bIdx * 200)}ms`;
-                    
                     return (
-                      <div 
-                        key={booking.id} 
-                        className="relative flex flex-col items-center w-full mb-3"
-                      >
-                        {/* THE PIN: Remains fixed, no drop animation */}
-                        <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-gradient-to-br from-slate-100 via-slate-400 to-slate-600 shadow-[0_1px_5px_rgba(0,0,0,0.8)] border border-slate-700/50 z-40 shrink-0"></div>
-                        
-                        {/* ANIMATED WRAPPER: Cord and Board drop from the pin */}
-                        <div 
-                          className={`w-full flex flex-col items-center ${!isAppLoading ? 'animate-hanging-drop' : 'opacity-0'}`}
-                          style={{ animationDelay }}
-                        >
-                          {/* The Cord */}
-                          <div className="w-[2.5px] md:w-[4px] h-10 md:h-6 bg-gradient-to-r from-slate-400 via-slate-200 to-slate-400 border-x border-black/20 z-20 shrink-0 shadow-[1px_0_2px_rgba(0,0,0,0.5)]"></div>
-                          
-                          {/* Hanging Board Card */}
-                          <div 
-                            onClick={(e) => { e.stopPropagation(); onDateClick(day.date, booking); }}
-                            className={`w-full group/card relative animate-swing origin-top hover:scale-105 hover:z-50 transition-all duration-300`}
-                          >
-                            <div className={`
-                              relative p-1 md:p-1.5 flex items-center justify-center select-none 
-                              rounded-md md:rounded-xl shadow-[0_8px_18px_rgba(0,0,0,0.6)] overflow-hidden cursor-pointer border-t border-l border-white/30 border-r border-b border-black/40
-                              ${isSpecial ? 'bg-amber-700 text-white shadow-amber-900/30' : 
-                                isUnpaid ? 'bg-red-950 text-white shadow-red-900/40' : 
-                                'bg-green-950 text-white shadow-green-900/40'}
-                            `}>
-                              <div className="absolute inset-0 bg-white/5 opacity-10 pointer-events-none mix-blend-overlay"></div>
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
-                              <div className="w-full relative z-10">
-                                {renderBookingContent(booking)}
-                              </div>
-                            </div>
-                            <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-[85%] h-2 bg-black/50 blur-[4.5px] rounded-full -z-10"></div>
-                          </div>
+                      <div key={booking.id} onClick={(e) => { e.stopPropagation(); onDateClick(day.date, booking); }}
+                        className={`relative px-0.5 py-1 md:py-2 min-h-[30px] md:min-h-[44px] flex items-center justify-center select-none border-y border-transparent rounded-md md:rounded-lg shadow-md overflow-hidden cursor-pointer z-20 border border-white/20 transition-opacity duration-300
+                          ${!isAppLoading ? 'animate-booking-pop' : 'opacity-0'}
+                          ${isSpecial ? 'bg-amber-500 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(245,158,11,0.3)]' : isUnpaid ? 'bg-rose-600 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(225,29,72,0.3)]' : 'bg-emerald-600 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(16,185,129,0.3)]'}`}>
+                        <div className="w-full">
+                          {renderBookingContent(booking)}
                         </div>
                       </div>
                     );
                   })}
                   {day.bookings.length > 2 && (
-                    <div className="mt-0.5 px-2 py-0.5 flex items-center justify-center bg-white/5 rounded-full border border-white/10">
-                      <span className="text-[6px] md:text-[9px] font-black text-slate-400 uppercase tracking-tighter">+{day.bookings.length - 2}</span>
+                    <div className={`px-1 py-0.5 flex items-center justify-center bg-white/5 rounded-md border border-white/10 transition-opacity duration-300 ${!isAppLoading ? 'animate-booking-pop' : 'opacity-0'}`}>
+                      <span className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase">+{day.bookings.length - 2} More</span>
                     </div>
                   )}
                 </div>
@@ -316,8 +282,6 @@ const Calendar: React.FC<CalendarProps> = ({
           })}
         </div>
       </div>
-      
-      {/* DatePicker Modal */}
       <Modal isOpen={isDatePickerOpen} onClose={() => setIsDatePickerOpen(false)} title="Jump to Schedule">
         <div className="flex flex-col space-y-6">
           <div className="flex items-center justify-between bg-slate-100 p-2 rounded-2xl border border-slate-200">

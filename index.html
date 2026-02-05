@@ -61,35 +61,21 @@
           animation: shake 0.4s ease-in-out;
         }
 
-        /* NEW: Hanging Drop Animation - Pin is static, cord grows/drops */
-        @keyframes hanging-drop {
+        @keyframes booking-fast-drop {
             0% {
                 opacity: 0;
-                transform: translateY(-40px) scaleY(0);
-                transform-origin: top;
+                transform: translateY(-400px);
             }
-            70% {
+            15% {
                 opacity: 1;
-                transform: translateY(5px) scaleY(1.1);
             }
             100% {
                 opacity: 1;
-                transform: translateY(0) scaleY(1);
+                transform: translateY(0);
             }
         }
-        
-        @keyframes swing {
-            0% { transform: rotate(2deg); }
-            50% { transform: rotate(-2deg); }
-            100% { transform: rotate(2deg); }
-        }
-        .animate-swing {
-            animation: swing 4s ease-in-out infinite;
-            transform-origin: top center;
-        }
-
-        .animate-hanging-drop {
-            animation: hanging-drop 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        .animate-booking-pop {
+            animation: booking-fast-drop 2.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
         }
 
         @keyframes border-rotate {
