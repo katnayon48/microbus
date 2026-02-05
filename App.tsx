@@ -23,13 +23,19 @@ const firebaseConfig = {
   appId: "1:693393079621:web:7430ac858d1a25e601522c"
 };
 
-const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const db = getDatabase(firebaseApp);
+// Robust Firebase initialization
+let db: any;
+try {
+  const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  db = getDatabase(firebaseApp);
+} catch (error) {
+  console.error("Firebase initialization failed:", error);
+}
 
 const LoadingScreen: React.FC = () => {
   return (
-    <div className="fixed inset-0 z-[200] bg-[#062c1e] shadow-[inset_0_0_150px_rgba(0,0,0,0.6)] flex flex-col items-center p-6 text-center animate-in fade-in duration-300">
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-sm:max-w-xs">
+    <div className="fixed inset-0 z-[200] bg-[#062c1e] shadow-[inset_0_0_150px_rgba(0,0,0,0.6)] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+      <div className="flex flex-col items-center w-full max-w-sm">
         <div className="relative mb-12">
           <div className="w-36 h-36 md:w-48 md:h-48 flex items-center justify-center animate-logo-glow overflow-hidden rounded-full border-2 border-white/20 relative z-10 bg-black/20">
             <img 
@@ -41,7 +47,7 @@ const LoadingScreen: React.FC = () => {
           <div className="absolute inset-0 bg-emerald-500/20 blur-[80px] rounded-full -z-10 animate-pulse scale-150"></div>
         </div>
         
-        <div className="space-y-6 w-full max-w-sm">
+        <div className="space-y-6 w-full">
           <div className="space-y-1">
             <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
               Microbus Schedule
@@ -84,6 +90,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const startTime = Date.now();
+    
+    if (!db) {
+      console.error("Database connection not available");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const bookingsRef = ref(db, 'bookings');
       const unsubscribe = onValue(bookingsRef, (snapshot) => {
@@ -109,7 +122,7 @@ const App: React.FC = () => {
       });
       return () => unsubscribe();
     } catch (e) {
-      console.error("Database setup error:", e);
+      console.error("Database operation error:", e);
       setIsLoading(false);
     }
   }, []);
@@ -122,6 +135,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleSaveBooking = async (booking: Booking) => {
+    if (!db) return;
     try {
       let id = booking.id;
       if (!id || id.startsWith('TEMP')) {
@@ -136,6 +150,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteBooking = async (id: string) => {
+    if (!db) return;
     try {
       await remove(ref(db, `bookings/${id}`));
       closeBookingModal();
@@ -196,7 +211,7 @@ const App: React.FC = () => {
     <>
       {isLoading && <LoadingScreen />}
       
-      <div className={`flex flex-col bg-[#010409] text-white font-inter h-[100dvh] overflow-hidden transition-all duration-300 shadow-[inset_0_0_150px_rgba(0,0,0,0.8)] ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+      <div className={`flex flex-col bg-[#010409] text-white font-inter h-[100dvh] overflow-hidden transition-all duration-300 shadow-[inset_0_0_150px_rgba(0,0,0,0.8)] ${isLoading ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
         <header className="bg-[#0a1128]/95 backdrop-blur-md border-b border-white/10 px-2 md:px-6 py-1.5 md:py-2 grid grid-cols-[1fr_auto_1fr] items-center sticky top-0 z-50 shadow-xl shrink-0">
           <section className="flex justify-start">
             {view === 'reports' ? (
@@ -214,7 +229,7 @@ const App: React.FC = () => {
           </section>
 
           <div className="text-center px-2 flex flex-col justify-center">
-            <h1 className="text-[14px] sm:text-lg md:text-[24px] font-black text-white tracking-tight uppercase leading-tight whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            <h1 className="text-[14px] sm:text-lg md:text-[24px] font-black text-white tracking-tight uppercase leading-tight whitespace-nowrap drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
               {view === 'reports' ? 'Report Center' : 'MICROBUS SCHEDULE'}
             </h1>
             <p className="text-[9px] sm:text-[10px] md:text-[12px] font-bold text-white tracking-[0.1em] md:tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap leading-none opacity-90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">

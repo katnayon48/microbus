@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Booking, DurationType, GarrisonStatusType } from '../types';
 import { Trash2, User, Landmark, MapPin, Calendar, Clock, Banknote, Wallet, AlignLeft, FileDown, Shield, CheckCircle2, Circle, X, Check, UserPlus, StickyNote, Phone } from 'lucide-react';
@@ -204,24 +205,38 @@ const BookingModal: React.FC<BookingModalProps> = ({
     setIsConfirmingDelete(false);
   };
 
-  const inputClasses = "w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm font-medium text-white placeholder:text-slate-500 placeholder:font-normal";
-  const labelClasses = "flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1";
+  // 3D/Tactile Input Classes
+  const inputClasses = `
+    w-full pl-10 pr-4 py-3 
+    bg-gradient-to-b from-black/60 to-black/40 
+    border-t border-l border-white/10 
+    border-r border-white/5 
+    border-b-4 border-black/80 
+    rounded-xl outline-none transition-all 
+    text-sm font-bold text-white 
+    placeholder:text-slate-600 placeholder:font-normal
+    shadow-[inset_0_2px_10px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.05)]
+    focus:border-emerald-500/50 focus:border-b-emerald-600 focus:shadow-[inset_0_2px_15px_rgba(0,0,0,0.8),0_0_20px_rgba(16,185,129,0.1)]
+    active:translate-y-[1px] active:border-b-2
+  `;
+
+  const labelClasses = "flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1 drop-shadow-sm";
 
   return (
     <>
       {/* Form Type Selector - Tabs */}
-      <div className="flex bg-black/20 p-1.5 rounded-2xl mb-8 border border-white/5 shadow-inner">
+      <div className="flex bg-black/40 p-1.5 rounded-2xl mb-8 border border-white/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
         <button 
           type="button" 
           onClick={() => setMode(false)}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[11px] ${!formData.isSpecialNote ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[11px] ${!formData.isSpecialNote ? 'bg-emerald-600 text-white shadow-[0_4px_0_rgb(6,95,70),0_10px_20px_rgba(0,0,0,0.3)]' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}
         >
           Reservation
         </button>
         <button 
           type="button" 
           onClick={() => setMode(true)}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[11px] ${formData.isSpecialNote ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5 hover:text-amber-500'}`}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[11px] ${formData.isSpecialNote ? 'bg-amber-500 text-white shadow-[0_4px_0_rgb(180,83,9),0_10px_20px_rgba(0,0,0,0.3)]' : 'text-slate-500 hover:bg-white/5 hover:text-amber-500'}`}
         >
           Special Note
         </button>
@@ -229,11 +244,11 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-6 pb-2">
         <div className="space-y-4 animate-in fade-in duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative">
               <label className={labelClasses}><Calendar size={12} className="text-emerald-500" /> Start Date</label>
               <div className="relative group">
-                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+                <Calendar className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
                 <input 
                   required 
                   type="date" 
@@ -247,7 +262,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             <div className="relative">
               <label className={labelClasses}><Calendar size={12} className="text-emerald-500" /> End Date</label>
               <div className="relative group">
-                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+                <Calendar className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
                 <input 
                   required 
                   type="date" 
@@ -262,29 +277,29 @@ const BookingModal: React.FC<BookingModalProps> = ({
           </div>
 
           {!formData.isSpecialNote ? (
-            <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-5 animate-in slide-in-from-top-2 duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
                   <label className={labelClasses}><User size={12} className="text-emerald-500" /> Rank and Name</label>
                   <div className="relative group">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
                     <input required name="rankName" value={formData.rankName || ''} onChange={handleChange} className={inputClasses} placeholder="Example: Billal Hossain" />
                   </div>
                 </div>
                 <div className="relative">
                   <label className={labelClasses}><Landmark size={12} className="text-emerald-500" /> Unit</label>
                   <div className="relative group">
-                    <Landmark className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+                    <Landmark className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
                     <input required name="unit" value={formData.unit || ''} onChange={handleChange} className={inputClasses} placeholder="e.g., HQ Company" />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
                   <label className={labelClasses}><Phone size={12} className="text-emerald-500" /> Mobile Number</label>
                   <div className="relative group">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
                     <input 
                       name="mobileNumber" 
                       value={formData.mobileNumber || ''} 
@@ -298,9 +313,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
                    <label className={labelClasses}><Shield size={12} className="text-emerald-500" /> Garrison Status</label>
                    <div className="flex gap-4">
                      {(['In Garrison', 'Out Garrison'] as GarrisonStatusType[]).map((s) => (
-                       <label key={s} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-xl border transition-all ${formData.garrisonStatus === s ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-sm' : 'bg-white/5 border-white/10 text-slate-500 hover:border-emerald-500/50'}`}>
+                       <label key={s} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-3 px-3 rounded-xl border-t border-l border-white/5 border-b-4 transition-all ${formData.garrisonStatus === s ? 'bg-emerald-600/20 border-emerald-500 border-b-emerald-700 text-white shadow-[0_4px_15px_rgba(0,0,0,0.3)]' : 'bg-black/40 border-white/5 border-b-black text-slate-500 hover:border-emerald-500/50 shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'}`}>
                          <input type="radio" name="garrisonStatus" checked={formData.garrisonStatus === s} onChange={() => handleToggle('garrisonStatus', s)} className="hidden" />
-                         <span className="text-xs font-bold">{s}</span>
+                         <span className="text-xs font-black uppercase tracking-tight">{s}</span>
                        </label>
                      ))}
                    </div>
@@ -310,48 +325,54 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <div className="relative">
                 <label className={labelClasses}><MapPin size={12} className="text-emerald-500" /> Destination</label>
                 <div className="relative group">
-                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
                   <input name="destination" value={formData.destination || ''} onChange={handleChange} className={inputClasses} placeholder="Enter travel destination (Optional)" />
                 </div>
               </div>
 
-              <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-5">
+              <div className="bg-black/40 p-5 rounded-2xl border-t border-l border-white/5 border-b-4 border-black/80 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)] space-y-5">
                 <div>
                   <label className={labelClasses}>Duration Policy</label>
                   <div className="flex gap-4">
                     {(['Full Day', 'Half Day'] as DurationType[]).map((d) => (
-                      <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-sm' : 'bg-transparent border-white/10 text-slate-500 hover:border-emerald-500/50'}`}>
+                      <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-xl border-t border-l border-white/5 border-b-2 transition-all ${formData.duration === d ? 'bg-emerald-600/30 border-emerald-500 border-b-emerald-600 text-white shadow-lg' : 'bg-black/40 border-white/10 border-b-black text-slate-500 hover:border-emerald-500/50'}`}>
                         <input type="radio" name="duration" checked={formData.duration === d} onChange={() => handleToggle('duration', d)} className="hidden" />
-                        <span className="text-xs font-bold">{d}</span>
+                        <span className="text-xs font-black uppercase tracking-tight">{d}</span>
                       </label>
                     ))}
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> Out Time</label>
-                    <input type="time" name="outTime" value={formData.outTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs font-bold text-white" />
+                    <div className="relative group">
+                       <Clock className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 pointer-events-none" size={14} />
+                       <input type="time" name="outTime" value={formData.outTime || ''} onChange={handleChange} className={`${inputClasses} py-2.5`} />
+                    </div>
                   </div>
                   <div>
                     <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> In Time</label>
-                    <input type="time" name="inTime" value={formData.inTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs font-bold text-white" />
+                    <div className="relative group">
+                       <Clock className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 pointer-events-none" size={14} />
+                       <input type="time" name="inTime" value={formData.inTime || ''} onChange={handleChange} className={`${inputClasses} py-2.5`} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
                   <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Fare Amount</label>
                   <div className="relative group">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm pointer-events-none">৳</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-[calc(50%+2px)] text-emerald-500 font-black text-sm pointer-events-none">৳</span>
                     {formData.isExempt ? (
-                      <div className="w-full pl-8 pr-4 py-2.5 bg-emerald-900/20 border border-emerald-500/20 rounded-xl text-sm font-black text-emerald-400 flex items-center">Not Required</div>
+                      <div className="w-full pl-8 pr-4 py-3 bg-emerald-950/20 border-t border-l border-emerald-500/20 border-b-4 border-black/80 rounded-xl text-sm font-black text-emerald-400 flex items-center shadow-[inset_0_2px_10px_rgba(0,0,0,0.6)]">Not Required</div>
                     ) : (
-                      <input required type="number" name="fare" value={formData.fare === undefined ? '' : formData.fare} onChange={handleChange} className={`${inputClasses} pl-8 font-black text-emerald-400 bg-emerald-900/10 border-emerald-500/30`} placeholder="0.00" />
+                      <input required type="number" name="fare" value={formData.fare === undefined ? '' : formData.fare} onChange={handleChange} className={`${inputClasses} pl-10 font-black text-emerald-400`} placeholder="0.00" />
                     )}
                   </div>
-                  <button type="button" onClick={handleExemptToggle} className={`mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all border ${formData.isExempt ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white/5 text-slate-400 border-white/10 hover:border-emerald-500/30'}`}>
+                  <button type="button" onClick={handleExemptToggle} className={`mt-3 flex items-center gap-2 px-4 py-2 rounded-xl transition-all border-t border-l border-white/5 border-b-2 ${formData.isExempt ? 'bg-emerald-600 text-white border-emerald-700 border-b-emerald-800 shadow-md' : 'bg-black/40 text-slate-500 border-white/5 border-b-black hover:border-emerald-500/30'}`}>
                     {formData.isExempt ? <CheckCircle2 size={14} /> : <Circle size={14} />}
                     <span className="text-[10px] font-black uppercase tracking-widest">Fare Exempt</span>
                   </button>
@@ -360,7 +381,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 <div className="relative">
                   <label className={labelClasses}><Wallet size={12} className="text-emerald-500" /> Payment Status</label>
                   <div className="relative group">
-                    <Wallet className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
+                    <Wallet className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 pointer-events-none" size={16} />
                     <select name="fareStatus" value={formData.fareStatus || 'Unpaid'} onChange={handleChange} disabled={formData.isExempt} className={`${inputClasses} appearance-none cursor-pointer ${formData.isExempt ? 'bg-black/40 opacity-60' : ''}`}>
                       <option value="Paid" className="bg-[#062c1e]">✅ Paid</option>
                       <option value="Unpaid" className="bg-[#062c1e]">❌ Unpaid</option>
@@ -392,7 +413,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 name="remarks" 
                 value={formData.remarks || ''} 
                 onChange={handleChange} 
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm font-medium text-white min-h-[120px] resize-none" 
+                className={`w-full px-4 py-4 min-h-[120px] resize-none ${inputClasses}`} 
                 placeholder={formData.isSpecialNote ? "Enter note to display on calendar..." : "Notes..."} 
               />
             </div>
@@ -407,7 +428,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   <button 
                     type="button" 
                     onClick={() => setIsConfirmingDelete(true)} 
-                    className="px-4 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90 flex items-center justify-center gap-2 group" 
+                    className="px-5 bg-rose-500/10 text-rose-500 border-t border-l border-white/5 border-b-4 border-black/80 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90 flex items-center justify-center gap-2 group shadow-lg" 
                     title="Delete Entry"
                   >
                     <Trash2 size={20} className="group-hover:animate-bounce" />
@@ -421,14 +442,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
                           <button 
                             type="button" 
                             onClick={handleConfirmDelete} 
-                            className="flex-1 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest py-3 flex items-center justify-center gap-1.5 hover:bg-rose-700 shadow-lg shadow-rose-900/20 active:scale-95 transition-all"
+                            className="flex-1 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest py-3 flex items-center justify-center gap-1.5 hover:bg-rose-700 shadow-[0_4px_0_rgb(159,18,57),0_10px_20px_rgba(0,0,0,0.3)] active:scale-95 transition-all border-t border-l border-white/10"
                           >
                             <Check size={14} /> YES
                           </button>
                           <button 
                             type="button" 
                             onClick={() => setIsConfirmingDelete(false)} 
-                            className="px-4 bg-white/10 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest py-3 flex items-center justify-center gap-1.5 hover:bg-white/20 active:scale-95 transition-all"
+                            className="px-5 bg-white/10 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest py-3 flex items-center justify-center gap-1.5 hover:bg-white/20 active:scale-95 transition-all border-t border-l border-white/5 border-b-2 border-black"
                           >
                             <X size={14} /> NO
                           </button>
@@ -442,7 +463,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             {!isConfirmingDelete && (
               <button 
                 type="submit" 
-                className={`flex-1 font-bold py-3.5 rounded-xl transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 ${formData.isSpecialNote ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-900/20' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20'}`}
+                className={`flex-1 font-black py-4 rounded-xl transition-all shadow-[0_4px_0_rgba(0,0,0,0.5),0_15px_30px_rgba(0,0,0,0.4)] active:scale-[0.98] active:border-b-2 flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 border-t border-l border-white/10 uppercase tracking-widest text-[11px] ${formData.isSpecialNote ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
               >
                 {existingBooking ? 'Update Schedule' : (formData.isSpecialNote ? 'Add Special Note' : 'Create Reservation')}
               </button>
@@ -450,7 +471,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           </div>
           
           {!formData.isSpecialNote && (
-            <button type="button" disabled={isDownloading || isConfirmingDelete} onClick={handleDownloadSlip} className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-emerald-400 rounded-xl border border-white/5 transition-all font-bold text-xs uppercase tracking-widest active:scale-[0.98] disabled:opacity-50">
+            <button type="button" disabled={isDownloading || isConfirmingDelete} onClick={handleDownloadSlip} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white/5 hover:bg-white/10 text-emerald-400 rounded-xl border-t border-l border-white/5 border-b-2 border-black/80 shadow-md transition-all font-black text-[10px] uppercase tracking-widest active:scale-[0.98] disabled:opacity-50">
               <FileDown size={16} />
               {isDownloading ? 'Generating PDF...' : 'Download Payment Slip'}
             </button>
@@ -460,8 +481,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
       <Modal isOpen={showReceivedByModal} onClose={() => setShowReceivedByModal(false)} title="Payment Collector" variant="dark">
         <div className="space-y-6">
-          <div className="bg-emerald-900/20 p-4 rounded-xl border border-emerald-500/20 flex items-center gap-4">
-             <div className="w-10 h-10 bg-emerald-600 text-white rounded-lg flex items-center justify-center">
+          <div className="bg-emerald-900/20 p-5 rounded-2xl border border-emerald-500/20 flex items-center gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
+             <div className="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-lg">
                 <UserPlus size={20} />
              </div>
              <div>
@@ -470,7 +491,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
              </div>
           </div>
           <div className="relative group">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+            <User className="absolute left-3.5 top-1/2 -translate-y-[calc(50%+2px)] text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
             <input 
               autoFocus
               value={receivedByName} 
@@ -481,7 +502,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           </div>
           <button 
             onClick={confirmDownload}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-xl shadow-emerald-900/20 active:scale-95 flex items-center justify-center gap-2"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-[0_4px_0_rgb(6,95,70),0_15px_30px_rgba(0,0,0,0.3)] active:scale-95 active:border-b-2 border-t border-l border-white/10 flex items-center justify-center gap-2"
           >
             <FileDown size={16} />
             Download Payment Slip
