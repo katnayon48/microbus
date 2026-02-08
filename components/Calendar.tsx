@@ -141,14 +141,14 @@ const Calendar: React.FC<CalendarProps> = ({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* 3-Column Grid for Perfect Center Alignment */}
-      <div className="grid grid-cols-3 items-center px-1 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1">
-        {/* Column 1: Month + Attendance Button */}
+      {/* 3-Column Grid for True Middle Alignment of TODAY navigation */}
+      <div className="grid grid-cols-3 items-center px-1 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1 overflow-hidden">
+        {/* Column 1: Month + Attendance Button (Left Aligned) */}
         <div className="flex items-center gap-1 md:gap-4 min-w-0">
           <div className="hidden sm:flex w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-emerald-600 items-center justify-center text-white shadow-lg shrink-0">
             <CalendarIcon size={14} className="md:w-5 md:h-5" />
           </div>
-          <div className="flex items-center gap-1 md:gap-2 min-w-0">
+          <div className="flex items-center gap-1 md:gap-2 min-w-0 overflow-hidden">
             <button 
               onClick={() => {
                 setPickerYear(currentDate.getFullYear());
@@ -157,15 +157,15 @@ const Calendar: React.FC<CalendarProps> = ({
               className="flex items-center gap-0.5 md:gap-1 px-0.5 py-1 rounded-lg hover:bg-white/10 transition-all active:scale-95 group shrink-0"
             >
               <h2 className="text-[10px] md:text-2xl font-black text-white tracking-tight uppercase whitespace-nowrap">
-                {format(currentDate, 'MMM yyyy')}
+                {format(currentDate, 'MMM yy')}
               </h2>
-              <ChevronDown size={10} className="text-emerald-400 group-hover:text-emerald-300 transition-colors md:w-4 md:h-4" />
+              <ChevronDown size={8} className="text-emerald-400 group-hover:text-emerald-300 transition-colors md:w-4 md:h-4 shrink-0" />
             </button>
             
             {!isAdmin && (
               <button 
                 onClick={onAttendanceViewerClick}
-                className="flex items-center justify-center px-1.5 md:px-4 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10"
+                className="flex items-center justify-center px-1 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[6.5px] md:text-[10px] font-black uppercase tracking-tight md:tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10"
               >
                 <span>Attendance</span>
               </button>
@@ -173,18 +173,18 @@ const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
         
-        {/* Column 2: Date Navigation - Truly Centered */}
-        <div className="flex justify-center">
-          <div className="flex items-center gap-0.5 md:gap-2 bg-white/5 p-0.5 md:p-1 rounded-lg md:rounded-xl border border-white/10 shadow-sm shrink-0">
+        {/* Column 2: Date Navigation (Perfectly Centered) */}
+        <div className="flex justify-center min-w-0">
+          <div className="flex items-center gap-0 md:gap-2 bg-white/5 p-0.5 rounded-lg md:rounded-xl border border-white/10 shadow-sm shrink-0">
             <button 
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
               className="p-1 md:p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-emerald-400 active:scale-90"
             >
-              <ChevronLeft size={14} md:size={20} strokeWidth={2.5} />
+              <ChevronLeft size={12} md:size={20} strokeWidth={2.5} />
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-2 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-slate-300 hover:text-emerald-400 uppercase tracking-wider whitespace-nowrap"
+              className="px-1 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-slate-300 hover:text-emerald-400 uppercase tracking-tight md:tracking-wider whitespace-nowrap"
             >
               Today
             </button>
@@ -192,17 +192,17 @@ const Calendar: React.FC<CalendarProps> = ({
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
               className="p-1 md:p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-emerald-400 active:scale-90"
             >
-              <ChevronRight size={14} md:size={20} strokeWidth={2.5} />
+              <ChevronRight size={12} md:size={20} strokeWidth={2.5} />
             </button>
           </div>
         </div>
 
-        {/* Column 3: Action Buttons */}
-        <div className="flex justify-end items-center gap-1 md:gap-2 shrink-0">
+        {/* Column 3: Action Buttons (Right Aligned) */}
+        <div className="flex justify-end items-center gap-1.5 md:gap-3 shrink-0">
           {!isAdmin && (
             <button 
               onClick={onStatsClick}
-              className="flex items-center justify-center px-1.5 md:px-4 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10"
+              className="flex items-center justify-center px-1.5 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10"
               title="View Statistics"
             >
               <span>STATE</span>
@@ -211,16 +211,16 @@ const Calendar: React.FC<CalendarProps> = ({
           {!isAdmin && onLoginClick && (
             <button 
               onClick={onLoginClick}
-              className="flex items-center gap-1 md:gap-2 px-1.5 md:px-4 py-1.5 md:py-2.5 bg-emerald-600 text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/20"
+              className="flex items-center gap-1 md:gap-2 px-1.5 md:px-5 py-1.5 md:py-2.5 bg-emerald-600 text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/20 h-7 md:h-10"
             >
-              <LogIn size={10} className="md:w-4 md:h-4 shrink-0" />
+              <LogIn size={9} className="md:w-4 md:h-4 shrink-0" />
               <span className="inline">Login</span>
             </button>
           )}
           {isAdmin && onReportClick && (
             <button 
               onClick={onReportClick}
-              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2.5 bg-white text-emerald-900 rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0"
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-5 py-1.5 md:py-2.5 bg-white text-emerald-900 rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 h-7 md:h-10"
             >
               <FileText size={10} className="md:w-4 md:h-4 shrink-0" />
               <span className="md:hidden">REPORT</span>
