@@ -1,7 +1,6 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Booking, BookingField, HandoffInfo } from '../types';
+import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
 import { format, parseISO, differenceInDays, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval, max, min } from 'date-fns';
 import { BOOKING_FIELDS } from '../constants';
 
@@ -623,5 +622,138 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
   } catch (error) {
     console.error("Trip Summary generation failed:", error);
     alert("Error generating summary PDF.");
+  }
+};
+
+export const generateAttendanceSheet = async (records: DriverAttendance[], start: string, end: string, withSignature: boolean = true) => {
+  try {
+    const doc = new jsPDF({ orientation: 'p' });
+    doc.setFont('helvetica');
+
+    const startDate = parseISO(start);
+    const endDate = parseISO(end);
+    
+    const filtered = records
+      .filter(r => {
+        const rd = parseISO(r.date);
+        return rd >= startDate && rd <= endDate;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Heading Configuration - Two-line heading
+    const mainHeading = "ATTENDANCE SHEET (CIVIL MICROBUS DRIVER)";
+    // Full month names (MMMM)
+    const rangeText = `${format(startDate, 'dd MMMM yyyy')} TO ${format(endDate, 'dd MMMM yyyy')}`.toUpperCase();
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11); 
+    doc.setFont('helvetica', 'bold');
+    
+    // Line 1: Main Title
+    doc.text(mainHeading, 105, 12, { align: 'center' });
+    let headingWidth = doc.getTextWidth(mainHeading);
+    doc.setLineWidth(0.5);
+    doc.line(105 - (headingWidth / 2), 14, 105 + (headingWidth / 2), 14);
+
+    // Line 2: Date Range
+    doc.text(rangeText, 105, 20, { align: 'center' });
+    headingWidth = doc.getTextWidth(rangeText);
+    doc.line(105 - (headingWidth / 2), 22, 105 + (headingWidth / 2), 22);
+
+    // Table Headers
+    const headers = [['DATE', 'DAY', 'IN TIME', 'OUT TIME', 'LAST DAY DUTY COMPLETION TIME', 'REMARKS']];
+
+    autoTable(doc, {
+      startY: 28, 
+      head: headers,
+      body: filtered.map((r) => {
+        const dateObj = parseISO(r.date);
+        const baseData = [
+          format(dateObj, 'dd MMM yy').toUpperCase(),
+          format(dateObj, 'EEEE').toUpperCase()
+        ];
+        
+        let dynamicColumns;
+        if (r.isHoliday) {
+          dynamicColumns = [
+            { content: 'HOLIDAY', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 250] } },
+            r.lastDayCompletionTime || '-'
+          ];
+        } else {
+          dynamicColumns = [
+            r.inTime || '-',
+            r.outTime || '-',
+            r.lastDayCompletionTime || '-'
+          ];
+        }
+
+        // Remarks logic: If isDutyDay is true, put "DUTY" in remarks column
+        const finalRemarks = r.isDutyDay ? 'DUTY' : (r.remarks || '');
+
+        return [...baseData, ...dynamicColumns, finalRemarks];
+      }),
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [220, 220, 220], 
+        textColor: [0, 0, 0], 
+        fontSize: 6.5, 
+        fontStyle: 'bold',
+        halign: 'center',
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+        valign: 'middle'
+      },
+      styles: { 
+        font: 'helvetica',
+        fontSize: 7, 
+        cellPadding: 0.8, 
+        lineColor: [0, 0, 0], 
+        lineWidth: 0.1, 
+        halign: 'center', 
+        textColor: [0, 0, 0],
+        valign: 'middle',
+        overflow: 'linebreak'
+      },
+      columnStyles: {
+        0: { cellWidth: 26 }, // Date
+        1: { cellWidth: 28 }, // Day
+        2: { cellWidth: 20 }, // In Time
+        3: { cellWidth: 20 }, // Out Time
+        4: { cellWidth: 62 }, // Last Day Duty
+        5: { cellWidth: 34 }  // Remarks
+      },
+      margin: { left: 10, right: 10 }
+    });
+
+    if (withSignature) {
+      const finalY = (doc as any).lastAutoTable?.finalY || 150;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      const sigY = Math.min(finalY + 12, 275);
+
+      doc.setFontSize(9); 
+      doc.setFont('helvetica', 'bold');
+      
+      // Driver signature line (Left)
+      doc.line(10, sigY, 55, sigY);
+      doc.text("Driver", 32.5, sigY + 4, { align: 'center' });
+
+      // JCO/NCO signature line (Right)
+      doc.line(pageWidth - 55, sigY, pageWidth - 10, sigY);
+      doc.text("JCO/NCO", pageWidth - 32.5, sigY + 4, { align: 'center' });
+
+      // Countersign (Center)
+      const countersignY = sigY + 14;
+      const csText = "COUNTERSIGN";
+      doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
+      const csWidth = doc.getTextWidth(csText);
+      doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
+    }
+
+    drawDeveloperFooter(doc, 285);
+    doc.save(`Attendance_Sheet_${format(startDate, 'MMM_yyyy')}.pdf`);
+  } catch (error) {
+    console.error("Attendance PDF generation failed:", error);
+    alert("Error generating attendance PDF.");
   }
 };

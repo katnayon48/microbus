@@ -1,4 +1,3 @@
-
 export type DurationType = 'Full Day' | 'Half Day';
 export type FareStatusType = 'Paid' | 'Unpaid';
 export type GarrisonStatusType = 'In Garrison' | 'Out Garrison';
@@ -20,6 +19,19 @@ export interface Booking {
   remarks?: string;
   isExempt?: boolean;
   isSpecialNote?: boolean;
+}
+
+export interface DriverAttendance {
+  id?: string;
+  date: string;
+  driverName: string;
+  inTime?: string;
+  outTime?: string;
+  isHoliday: boolean;
+  isOfficeDay?: boolean;
+  isDutyDay?: boolean;
+  lastDayCompletionTime?: string;
+  remarks?: string;
 }
 
 export type BookingField = keyof Booking | 'totalDays';

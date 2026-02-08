@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, ChevronDown, CalendarDays, LogIn, FileText, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, ChevronDown, CalendarDays, LogIn, FileText, BarChart3, Clock } from 'lucide-react';
 import { format, addMonths, subMonths, isToday, setMonth, setYear } from 'date-fns';
 import { getCalendarDays } from '../utils/dateUtils';
 import { Booking } from '../types';
@@ -16,6 +15,7 @@ interface CalendarProps {
   onLoginClick?: () => void;
   onReportClick?: () => void;
   onStatsClick?: () => void;
+  onAttendanceViewerClick?: () => void;
   isAppLoading?: boolean; 
 }
 
@@ -29,6 +29,7 @@ const Calendar: React.FC<CalendarProps> = ({
   onLoginClick,
   onReportClick,
   onStatsClick,
+  onAttendanceViewerClick,
   isAppLoading = false
 }) => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -92,12 +93,10 @@ const Calendar: React.FC<CalendarProps> = ({
     let rank = '';
     let nameString = '';
 
-    // Smart split for military/common ranks
     if (parts.length >= 2) {
       const first = parts[0].toUpperCase();
       const second = parts[1].toUpperCase();
       
-      // Detect 2-word ranks (LT COL, MAJ GEN, BRIG GEN, LT GEN, SUB MAJ)
       if ((first === 'LT' || first === 'MAJ' || first === 'BRIG' || first === 'SUB') && 
           (second === 'COL' || second === 'GEN' || second === 'MAJ' || second === 'CDR')) {
         rank = parts.slice(0, 2).join(' ');
@@ -110,7 +109,6 @@ const Calendar: React.FC<CalendarProps> = ({
       nameString = fullName;
     }
 
-    // Fallback if split results in empty name
     if (!nameString && rank) {
       nameString = rank;
       rank = '';
@@ -121,13 +119,13 @@ const Calendar: React.FC<CalendarProps> = ({
     return (
       <div className="flex flex-col items-center justify-center w-full overflow-hidden px-0.5">
         {rank && (
-          <span className={`block leading-none mb-0.5 w-full text-center whitespace-nowrap ${fontSizeClasses}`}>
+          <span className={`block leading-none mb-0.5 w-full text-center whitespace-nowrap ${fontSizeClasses} drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]`}>
             {rank}
           </span>
         )}
         <div className="flex flex-col items-center w-full">
           {nameWords.map((word, idx) => (
-            <span key={idx} className={`block leading-tight text-center w-full whitespace-nowrap ${fontSizeClasses}`}>
+            <span key={idx} className={`block leading-tight text-center w-full whitespace-nowrap ${fontSizeClasses} drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]`}>
               {word}
             </span>
           ))}
@@ -143,55 +141,68 @@ const Calendar: React.FC<CalendarProps> = ({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <div className="grid grid-cols-3 items-center px-2 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1">
-        <div className="flex items-center gap-1 md:gap-4 overflow-hidden shrink-0">
-          <div className="hidden sm:flex w-6 h-6 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-emerald-600 items-center justify-center text-white shadow-lg shadow-emerald-900/20 shrink-0">
-            <CalendarIcon size={12} className="md:w-5 md:h-5" />
+      {/* 3-Column Grid for Perfect Center Alignment */}
+      <div className="grid grid-cols-3 items-center px-1 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1">
+        {/* Column 1: Month + Attendance Button */}
+        <div className="flex items-center gap-1 md:gap-4 min-w-0">
+          <div className="hidden sm:flex w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-emerald-600 items-center justify-center text-white shadow-lg shrink-0">
+            <CalendarIcon size={14} className="md:w-5 md:h-5" />
           </div>
-          <div className="relative flex items-center shrink-0">
+          <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <button 
               onClick={() => {
                 setPickerYear(currentDate.getFullYear());
                 setIsDatePickerOpen(true);
               }}
-              className="flex items-center gap-0.5 md:gap-2 px-1 py-1 rounded-lg hover:bg-white/10 transition-all active:scale-95 group"
+              className="flex items-center gap-0.5 md:gap-1 px-0.5 py-1 rounded-lg hover:bg-white/10 transition-all active:scale-95 group shrink-0"
             >
               <h2 className="text-[10px] md:text-2xl font-black text-white tracking-tight uppercase whitespace-nowrap">
                 {format(currentDate, 'MMM yyyy')}
               </h2>
-              <ChevronDown size={10} className="text-emerald-400 group-hover:text-emerald-300 transition-colors md:w-5 md:h-5" />
+              <ChevronDown size={10} className="text-emerald-400 group-hover:text-emerald-300 transition-colors md:w-4 md:h-4" />
             </button>
+            
+            {!isAdmin && (
+              <button 
+                onClick={onAttendanceViewerClick}
+                className="flex items-center justify-center px-1.5 md:px-4 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10"
+              >
+                <span>Attendance</span>
+              </button>
+            )}
           </div>
         </div>
         
-        <div className="flex items-center justify-center min-w-0">
+        {/* Column 2: Date Navigation - Truly Centered */}
+        <div className="flex justify-center">
           <div className="flex items-center gap-0.5 md:gap-2 bg-white/5 p-0.5 md:p-1 rounded-lg md:rounded-xl border border-white/10 shadow-sm shrink-0">
             <button 
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              className="p-1 md:p-2 hover:bg-white/10 transition-all rounded-lg text-slate-400 hover:text-emerald-400 active:scale-90"
+              className="p-1 md:p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-emerald-400 active:scale-90"
             >
-              <ChevronLeft size={14} md:size={24} strokeWidth={2.5} />
+              <ChevronLeft size={14} md:size={20} strokeWidth={2.5} />
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-3 md:px-20 py-1 md:py-2 text-[8px] md:text-xs font-black text-slate-300 hover:text-emerald-400 transition-all uppercase tracking-wider"
+              className="px-2 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-slate-300 hover:text-emerald-400 uppercase tracking-wider whitespace-nowrap"
             >
               Today
             </button>
             <button 
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="p-1 md:p-2 hover:bg-white/10 transition-all rounded-lg text-slate-400 hover:text-emerald-400 active:scale-90"
+              className="p-1 md:p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-emerald-400 active:scale-90"
             >
-              <ChevronRight size={14} md:size={24} strokeWidth={2.5} />
+              <ChevronRight size={14} md:size={20} strokeWidth={2.5} />
             </button>
           </div>
         </div>
 
+        {/* Column 3: Action Buttons */}
         <div className="flex justify-end items-center gap-1 md:gap-2 shrink-0">
           {!isAdmin && (
             <button 
               onClick={onStatsClick}
-              className="flex items-center justify-center px-2 md:px-4 py-1 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10"
+              className="flex items-center justify-center px-1.5 md:px-4 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10"
               title="View Statistics"
             >
               <span>STATE</span>
@@ -200,16 +211,16 @@ const Calendar: React.FC<CalendarProps> = ({
           {!isAdmin && onLoginClick && (
             <button 
               onClick={onLoginClick}
-              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-emerald-600 text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/20"
+              className="flex items-center gap-1 md:gap-2 px-1.5 md:px-4 py-1.5 md:py-2.5 bg-emerald-600 text-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/20"
             >
               <LogIn size={10} className="md:w-4 md:h-4 shrink-0" />
-              <span>Login</span>
+              <span className="inline">Login</span>
             </button>
           )}
           {isAdmin && onReportClick && (
             <button 
               onClick={onReportClick}
-              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2.5 bg-white text-emerald-900 rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0"
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2.5 bg-white text-emerald-900 rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0"
             >
               <FileText size={10} className="md:w-4 md:h-4 shrink-0" />
               <span className="md:hidden">REPORT</span>
@@ -260,11 +271,27 @@ const Calendar: React.FC<CalendarProps> = ({
                   {day.bookings.slice(0, 2).map(booking => {
                     const isUnpaid = booking.fareStatus === 'Unpaid';
                     const isSpecial = booking.isSpecialNote;
+                    
+                    // 3D Visual Properties: Gradient + Highlighting Borders + Inset Shadows
+                    let bgClasses = "";
+                    let shadowClasses = "shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)]";
+                    let borderClasses = "border-t-white/30 border-b-black/50 border-x-white/10";
+
+                    if (isSpecial) {
+                      bgClasses = "bg-gradient-to-b from-[#f59e0b] to-[#92400e]";
+                    } else if (isUnpaid) {
+                      // Deep Maroon: গাড় খয়েরি
+                      bgClasses = "bg-gradient-to-b from-[#800000] to-[#3a0000]";
+                    } else {
+                      // Deep Green: গাড় সবুজ
+                      bgClasses = "bg-gradient-to-b from-[#006400] to-[#003300]";
+                    }
+
                     return (
                       <div key={booking.id} onClick={(e) => { e.stopPropagation(); onDateClick(day.date, booking); }}
-                        className={`relative px-0.5 py-1 md:py-2 min-h-[30px] md:min-h-[44px] flex items-center justify-center select-none border-y border-transparent rounded-md md:rounded-lg shadow-md overflow-hidden cursor-pointer z-20 border border-white/20 transition-opacity duration-300
+                        className={`relative px-0.5 py-1 md:py-2 min-h-[30px] md:min-h-[44px] flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all duration-300
                           ${!isAppLoading ? 'animate-booking-pop' : 'opacity-0'}
-                          ${isSpecial ? 'bg-amber-500 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(245,158,11,0.3)]' : isUnpaid ? 'bg-rose-600 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(225,29,72,0.3)]' : 'bg-emerald-600 text-white hover:brightness-110 shadow-[0_2px_10px_rgba(16,185,129,0.3)]'}`}>
+                          ${bgClasses} ${shadowClasses} ${borderClasses} text-white hover:brightness-110 active:scale-95 active:shadow-inner`}>
                         <div className="w-full">
                           {renderBookingContent(booking)}
                         </div>

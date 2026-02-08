@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { LogOut, FileText, Loader2, ArrowLeft, Phone } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -11,6 +10,7 @@ import BookingModal from './components/BookingModal';
 import ViewBookingModal from './components/ViewBookingModal';
 import ReportManager from './components/ReportManager';
 import TripStats from './components/TripStats';
+import AttendanceViewer from './components/AttendanceViewer';
 import { Booking } from './types';
 
 const firebaseConfig = {
@@ -74,7 +74,8 @@ const LoadingScreen: React.FC = () => {
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState<'calendar' | 'reports'>('calendar');
+  const [view, setView] = useState<'calendar' | 'reports' | 'attendance'>('calendar');
+  const [reportInitialStep, setReportInitialStep] = useState<any>('dashboard');
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -85,6 +86,7 @@ const App: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [pendingDateAfterLogin, setPendingDateAfterLogin] = useState<Date | undefined>();
+  const [pendingReportStep, setPendingReportStep] = useState<string | null>(null);
   
   const [footerState, setFooterState] = useState(0); 
 
@@ -185,7 +187,21 @@ const App: React.FC = () => {
         setEditingBooking(null);
         setShowBookingModal(true);
         setPendingDateAfterLogin(undefined);
+      } else if (pendingReportStep) {
+        setReportInitialStep(pendingReportStep);
+        setView('reports');
+        setPendingReportStep(null);
       }
+    }
+  };
+
+  const handleAttendanceLoginRedirect = () => {
+    if (isAdmin) {
+      setReportInitialStep('driver-attendance');
+      setView('reports');
+    } else {
+      setPendingReportStep('driver-attendance');
+      setShowLoginModal(true);
     }
   };
 
@@ -198,11 +214,13 @@ const App: React.FC = () => {
   const closeLoginModal = () => {
     setShowLoginModal(false);
     setPendingDateAfterLogin(undefined);
+    setPendingReportStep(null);
   };
 
   const handleLogout = () => {
     setIsAdmin(false);
     setView('calendar');
+    setReportInitialStep('dashboard');
   };
 
   const logoStyles = "w-10 h-10 md:w-14 md:h-14 object-cover rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)] scale-110";
@@ -214,9 +232,9 @@ const App: React.FC = () => {
       <div className={`flex flex-col bg-[#010409] text-white font-inter h-[100dvh] overflow-hidden transition-all duration-300 shadow-[inset_0_0_150px_rgba(0,0,0,0.8)] ${isLoading ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
         <header className="bg-[#0a1128]/95 backdrop-blur-md border-b border-white/10 px-2 md:px-6 py-1.5 md:py-2 grid grid-cols-[1fr_auto_1fr] items-center sticky top-0 z-50 shadow-xl shrink-0">
           <section className="flex justify-start">
-            {view === 'reports' ? (
+            {view !== 'calendar' ? (
               <button 
-                onClick={() => setView('calendar')}
+                onClick={() => { setView('calendar'); setReportInitialStep('dashboard'); }}
                 className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center bg-white/5 text-slate-300 rounded-lg md:rounded-xl hover:bg-white/10 hover:text-white transition-all active:scale-90 shadow-sm border border-white/5"
               >
                 <ArrowLeft size={20} className="md:w-6 md:h-6" />
@@ -230,10 +248,10 @@ const App: React.FC = () => {
 
           <div className="text-center px-2 flex flex-col justify-center">
             <h1 className="text-[14px] sm:text-lg md:text-[24px] font-black text-white tracking-tight uppercase leading-tight whitespace-nowrap drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
-              {view === 'reports' ? 'Report Center' : 'MICROBUS SCHEDULE'}
+              {view === 'reports' ? 'Report Center' : view === 'attendance' ? 'Attendance Log' : 'MICROBUS SCHEDULE'}
             </h1>
             <p className="text-[9px] sm:text-[10px] md:text-[12px] font-bold text-white tracking-[0.1em] md:tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap leading-none opacity-90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-              {view === 'reports' ? 'Data Analytics & PDF' : 'AREA HQ BARISHAL'}
+              {view === 'reports' ? 'Data Analytics & PDF' : view === 'attendance' ? 'Driver Timing History' : 'AREA HQ BARISHAL'}
             </p>
           </div>
 
@@ -265,14 +283,19 @@ const App: React.FC = () => {
                   onDateDoubleClick={handleDateDoubleClick}
                   onLoginClick={() => setShowLoginModal(true)}
                   onStatsClick={() => setShowStatsModal(true)}
-                  onReportClick={() => setView('reports')}
+                  onAttendanceViewerClick={() => setView('attendance')}
+                  onReportClick={() => { setView('reports'); setReportInitialStep('dashboard'); }}
                   isAppLoading={isLoading}
                 />
               </div>
             </div>
+          ) : view === 'attendance' ? (
+            <div className="max-w-4xl mx-auto w-full h-full overflow-y-auto animate-in fade-in slide-in-from-right-4 duration-300 custom-scrollbar p-4">
+              <AttendanceViewer isAdmin={isAdmin} onLoginClick={handleAttendanceLoginRedirect} />
+            </div>
           ) : (
             <div className="max-w-5xl mx-auto w-full h-full overflow-y-auto animate-in fade-in slide-in-from-right-4 duration-300 custom-scrollbar p-2">
-              <ReportManager bookings={bookings} onBack={() => setView('calendar')} />
+              <ReportManager bookings={bookings} onBack={() => { setView('calendar'); setReportInitialStep('dashboard'); }} initialStep={reportInitialStep} />
             </div>
           )}
         </main>
