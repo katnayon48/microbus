@@ -305,14 +305,16 @@ const BookingModal: React.FC<BookingModalProps> = ({
       alert("Please select a date.");
       return;
     }
+
+    // Comprehensive data cleanup for Firebase compatibility
     const rawBooking: any = {
       id: existingBooking?.id || '',
       rankName: formData.rankName || (formData.isSpecialNote ? 'SPECIAL NOTE' : 'N/A'),
       unit: formData.unit || '',
       mobileNumber: formData.mobileNumber || '',
       garrisonStatus: formData.garrisonStatus || 'In Garrison',
-      startDate: formData.startDate || format(new Date(), 'yyyy-MM-dd'),
-      endDate: formData.endDate || formData.startDate || format(new Date(), 'yyyy-MM-dd'),
+      startDate: formData.startDate,
+      endDate: formData.endDate || formData.startDate,
       duration: formData.duration || 'Full Day',
       destination: formData.destination || '',
       fare: formData.fare || 0,
@@ -323,17 +325,39 @@ const BookingModal: React.FC<BookingModalProps> = ({
       isExempt: !!formData.isExempt,
       isSpecialNote: !!formData.isSpecialNote,
       isFuelEntry: !!formData.isFuelEntry,
-      kmStart: formData.kmStart,
-      kmEnd: formData.kmEnd,
-      totalKm: formData.totalKm,
-      fuelPurchases: formData.fuelPurchases,
-      purchasedFuel: formData.purchasedFuel,
-      fuelRate: formData.fuelRate,
-      totalFuelPrice: formData.totalFuelPrice
     };
+
+    // Only include fuel consumption details if toggled ON and data exists
+    if (formData.isFuelEntry) {
+      if (formData.kmStart !== undefined) rawBooking.kmStart = formData.kmStart;
+      if (formData.kmEnd !== undefined) rawBooking.kmEnd = formData.kmEnd;
+      if (formData.totalKm !== undefined) rawBooking.totalKm = formData.totalKm;
+      if (formData.purchasedFuel !== undefined) rawBooking.purchasedFuel = formData.purchasedFuel;
+      if (formData.fuelRate !== undefined) rawBooking.fuelRate = formData.fuelRate;
+      if (formData.totalFuelPrice !== undefined) rawBooking.totalFuelPrice = formData.totalFuelPrice;
+
+      // Clean up fuelPurchases array to remove undefined values before sending to Firebase
+      if (formData.fuelPurchases && formData.fuelPurchases.length > 0) {
+        const cleanedPurchases = formData.fuelPurchases
+          .filter(p => p.purchasedFuel !== undefined || p.fuelRate !== undefined || p.totalFuelPrice !== undefined)
+          .map(p => {
+            const cleaned: any = { id: p.id };
+            if (p.purchasedFuel !== undefined) cleaned.purchasedFuel = p.purchasedFuel;
+            if (p.fuelRate !== undefined) cleaned.fuelRate = p.fuelRate;
+            if (p.totalFuelPrice !== undefined) cleaned.totalFuelPrice = p.totalFuelPrice;
+            return cleaned;
+          });
+        
+        if (cleanedPurchases.length > 0) {
+          rawBooking.fuelPurchases = cleanedPurchases;
+        }
+      }
+    }
+
     const finalBooking = Object.fromEntries(
       Object.entries(rawBooking).filter(([_, value]) => value !== undefined && value !== null)
     ) as unknown as Booking;
+    
     onSave(finalBooking);
   };
 

@@ -37,7 +37,7 @@ const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginCli
   }, [attendanceRecords, historyMonth]);
 
   return (
-    <div className="relative min-h-full w-full bg-[#062c1e] rounded-2xl md:rounded-3xl p-3 md:p-8 border border-white/10 shadow-2xl overflow-hidden flex flex-col">
+    <div className="relative h-full w-full bg-[#062c1e] rounded-2xl md:rounded-3xl p-3 md:p-6 border border-white/10 shadow-2xl overflow-hidden flex flex-col">
       {/* Watermark Logo */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
         <img 
@@ -47,55 +47,57 @@ const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginCli
         />
       </div>
 
-      <div className="relative z-10 space-y-4 md:space-y-8 flex-1 flex flex-col">
-        {/* Month Navigation Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between px-1 md:px-2 gap-3 shrink-0">
-          <div className="flex items-center gap-2 md:gap-4">
-            <div className="w-8 h-8 md:w-12 md:h-12 bg-emerald-600/20 text-emerald-400 rounded-lg md:rounded-2xl flex items-center justify-center border border-emerald-500/20 shadow-inner shrink-0">
-              <CalendarRange size={18} className="md:w-6 md:h-6" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                <h4 className="text-[10px] md:text-lg font-black text-white uppercase tracking-tight whitespace-nowrap">ATTENDANCE LOG</h4>
-                <div className="flex items-center gap-0.5 md:gap-1 bg-black/40 px-1.5 py-0.5 md:px-2 md:py-1 rounded-lg border border-white/10 shadow-lg shrink-0">
-                  <button 
-                    onClick={() => setHistoryMonth(m => subMonths(m, 1))} 
-                    className="p-0.5 text-slate-500 hover:text-emerald-400 active:scale-90 transition-colors"
-                  >
-                    <ChevronLeft size={14} className="md:w-4 md:h-4" />
-                  </button>
-                  <span className="text-[8px] md:text-[12px] font-black text-white uppercase tracking-widest min-w-[75px] md:min-w-[100px] text-center">
-                    {format(historyMonth, 'MMM yyyy')}
-                  </span>
-                  <button 
-                    onClick={() => setHistoryMonth(m => addMonths(m, 1))} 
-                    className="p-0.5 text-slate-500 hover:text-emerald-400 active:scale-90 transition-colors"
-                  >
-                    <ChevronRight size={14} className="md:w-4 md:h-4" />
-                  </button>
-                </div>
+      <div className="relative z-10 flex-1 flex flex-col min-h-0 space-y-4">
+        {/* Updated Header Layout with Centered Month Nav */}
+        <div className="flex flex-col gap-4 px-1 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 md:gap-4">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-600/20 text-emerald-400 rounded-lg md:rounded-xl flex items-center justify-center border border-emerald-500/20 shadow-inner shrink-0">
+                <CalendarRange size={18} className="md:w-5 md:h-5" />
               </div>
+              <h4 className="text-[10px] md:text-lg font-black text-white uppercase tracking-tight whitespace-nowrap">DRIVER'S ATTENDANCE LOG</h4>
+            </div>
+            
+            <div className="bg-white/5 border border-white/10 px-3 py-1 rounded-full">
+              <span className="text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                {filteredAttendance.length} Records
+              </span>
             </div>
           </div>
-          
-          <div className="bg-white/5 border border-white/10 px-3 py-0.5 md:px-4 md:py-1 rounded-full self-start">
-            <span className="text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest">
-              {filteredAttendance.length} Records
-            </span>
+
+          {/* Centered Month Navigation Control */}
+          <div className="flex justify-center">
+            <div className="flex items-center gap-1 md:gap-2 bg-black/40 px-2 py-1.5 md:px-6 md:py-2.5 rounded-xl md:rounded-2xl border border-white/10 shadow-2xl shrink-0">
+              <button 
+                onClick={() => setHistoryMonth(m => subMonths(m, 1))} 
+                className="p-1 text-slate-500 hover:text-emerald-400 active:scale-90 transition-colors bg-white/5 rounded-lg"
+              >
+                <ChevronLeft size={16} className="md:w-6 md:h-6" />
+              </button>
+              <span className="text-[9px] md:text-[14px] font-black text-white uppercase tracking-[0.1em] md:tracking-[0.2em] min-w-[85px] md:min-w-[120px] text-center px-1">
+                {format(historyMonth, 'MMM yyyy')}
+              </span>
+              <button 
+                onClick={() => setHistoryMonth(m => addMonths(m, 1))} 
+                className="p-1 text-slate-500 hover:text-emerald-400 active:scale-90 transition-colors bg-white/5 rounded-lg"
+              >
+                <ChevronRight size={16} className="md:w-6 md:h-6" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Attendance Table */}
+        {/* Attendance Table Container */}
         <div className="bg-black/30 rounded-xl md:rounded-[2rem] border border-white/10 overflow-hidden shadow-2xl w-full backdrop-blur-sm flex-1 flex flex-col min-h-0">
           {filteredAttendance.length > 0 ? (
             <div className="w-full h-full overflow-y-auto custom-scrollbar">
               <table className="w-full text-left border-collapse table-fixed">
                 <thead className="sticky top-0 z-20">
-                  <tr className="bg-black/80 border-b border-white/10">
-                    <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%] md:w-[25%]">Date</th>
-                    <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%] md:w-[25%]">Day</th>
-                    <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center border-r border-white/5 w-[25%] md:w-[25%]">In</th>
-                    <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center w-[25%] md:w-[25%]">Out</th>
+                  <tr className="bg-[#0a1128] border-b border-white/10">
+                    <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">Date</th>
+                    <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">Day</th>
+                    <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center border-r border-white/5 w-[25%]">In</th>
+                    <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center w-[25%]">Out</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -150,10 +152,10 @@ const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginCli
         </div>
 
         {/* Action Button Section */}
-        <div className="py-2 md:py-8 flex flex-col items-center gap-2 md:gap-6 shrink-0">
+        <div className="py-2 md:py-4 flex flex-col items-center gap-2 md:gap-3 shrink-0">
           <button 
             onClick={onLoginClick}
-            className="group flex items-center justify-center gap-2 md:gap-3 px-6 py-2.5 md:px-10 md:py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl md:rounded-2xl text-[9px] md:text-[12px] font-black uppercase tracking-widest shadow-2xl transition-all active:scale-[0.98] border border-white/10 hover:shadow-emerald-900/40"
+            className="group flex items-center justify-center gap-2 md:gap-3 px-6 py-2.5 md:px-10 md:py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl md:rounded-2xl text-[9px] md:text-[12px] font-black uppercase tracking-widest shadow-2xl transition-all active:scale-[0.98] border border-white/10"
           >
             {isAdmin ? (
               <>
@@ -168,7 +170,7 @@ const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginCli
             )}
           </button>
           
-          <div className="flex flex-col items-center gap-1 md:gap-2 opacity-50">
+          <div className="flex flex-col items-center gap-1 opacity-50">
             <div className="h-px w-20 md:w-32 bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
             <p className="text-[6px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">
               Authorized Personnel Only

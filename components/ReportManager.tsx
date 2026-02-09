@@ -499,7 +499,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
               <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                 <Table size={20} strokeWidth={2.5} />
               </div>
-              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Detailed Booking Report</h4>
+              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Detailed Data Report</h4>
               <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Custom spreadsheet-style export with specific columns and period range.</p>
               <div className="mt-auto flex items-center gap-2 text-blue-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
                 Customize Export <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
@@ -545,7 +545,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                     <button 
                       type="button"
                       onClick={() => setFuelWithSignature(false)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${!fuelWithSignature ? 'bg-amber-600 text-white border-amber-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${!fuelWithSignature ? 'bg-amber-600 text-white border-amber-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-amber-500/30'}`}
                     >
                       <ShieldOff size={14} />
                       <span className="text-[10px] font-black uppercase tracking-widest">Without Signature</span>
@@ -618,14 +618,14 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                  <div className="grid grid-cols-2 gap-4">
                    <div 
                      onClick={() => handleDayTypeSelection('office')}
-                     className={`flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 cursor-pointer transition-all h-14 ${attendanceForm.isHoliday ? 'opacity-40 cursor-not-allowed grayscale bg-black/20 border-white/5' : attendanceForm.isOfficeDay ? 'bg-emerald-500/10 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                     className={`flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 cursor-pointer transition-all h-14 ${attendanceForm.isHoliday ? 'opacity-40 cursor-not-allowed grayscale bg-black/20 border-white/5' : attendanceForm.isOfficeDay ? 'bg-emerald-500/10 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10'}`}
                    >
                      <h4 className={`text-[10px] font-black uppercase tracking-widest ${attendanceForm.isOfficeDay ? 'text-emerald-500' : 'text-slate-300'}`}>Office Day</h4>
                    </div>
 
                    <div 
                      onClick={() => handleDayTypeSelection('duty')}
-                     className={`flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 cursor-pointer transition-all h-14 ${attendanceForm.isDutyDay ? 'bg-emerald-500/10 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                     className={`flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 cursor-pointer transition-all h-14 ${attendanceForm.isDutyDay ? 'bg-emerald-500/10 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10'}`}
                    >
                      <h4 className={`text-[10px] font-black uppercase tracking-widest ${attendanceForm.isDutyDay ? 'text-emerald-500' : 'text-slate-300'}`}>Duty Day</h4>
                    </div>
@@ -731,7 +731,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                    </div>
                    <div className="flex flex-col">
                       <div className="flex items-baseline gap-2">
-                        <h4 className="text-[10px] md:text-sm font-black text-white uppercase tracking-tight whitespace-nowrap">ATTENDANCE LOG</h4>
+                        <h4 className="text-[10px] md:text-sm font-black text-white uppercase tracking-tight whitespace-nowrap">DRIVER'S ATTENDANCE LOG</h4>
                         <div className="flex items-center gap-1 bg-black/40 px-2 py-1 rounded-lg border border-white/10 shadow-lg shrink-0">
                            <button onClick={() => setHistoryMonth(m => subMonths(m, 1))} className="text-slate-500 hover:text-emerald-400 active:scale-90 transition-colors"><ChevronLeft size={14} /></button>
                            <span className="text-[8px] md:text-[10px] font-black text-emerald-400 uppercase tracking-widest min-w-[90px] text-center">

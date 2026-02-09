@@ -248,7 +248,7 @@ const App: React.FC = () => {
 
           <div className="text-center px-2 flex flex-col justify-center">
             <h1 className="text-[14px] sm:text-lg md:text-[24px] font-black text-white tracking-tight uppercase leading-tight whitespace-nowrap drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
-              {view === 'reports' ? 'Report Center' : view === 'attendance' ? 'Attendance Log' : 'MICROBUS SCHEDULE'}
+              {view === 'reports' ? 'Report Center' : view === 'attendance' ? "Driver's Attendance Log" : 'MICROBUS SCHEDULE'}
             </h1>
             <p className="text-[9px] sm:text-[10px] md:text-[12px] font-bold text-white tracking-[0.1em] md:tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap leading-none opacity-90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
               {view === 'reports' ? 'Data Analytics & PDF' : view === 'attendance' ? 'Driver Timing History' : 'AREA HQ BARISHAL'}
@@ -290,7 +290,7 @@ const App: React.FC = () => {
               </div>
             </div>
           ) : view === 'attendance' ? (
-            <div className="max-w-4xl mx-auto w-full h-full overflow-y-auto animate-in fade-in slide-in-from-right-4 duration-300 custom-scrollbar p-4">
+            <div className="max-w-4xl mx-auto w-full h-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300 p-2 md:p-4">
               <AttendanceViewer isAdmin={isAdmin} onLoginClick={handleAttendanceLoginRedirect} />
             </div>
           ) : (
