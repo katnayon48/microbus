@@ -334,7 +334,8 @@ const App: React.FC = () => {
             onSave={handleSaveBooking} 
             onDelete={handleDeleteBooking} 
             initialDate={selectedDate} 
-            existingBooking={editingBooking} 
+            existingBooking={editingBooking}
+            bookings={bookings} 
           />
         </Modal>
         

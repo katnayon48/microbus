@@ -660,8 +660,8 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
     headingWidth = doc.getTextWidth(rangeText);
     doc.line(105 - (headingWidth / 2), 22, 105 + (headingWidth / 2), 22);
 
-    // Table Headers
-    const headers = [['DATE', 'DAY', 'IN TIME', 'OUT TIME', 'LAST DAY DUTY COMPLETION TIME', 'REMARKS']];
+    // Table Headers - With Newline for (TO CANTONMENT)
+    const headers = [['DATE', 'DAY', 'IN TIME', 'OUT TIME', 'LAST DAY MICROBUS ENTRY TIME\n(TO CANTONMENT)', 'REMARKS']];
 
     autoTable(doc, {
       startY: 28, 
@@ -719,7 +719,7 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
         1: { cellWidth: 28 }, // Day
         2: { cellWidth: 20 }, // In Time
         3: { cellWidth: 20 }, // Out Time
-        4: { cellWidth: 62 }, // Last Day Duty
+        4: { cellWidth: 62 }, // Last Day Entry (TO CANTONMENT)
         5: { cellWidth: 34 }  // Remarks
       },
       margin: { left: 10, right: 10 }
@@ -755,5 +755,181 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
   } catch (error) {
     console.error("Attendance PDF generation failed:", error);
     alert("Error generating attendance PDF.");
+  }
+};
+
+export const generateFuelReport = async (bookings: Booking[], startDate: string, endDate: string, withSignature: boolean = true) => {
+  try {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFont('helvetica');
+
+    const sDate = parseISO(startDate);
+    const eDate = parseISO(endDate);
+    const filtered = filterByRange(bookings, startDate, endDate);
+
+    const mainHeading = "FUEL PURCHASE REPORT - CIVIL MICROBUS";
+    const rangeText = `${format(sDate, 'dd MMMM yyyy')} TO ${format(eDate, 'dd MMMM yyyy')}`.toUpperCase();
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(mainHeading, 148.5, 12, { align: 'center' });
+    let headingWidth = doc.getTextWidth(mainHeading);
+    doc.setLineWidth(0.5);
+    doc.line(148.5 - (headingWidth / 2), 14, 148.5 + (headingWidth / 2), 14);
+
+    doc.setFontSize(10);
+    doc.text(rangeText, 148.5, 20, { align: 'center' });
+    headingWidth = doc.getTextWidth(rangeText);
+    doc.setLineWidth(0.3);
+    doc.line(148.5 - (headingWidth / 2), 21.5, 148.5 + (headingWidth / 2), 21.5);
+
+    const tableBody: any[] = [];
+    let serial = 1;
+
+    filtered.forEach((b) => {
+      const days = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
+      const numPurchases = (b.fuelPurchases && b.fuelPurchases.length > 0) ? b.fuelPurchases.length : 1;
+
+      if (b.fuelPurchases && b.fuelPurchases.length > 0) {
+        b.fuelPurchases.forEach((p, pIdx) => {
+          if (pIdx === 0) {
+            // First row for this booking contains common info with rowSpan for merging
+            tableBody.push([
+              { content: serial++, rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
+              { content: (b.rankName || '').toUpperCase(), rowSpan: numPurchases, styles: { valign: 'top', halign: 'left' } },
+              { content: format(parseISO(b.startDate), DATE_FORMAT), rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
+              { content: format(parseISO(b.endDate), DATE_FORMAT), rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
+              { content: days, rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
+              { content: (b.destination || '-').toUpperCase(), rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
+              { content: b.kmStart ?? '-', rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
+              { content: b.kmEnd ?? '-', rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
+              { content: b.totalKm ?? '-', rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
+              p.purchasedFuel ?? '-',
+              p.fuelRate ?? '-',
+              p.totalFuelPrice ? p.totalFuelPrice.toLocaleString() : '-',
+              { content: b.remarks || '-', rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } }
+            ]);
+          } else {
+            // Subsequent rows for the same booking
+            tableBody.push([
+              p.purchasedFuel ?? '-',
+              p.fuelRate ?? '-',
+              p.totalFuelPrice ? p.totalFuelPrice.toLocaleString() : '-'
+            ]);
+          }
+        });
+      } else {
+        // Single row base entry
+        tableBody.push([
+          serial++,
+          (b.rankName || '').toUpperCase(),
+          format(parseISO(b.startDate), DATE_FORMAT),
+          format(parseISO(b.endDate), DATE_FORMAT),
+          days,
+          (b.destination || '-').toUpperCase(),
+          b.kmStart ?? '-',
+          b.kmEnd ?? '-',
+          b.totalKm ?? '-',
+          '-', '-', '-',
+          b.remarks || '-'
+        ]);
+      }
+    });
+
+    autoTable(doc, {
+      startY: 28,
+      head: [
+        [
+          { content: 'SER', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'NAME AND RANK', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'BOOKING DATE', colSpan: 2, styles: { halign: 'center' } },
+          { content: 'DAYS', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'DESTINATION', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'KILOMETERS', colSpan: 2, styles: { halign: 'center' } },
+          { content: 'TOTAL KILOMETRES', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'PURCHASED FUEL', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'RATE', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'TOTAL TAKA', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'REMARKS', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } }
+        ],
+        [
+          { content: 'FROM', styles: { halign: 'center' } },
+          { content: 'TO', styles: { halign: 'center' } },
+          { content: 'START', styles: { halign: 'center' } },
+          { content: 'END', styles: { halign: 'center' } }
+        ]
+      ],
+      body: tableBody,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [220, 220, 220], 
+        textColor: [0, 0, 0], 
+        fontSize: 7.5, 
+        fontStyle: 'bold',
+        halign: 'center',
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+        valign: 'middle'
+      },
+      styles: { 
+        font: 'helvetica',
+        fontSize: 8, 
+        cellPadding: 1, 
+        lineColor: [0, 0, 0], 
+        lineWidth: 0.1, 
+        halign: 'center', 
+        textColor: [0, 0, 0],
+        valign: 'middle'
+      },
+      columnStyles: {
+        0: { cellWidth: 10 },
+        1: { cellWidth: 41, halign: 'left' },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 12 },
+        5: { cellWidth: 25, halign: 'center' },
+        6: { cellWidth: 18 },
+        7: { cellWidth: 18 },
+        8: { cellWidth: 22 },
+        9: { cellWidth: 22 },
+        10: { cellWidth: 15 },
+        11: { cellWidth: 20 },
+        12: { cellWidth: 30 }
+      },
+      margin: { left: 10, right: 10 }
+    });
+
+    if (withSignature) {
+      const finalY = (doc as any).lastAutoTable?.finalY || 150;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Position signatures significantly below the table
+      const sigY = Math.min(finalY + 15, 180); 
+
+      doc.setFontSize(9); 
+      doc.setFont('helvetica', 'bold');
+      
+      // Driver signature line (Left)
+      doc.line(20, sigY, 70, sigY);
+      doc.text("Driver", 45, sigY + 4, { align: 'center' });
+
+      // JCO/NCO signature line (Right)
+      doc.line(pageWidth - 70, sigY, pageWidth - 20, sigY);
+      doc.text("JCO/NCO", pageWidth - 45, sigY + 4, { align: 'center' });
+
+      // Countersign (Center)
+      const countersignY = sigY + 12;
+      const csText = "COUNTERSIGN";
+      doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
+      const csWidth = doc.getTextWidth(csText);
+      doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
+    }
+
+    drawDeveloperFooter(doc, 200);
+    doc.save(`Fuel_Report_${format(sDate, 'MMM_yyyy')}.pdf`);
+  } catch (error) {
+    console.error("Fuel PDF generation failed:", error);
+    alert("Error generating fuel report PDF.");
   }
 };

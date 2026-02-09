@@ -141,9 +141,7 @@ const Calendar: React.FC<CalendarProps> = ({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* 3-Column Grid for True Middle Alignment of TODAY navigation */}
       <div className="grid grid-cols-3 items-center px-1 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1 overflow-hidden">
-        {/* Column 1: Month + Attendance Button (Left Aligned) */}
         <div className="flex items-center gap-1 md:gap-4 min-w-0">
           <div className="hidden sm:flex w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-emerald-600 items-center justify-center text-white shadow-lg shrink-0">
             <CalendarIcon size={14} className="md:w-5 md:h-5" />
@@ -173,7 +171,6 @@ const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
         
-        {/* Column 2: Date Navigation (Perfectly Centered) */}
         <div className="flex justify-center min-w-0">
           <div className="flex items-center gap-0 md:gap-2 bg-white/5 p-0.5 rounded-lg md:rounded-xl border border-white/10 shadow-sm shrink-0">
             <button 
@@ -197,7 +194,6 @@ const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
 
-        {/* Column 3: Action Buttons (Right Aligned) */}
         <div className="flex justify-end items-center gap-1.5 md:gap-3 shrink-0">
           {!isAdmin && (
             <button 
@@ -272,7 +268,6 @@ const Calendar: React.FC<CalendarProps> = ({
                     const isUnpaid = booking.fareStatus === 'Unpaid';
                     const isSpecial = booking.isSpecialNote;
                     
-                    // 3D Visual Properties: Gradient + Highlighting Borders + Inset Shadows
                     let bgClasses = "";
                     let shadowClasses = "shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)]";
                     let borderClasses = "border-t-white/30 border-b-black/50 border-x-white/10";
@@ -280,10 +275,8 @@ const Calendar: React.FC<CalendarProps> = ({
                     if (isSpecial) {
                       bgClasses = "bg-gradient-to-b from-[#f59e0b] to-[#92400e]";
                     } else if (isUnpaid) {
-                      // Deep Maroon: গাড় খয়েরি
                       bgClasses = "bg-gradient-to-b from-[#800000] to-[#3a0000]";
                     } else {
-                      // Deep Green: গাড় সবুজ
                       bgClasses = "bg-gradient-to-b from-[#006400] to-[#003300]";
                     }
 

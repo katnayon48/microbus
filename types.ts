@@ -2,6 +2,13 @@ export type DurationType = 'Full Day' | 'Half Day';
 export type FareStatusType = 'Paid' | 'Unpaid';
 export type GarrisonStatusType = 'In Garrison' | 'Out Garrison';
 
+export interface FuelPurchase {
+  id: string;
+  purchasedFuel?: number;
+  fuelRate?: number;
+  totalFuelPrice?: number;
+}
+
 export interface Booking {
   id: string;
   rankName: string;
@@ -19,6 +26,16 @@ export interface Booking {
   remarks?: string;
   isExempt?: boolean;
   isSpecialNote?: boolean;
+  // Fuel fields
+  isFuelEntry?: boolean;
+  kmStart?: number;
+  kmEnd?: number;
+  totalKm?: number;
+  fuelPurchases?: FuelPurchase[];
+  // Summary fuel fields
+  purchasedFuel?: number;
+  fuelRate?: number;
+  totalFuelPrice?: number;
 }
 
 export interface DriverAttendance {

@@ -2,10 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   FileText, Table, ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
   UserCheck, ArrowRight, ArrowLeft, BarChart3, TrendingUp, Download, 
-  BarChart, Clock, User, CheckCircle2, Save, Loader2, CalendarRange, Trash2, CalendarDays, Pencil, FileDown, AlignLeft, History, ShieldCheck, ShieldOff, Coffee, Briefcase, Lock, AlertTriangle, X, Check
+  BarChart, Clock, User, CheckCircle2, Save, Loader2, CalendarRange, Trash2, CalendarDays, Pencil, FileDown, AlignLeft, History, ShieldCheck, ShieldOff, Coffee, Briefcase, Lock, AlertTriangle, X, Check, Droplets, Fuel
 } from 'lucide-react';
 import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
-import { generatePaymentSlip, generateOverallReport, generateTripSummaryReport, generateAttendanceSheet } from '../services/pdfService';
+import { generatePaymentSlip, generateOverallReport, generateTripSummaryReport, generateAttendanceSheet, generateFuelReport } from '../services/pdfService';
 import { BOOKING_FIELDS } from '../constants';
 import { 
   startOfMonth, endOfMonth, subMonths, format, parseISO, getYear, 
@@ -20,7 +20,7 @@ interface ReportManagerProps {
   initialStep?: ReportStep;
 }
 
-type ReportStep = 'dashboard' | 'payment-slip-range' | 'handoff-prompt' | 'handoff-form' | 'detailed-setup' | 'trip-summary' | 'summary-download-range' | 'graph-choice' | 'driver-attendance' | 'attendance-download-range';
+type ReportStep = 'dashboard' | 'payment-slip-range' | 'handoff-prompt' | 'handoff-form' | 'detailed-setup' | 'trip-summary' | 'summary-download-range' | 'graph-choice' | 'driver-attendance' | 'attendance-download-range' | 'fuel-report-range';
 
 const MONTH_BAR_STYLES = [
   { color: '#10b981', gradient: 'linear-gradient(to top, #065f46, #10b981)' },
@@ -60,6 +60,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
   });
 
   const [withSignature, setWithSignature] = useState(true);
+  const [fuelWithSignature, setFuelWithSignature] = useState(true);
 
   // Check if there was a booking on the previous day
   const hasPreviousBooking = useMemo(() => {
@@ -165,6 +166,14 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
   }, [attendanceForm.date, bookings]);
 
   const [range, setRange] = useState(() => {
+    const now = new Date();
+    return {
+      start: format(startOfMonth(now), 'yyyy-MM-dd'),
+      end: format(endOfMonth(now), 'yyyy-MM-dd')
+    };
+  });
+
+  const [fuelReportRange, setFuelReportRange] = useState(() => {
     const now = new Date();
     return {
       start: format(startOfMonth(now), 'yyyy-MM-dd'),
@@ -335,6 +344,13 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
     setActiveStep('driver-attendance');
   };
 
+  const handleFuelReportDownload = async () => {
+    setIsGenerating(true);
+    await generateFuelReport(bookings, fuelReportRange.start, fuelReportRange.end, fuelWithSignature);
+    setIsGenerating(false);
+    setActiveStep('dashboard');
+  };
+
   const filteredAttendance = useMemo(() => {
     const monthStr = format(historyMonth, 'yyyy-MM');
     return attendanceRecords.filter(record => record.date.startsWith(monthStr))
@@ -348,6 +364,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
   };
 
   const isRangeValid = range.start && range.end;
+  const isFuelRangeValid = fuelReportRange.start && fuelReportRange.end;
   const isSummaryRangeValid = summaryRange.start && summaryRange.end;
   const isAttendanceRangeValid = attendanceReportRange.start && attendanceReportRange.end;
 
@@ -461,20 +478,31 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                 <Clock size={20} strokeWidth={2.5} />
               </div>
               <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Driver's Attendance</h4>
-              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Record daily In/Out times for Nazrul or other drivers.</p>
+              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Record daily In/Out times for Driver.</p>
               <div className="mt-auto flex items-center gap-2 text-amber-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
                 Manage Timing <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
               </div>
             </button>
 
-            <button onClick={() => setActiveStep('detailed-setup')} className="p-4 md:p-6 bg-[#062c1e] rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-xl hover:border-emerald-600 transition-all group text-left flex flex-col items-start">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-700 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <button onClick={() => setActiveStep('fuel-report-range')} className="p-4 md:p-6 bg-[#062c1e] rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-xl hover:border-emerald-600 transition-all group text-left flex flex-col items-start">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-500 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <Fuel size={20} strokeWidth={2.5} />
+              </div>
+              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">KILOMETERS AND FUEL REPORT</h4>
+              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Detailed report on vehicle mileage and fuel purchase history.</p>
+              <div className="mt-auto flex items-center gap-2 text-emerald-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
+                Export Fuel Logs <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+              </div>
+            </button>
+
+            <button onClick={() => setActiveStep('detailed-setup')} className="p-4 md:p-6 bg-[#062c1e] rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-xl hover:border-blue-500 transition-all group text-left flex flex-col items-start">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                 <Table size={20} strokeWidth={2.5} />
               </div>
-              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Detailed Data</h4>
-              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Full export of booking history with fully custom columns.</p>
-              <div className="mt-auto flex items-center gap-2 text-slate-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
-                Configure Table <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Detailed Booking Report</h4>
+              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Custom spreadsheet-style export with specific columns and period range.</p>
+              <div className="mt-auto flex items-center gap-2 text-blue-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
+                Customize Export <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
               </div>
             </button>
 
@@ -489,6 +517,64 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
               </div>
             </button>
           </div>
+        </div>
+      )}
+
+      {activeStep === 'fuel-report-range' && (
+        <div className="animate-in fade-in slide-in-from-right-6 duration-500 max-w-md mx-auto w-full py-8">
+          <StepHeader title="Fuel Report Range" subtitle="Choose period for fuel logs" onBackStep={() => setActiveStep('dashboard')} />
+          <form 
+            onSubmit={(e) => { e.preventDefault(); if(isFuelRangeValid) handleFuelReportDownload(); }} 
+            className="space-y-6 bg-[#062c1e] p-8 rounded-[2.5rem] border-2 border-white/5 shadow-2xl"
+          >
+             <div className="grid grid-cols-1 gap-6">
+               <DateInput label="Start Date" value={fuelReportRange.start} onChange={(e:any) => setFuelReportRange(p => ({...p, start: e.target.value}))} />
+               <DateInput label="End Date" value={fuelReportRange.end} onChange={(e:any) => setFuelReportRange(p => ({...p, end: e.target.value}))} />
+               
+               <div className="space-y-2">
+                 <label className={labelClasses}>Signature Policy</label>
+                 <div className="flex gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => setFuelWithSignature(true)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${fuelWithSignature ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}
+                    >
+                      <ShieldCheck size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">With Signature</span>
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setFuelWithSignature(false)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${!fuelWithSignature ? 'bg-amber-600 text-white border-amber-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}
+                    >
+                      <ShieldOff size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Without Signature</span>
+                    </button>
+                 </div>
+                 <p className="text-[8px] font-bold text-slate-500 uppercase tracking-tight ml-1">
+                   {fuelWithSignature ? 'Includes Driver/JCO cols & Countersign' : 'Removes Driver/JCO cols & Countersign'}
+                 </p>
+               </div>
+             </div>
+             
+             <button 
+              type="submit" 
+              disabled={!isFuelRangeValid || isGenerating} 
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-xl shadow-emerald-900/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-95"
+             >
+                {isGenerating ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download size={18} />
+                    Download Fuel Report
+                  </>
+                )}
+             </button>
+          </form>
         </div>
       )}
 
@@ -575,9 +661,9 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                 </div>
               )}
 
-              {/* Last Day Duty Completion Time: Disabled if no activity on previous day */}
+              {/* Last Day Microbus Entry Time (To Cantonment): Disabled if no activity on previous day */}
               <div className="relative group">
-                <label className={labelClasses}>Last Day Duty Completion Time</label>
+                <label className={labelClasses}>Last Day Microbus Entry Time (To Cantonment)</label>
                 <div className="relative">
                   <History className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${hasPreviousBooking ? 'text-emerald-500/60' : 'text-slate-500/30'} group-focus-within:text-emerald-500 transition-colors pointer-events-none z-10`} size={16} />
                   <input 
@@ -705,7 +791,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                                 </td>
                                 <td className="p-2 md:p-3 text-center border border-white/20">
                                    <div className="inline-flex items-center bg-amber-500/5 px-1.5 py-0.5 rounded border border-emerald-500/10">
-                                      <span className="text-[8px] md:text-xs font-black text-amber-400">{record.outTime}</span>
+                                      <span className="text-[8px] md:text-xs font-black text-emerald-400">{record.outTime}</span>
                                    </div>
                                 </td>
                               </>
@@ -780,7 +866,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                     <button 
                       type="button"
                       onClick={() => setWithSignature(false)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${!withSignature ? 'bg-amber-600 text-white border-amber-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-amber-500/30'}`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${!withSignature ? 'bg-amber-600 text-white border-amber-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}
                     >
                       <ShieldOff size={14} />
                       <span className="text-[10px] font-black uppercase tracking-widest">Without Signature</span>
