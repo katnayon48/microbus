@@ -1,15 +1,25 @@
-import React, { useState, useMemo, useEffect } from 'react';
+
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   FileText, Table, ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
   UserCheck, ArrowRight, ArrowLeft, BarChart3, TrendingUp, Download, 
-  BarChart, Clock, User, CheckCircle2, Save, Loader2, CalendarRange, Trash2, CalendarDays, Pencil, FileDown, AlignLeft, History, ShieldCheck, ShieldOff, Coffee, Briefcase, Lock, AlertTriangle, X, Check, Droplets, Fuel
+  BarChart, Clock, User, CheckCircle2, Save, Loader2, CalendarRange, 
+  Trash2, CalendarDays, Pencil, FileDown, AlignLeft, History, 
+  ShieldCheck, ShieldOff, Coffee, Briefcase, Lock, AlertTriangle, 
+  X, Check, Droplets, Fuel, Sparkles, LayoutDashboard, Database,
+  Type, UserPlus, Fingerprint, FileSpreadsheet, RotateCw, CheckCircle, Plus
 } from 'lucide-react';
 import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
-import { generatePaymentSlip, generateOverallReport, generateTripSummaryReport, generateAttendanceSheet, generateFuelReport } from '../services/pdfService';
+import { 
+  generatePaymentSlip, generateOverallReport, generateTripSummaryReport, 
+  generateAttendanceSheet, generateFuelReport 
+} from '../services/pdfService';
 import { BOOKING_FIELDS } from '../constants';
 import { 
-  startOfMonth, endOfMonth, subMonths, format, parseISO, getYear, 
-  startOfYear, endOfYear, differenceInDays, max, min, isSameMonth, addMonths, subDays, isSameDay, isWithinInterval
+  startOfMonth, endOfMonth, subMonths, format, getYear, 
+  startOfYear, endOfYear, differenceInDays, isSameMonth, 
+  addMonths, subDays, isSameDay, isWithinInterval, parseISO,
+  max, min
 } from 'date-fns';
 import { getDatabase, ref, push, set, onValue, remove } from 'firebase/database';
 import Modal from './Modal';
@@ -23,7 +33,7 @@ interface ReportManagerProps {
 type ReportStep = 'dashboard' | 'payment-slip-range' | 'handoff-prompt' | 'handoff-form' | 'detailed-setup' | 'trip-summary' | 'summary-download-range' | 'graph-choice' | 'driver-attendance' | 'attendance-download-range' | 'fuel-report-range';
 
 const MONTH_BAR_STYLES = [
-  { color: '#10b981', gradient: 'linear-gradient(to top, #065f46, #10b981)' },
+  { color: '#10b981', gradient: 'linear-gradient(to top, #064e3b, #10b981)' },
   { color: '#06b6d4', gradient: 'linear-gradient(to top, #164e63, #06b6d4)' },
   { color: '#3b82f6', gradient: 'linear-gradient(to top, #1e3a8a, #3b82f6)' },
   { color: '#6366f1', gradient: 'linear-gradient(to top, #312e81, #6366f1)' },
@@ -40,165 +50,21 @@ const MONTH_BAR_STYLES = [
 const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initialStep = 'dashboard' }) => {
   const [activeStep, setActiveStep] = useState<ReportStep>(initialStep);
   const [selectedYear, setSelectedYear] = useState(() => getYear(new Date()));
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isSavingAttendance, setIsSavingAttendance] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState<DriverAttendance[]>([]);
-  const [attendanceToDelete, setAttendanceToDelete] = useState<DriverAttendance | null>(null);
-  
   const [historyMonth, setHistoryMonth] = useState(new Date());
+  
+  // State to control visibility of the attendance form
+  const [isAddingAttendance, setIsAddingAttendance] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const [attendanceForm, setAttendanceForm] = useState<DriverAttendance>({
-    date: format(new Date(), 'yyyy-MM-dd'),
-    driverName: 'NAZRUL',
-    inTime: '08:00',
-    outTime: '17:00',
-    isHoliday: false,
-    isOfficeDay: false,
-    isDutyDay: false,
-    lastDayCompletionTime: '',
-    remarks: ''
-  });
-
+  // Signature States
   const [withSignature, setWithSignature] = useState(true);
   const [fuelWithSignature, setFuelWithSignature] = useState(true);
-
-  // Check if there was a booking on the previous day
-  const hasPreviousBooking = useMemo(() => {
-    if (!attendanceForm.date) return false;
-    try {
-      const selectedDateObj = parseISO(attendanceForm.date);
-      const yesterdayDateObj = subDays(selectedDateObj, 1);
-      return bookings.some(b => {
-        if (b.isSpecialNote) return false;
-        const bEnd = parseISO(b.endDate);
-        return isSameDay(bEnd, yesterdayDateObj);
-      });
-    } catch (e) {
-      return false;
-    }
-  }, [attendanceForm.date, bookings]);
-
-  // Holiday Toggle Logic
-  const toggleHoliday = () => {
-    setAttendanceForm(prev => {
-      const nextHoliday = !prev.isHoliday;
-      return {
-        ...prev,
-        isHoliday: nextHoliday,
-        // When holiday is enabled, office day must be disabled
-        isOfficeDay: nextHoliday ? false : prev.isOfficeDay
-      };
-    });
-  };
-
-  // Selection Logic for Office vs Duty (Mutually Exclusive)
-  const handleDayTypeSelection = (type: 'office' | 'duty') => {
-    if (type === 'office') {
-      if (attendanceForm.isHoliday) return; // Cannot select Office Day if Holiday is active
-      setAttendanceForm(prev => ({
-        ...prev,
-        isOfficeDay: !prev.isOfficeDay,
-        isDutyDay: false,
-        remarks: prev.remarks === 'DUTY' ? '' : prev.remarks
-      }));
-    } else {
-      // Duty Day Toggle with auto-fetching times from reservation
-      const nextDuty = !attendanceForm.isDutyDay;
-      if (nextDuty) {
-        const selectedDateObj = parseISO(attendanceForm.date);
-        const bookingForDay = bookings.find(b => {
-          if (b.isSpecialNote) return false;
-          const start = parseISO(b.startDate);
-          const end = parseISO(b.endDate);
-          return isWithinInterval(selectedDateObj, { start, end });
-        });
-
-        if (bookingForDay) {
-          setAttendanceForm(prev => ({
-            ...prev,
-            isDutyDay: true,
-            isOfficeDay: false,
-            // Logic: Reservation OUT TIME -> Attendance IN TIME, Reservation IN TIME -> Attendance OUT TIME
-            inTime: bookingForDay.outTime || prev.inTime,
-            outTime: bookingForDay.inTime || prev.outTime,
-            remarks: 'DUTY'
-          }));
-        } else {
-          alert("No reservation found for the selected date to auto-populate times.");
-          setAttendanceForm(prev => ({ 
-            ...prev, 
-            isDutyDay: true, 
-            isOfficeDay: false, 
-            remarks: 'DUTY' 
-          }));
-        }
-      } else {
-        setAttendanceForm(prev => ({
-          ...prev,
-          isDutyDay: false,
-          remarks: prev.remarks === 'DUTY' ? '' : prev.remarks
-        }));
-      }
-    }
-  };
-
-  // Auto-calculate Last Day Duty Completion Time based on selected date
-  useEffect(() => {
-    if (!attendanceForm.date) return;
-    
-    const selectedDateObj = parseISO(attendanceForm.date);
-    const yesterdayDateObj = subDays(selectedDateObj, 1);
-    
-    const yesterdayBooking = bookings.find(b => {
-      if (b.isSpecialNote) return false;
-      const bEnd = parseISO(b.endDate);
-      return isSameDay(bEnd, yesterdayDateObj);
-    });
-
-    setAttendanceForm(prev => {
-      const calculatedVal = yesterdayBooking?.inTime || '';
-      if (prev.lastDayCompletionTime === calculatedVal) return prev;
-      return {
-        ...prev,
-        lastDayCompletionTime: calculatedVal
-      };
-    });
-  }, [attendanceForm.date, bookings]);
-
-  const [range, setRange] = useState(() => {
-    const now = new Date();
-    return {
-      start: format(startOfMonth(now), 'yyyy-MM-dd'),
-      end: format(endOfMonth(now), 'yyyy-MM-dd')
-    };
-  });
-
-  const [fuelReportRange, setFuelReportRange] = useState(() => {
-    const now = new Date();
-    return {
-      start: format(startOfMonth(now), 'yyyy-MM-dd'),
-      end: format(endOfMonth(now), 'yyyy-MM-dd')
-    };
-  });
-
-  const [summaryRange, setSummaryRange] = useState(() => {
-    const now = new Date();
-    return {
-      start: format(startOfYear(now), 'yyyy-MM-dd'),
-      end: format(endOfYear(now), 'yyyy-MM-dd')
-    };
-  });
-
-  const [attendanceReportRange, setAttendanceReportRange] = useState(() => {
-    const now = new Date();
-    return {
-      start: format(startOfMonth(now), 'yyyy-MM-dd'),
-      end: format(endOfMonth(now), 'yyyy-MM-dd')
-    };
-  });
-  
+  const [masterDataWithSignature, setMasterDataWithSignature] = useState(false);
+  const [customHeader, setCustomHeader] = useState('');
   const [selectedFields, setSelectedFields] = useState<BookingField[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const [handoffData, setHandoffData] = useState<HandoffInfo>({
     providerArmyNo: '',
@@ -209,18 +75,63 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
     receiverName: '',
   });
 
+  const [range, setRange] = useState(() => {
+    const now = new Date();
+    return {
+      start: format(startOfMonth(now), 'yyyy-MM-dd'),
+      end: format(endOfMonth(now), 'yyyy-MM-dd')
+    };
+  });
+
+  const [attendanceForm, setAttendanceForm] = useState<DriverAttendance>({
+    date: format(new Date(), 'yyyy-MM-dd'),
+    driverName: 'NAZRUL',
+    inTime: '08:00',
+    outTime: '17:00',
+    isHoliday: false,
+    isOfficeDay: true,
+    isDutyDay: false,
+    lastDayCompletionTime: '',
+    remarks: ''
+  });
+
+  const lastAutoPopDate = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (activeStep === 'driver-attendance' && attendanceForm.date && isAddingAttendance && !attendanceForm.id) {
+      if (attendanceForm.date !== lastAutoPopDate.current) {
+        try {
+          const currentDateObj = parseISO(attendanceForm.date);
+          const prevDateObj = subDays(currentDateObj, 1);
+          const prevDateStr = format(prevDateObj, 'yyyy-MM-dd');
+
+          const prevBooking = bookings
+            .filter(b => !b.isSpecialNote && b.endDate === prevDateStr && b.inTime)
+            .sort((a, b) => (b.inTime || '').localeCompare(a.inTime || ''))[0];
+
+          if (prevBooking && prevBooking.inTime) {
+            setAttendanceForm(prev => ({ ...prev, lastDayCompletionTime: prevBooking.inTime || '' }));
+          } else {
+            setAttendanceForm(prev => ({ ...prev, lastDayCompletionTime: '' }));
+          }
+          
+          lastAutoPopDate.current = attendanceForm.date;
+        } catch (err) {
+          console.error("Error calculating auto-attendance time:", err);
+        }
+      }
+    }
+  }, [attendanceForm.date, activeStep, bookings, isAddingAttendance, attendanceForm.id]);
+
   useEffect(() => {
     if (activeStep === 'driver-attendance' || activeStep === 'attendance-download-range') {
       const db = getDatabase();
-      const attendanceRef = ref(db, 'attendance');
-      const unsubscribe = onValue(attendanceRef, (snapshot) => {
+      const unsubscribe = onValue(ref(db, 'attendance'), (snapshot) => {
         const data = snapshot.val();
         if (data) {
-          const list = Object.keys(data).map(key => ({ ...data[key] }));
+          const list = Object.keys(data).map(key => ({ ...data[key], id: key }));
           setAttendanceRecords(list.sort((a, b) => b.date.localeCompare(a.date)));
-        } else {
-          setAttendanceRecords([]);
-        }
+        } else { setAttendanceRecords([]); }
       });
       return () => unsubscribe();
     }
@@ -243,7 +154,6 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
         try {
           const bookingStart = parseISO(b.startDate);
           const bookingEnd = parseISO(b.endDate);
-          
           const overlapStart = max([bookingStart, monthStart]);
           const overlapEnd = min([bookingEnd, monthEnd]);
 
@@ -253,10 +163,8 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
           }
         } catch (err) {}
       });
-      
       statsArray[m].count = totalDaysInMonth;
     }
-    
     return statsArray;
   }, [bookings, selectedYear]);
 
@@ -265,88 +173,96 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
 
   const handleSaveAttendance = async () => {
     setIsSavingAttendance(true);
-    setSaveSuccess(false);
     try {
       const db = getDatabase();
       const attendanceRef = ref(db, 'attendance');
-      const existing = attendanceRecords.find(r => r.date === attendanceForm.date);
+      const recordToSave = { ...attendanceForm };
       
-      const recordToSave = {
-        ...attendanceForm,
-        id: (existing && existing.id) ? existing.id : undefined
-      };
-
       if (recordToSave.id) {
          await set(ref(db, `attendance/${recordToSave.id}`), recordToSave);
       } else {
-         const newAttendanceRef = push(attendanceRef);
-         await set(newAttendanceRef, {
-           ...recordToSave,
-           id: newAttendanceRef.key
-         });
+         const newRef = push(attendanceRef);
+         await set(newRef, { ...recordToSave, id: newRef.key });
       }
       
-      setSaveSuccess(true);
-      setAttendanceForm({
-        ...attendanceForm,
-        id: undefined,
-        remarks: '',
-        isDutyDay: false,
-        isOfficeDay: false,
-        isHoliday: false
+      setAttendanceForm({ 
+        date: format(new Date(), 'yyyy-MM-dd'),
+        driverName: 'NAZRUL',
+        inTime: '08:00',
+        outTime: '17:00',
+        id: undefined, 
+        remarks: '', 
+        isDutyDay: false, 
+        isOfficeDay: true, 
+        isHoliday: false,
+        lastDayCompletionTime: '' 
       });
-      setTimeout(() => {
-        setSaveSuccess(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Attendance save failed:", error);
-      alert("Failed to save attendance.");
-    } finally {
-      setIsSavingAttendance(false);
-    }
+      lastAutoPopDate.current = null;
+      setIsAddingAttendance(false); // Close form after successful save
+    } catch (error) { alert("Save failed."); } finally { setIsSavingAttendance(false); }
   };
 
   const handleEditAttendance = (record: DriverAttendance) => {
-    setAttendanceForm({
-      date: record.date,
-      driverName: record.driverName,
-      inTime: record.inTime || '08:00',
-      outTime: record.outTime || '17:00',
-      isHoliday: record.isHoliday,
-      isOfficeDay: record.isOfficeDay || false,
-      isDutyDay: record.isDutyDay || false,
-      lastDayCompletionTime: record.lastDayCompletionTime || '',
-      remarks: record.remarks || '',
-      id: record.id
-    });
-    const container = document.querySelector('.custom-scrollbar');
-    if (container) {
-      container.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    setAttendanceForm({ ...record });
+    setIsAddingAttendance(true);
   };
 
   const confirmDeleteAttendance = async () => {
-    if (!attendanceToDelete || !attendanceToDelete.id) return;
+    if (!deletingId) return;
     try {
       const db = getDatabase();
-      await remove(ref(db, `attendance/${attendanceToDelete.id}`));
-      setAttendanceToDelete(null);
+      await remove(ref(db, `attendance/${deletingId}`));
+      setDeletingId(null);
     } catch (error) {
-      console.error("Delete failed:", error);
       alert("Delete failed.");
     }
   };
 
   const handleAttendanceSheetDownload = async () => {
     setIsGenerating(true);
-    await generateAttendanceSheet(attendanceRecords, attendanceReportRange.start, attendanceReportRange.end, withSignature);
+    await generateAttendanceSheet(attendanceRecords, range.start, range.end, withSignature);
     setIsGenerating(false);
     setActiveStep('driver-attendance');
   };
 
   const handleFuelReportDownload = async () => {
     setIsGenerating(true);
-    await generateFuelReport(bookings, fuelReportRange.start, fuelReportRange.end, fuelWithSignature);
+    await generateFuelReport(bookings, range.start, range.end, fuelWithSignature);
+    setIsGenerating(false);
+    setActiveStep('dashboard');
+  };
+
+  const handleDetailedReportDownload = async () => {
+    setIsGenerating(true);
+    const allFields: BookingField[] = BOOKING_FIELDS.map(f => f.value as BookingField);
+    await generateOverallReport(bookings, range.start, range.end, allFields, "DETAILED MASTER DATA REPORT", masterDataWithSignature);
+    setIsGenerating(false);
+    setActiveStep('dashboard');
+  };
+
+  const handleDetailedReportExport = async () => {
+    setIsGenerating(true);
+    await generateOverallReport(bookings, range.start, range.end, selectedFields, customHeader, masterDataWithSignature);
+    setIsGenerating(false);
+    setActiveStep('dashboard');
+  };
+
+  const toggleField = (field: BookingField) => {
+    setSelectedFields(prev => 
+      prev.includes(field) ? prev.filter(f => f !== field) : [...prev, field]
+    );
+  };
+
+  const handleTripSummaryDownload = async (withGraph: boolean) => {
+    setIsGenerating(true);
+    await generateTripSummaryReport(bookings, range.start, range.end, withGraph);
+    setIsGenerating(false);
+    setActiveStep('trip-summary');
+  };
+
+  const handlePaymentSlipGenerate = async () => {
+    setIsGenerating(true);
+    await generatePaymentSlip(bookings, range.start, range.end, activeStep === 'handoff-form' ? handoffData : undefined);
     setIsGenerating(false);
     setActiveStep('dashboard');
   };
@@ -357,806 +273,706 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
       .sort((a, b) => a.date.localeCompare(b.date)); 
   }, [attendanceRecords, historyMonth]);
 
-  const toggleField = (field: BookingField) => {
-    setSelectedFields(prev => 
-      prev.includes(field) ? prev.filter(f => f !== field) : [...prev, field]
+  const StepHeader = ({ title, subtitle, onBackStep }: { title: string, subtitle: string, onBackStep: () => void }) => (
+    <div className="flex items-center gap-2 md:gap-3 mb-3 animate-in fade-in slide-in-from-left-4 duration-500 shrink-0">
+      <button 
+        onClick={onBackStep}
+        className="w-7 h-7 md:w-9 md:h-9 flex items-center justify-center bg-white/5 border border-white/10 text-slate-400 rounded-lg hover:bg-emerald-600 hover:text-white transition-all active:scale-90 shadow-lg shrink-0"
+      >
+        <ArrowLeft size={16} />
+      </button>
+      <div className="min-w-0">
+        <h3 className="text-xs md:text-lg font-black text-white uppercase tracking-tight leading-none truncate">{title}</h3>
+        <p className="text-emerald-500 font-bold text-[7px] md:text-[9px] uppercase tracking-widest mt-1 truncate">{subtitle}</p>
+      </div>
+    </div>
+  );
+
+  const ReportTile = ({ onClick, icon: Icon, title, subtitle, color, accentColor }: any) => {
+    const iconSize = typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 28;
+
+    return (
+      <button 
+        onClick={onClick} 
+        className="relative aspect-square md:aspect-auto md:h-52 p-3.5 md:p-6 bg-black/30 backdrop-blur-2xl rounded-2xl md:rounded-[2rem] border border-white/10 shadow-2xl hover:border-emerald-500/50 hover:bg-emerald-950/20 transition-all group flex flex-col items-center justify-center text-center overflow-hidden active:scale-[0.98]"
+      >
+        <div className="relative mb-3 md:mb-5 group-hover:scale-105 transition-transform duration-500 ease-out">
+          <div className={`absolute inset-0 rounded-xl md:rounded-[1.5rem] blur-lg opacity-30 group-hover:opacity-70 transition-opacity ${color}`}></div>
+          <div className={`relative w-11 h-11 md:w-16 md:h-16 ${color} rounded-xl md:rounded-[1.5rem] flex items-center justify-center border-2 border-white/20 shadow-2xl overflow-hidden`}>
+            <div className="absolute inset-0 opacity-[0.08] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '6px 6px' }}></div>
+            <Icon className="text-white relative z-10 drop-shadow-md" size={iconSize} strokeWidth={1.5} />
+            <div className="absolute inset-[3px] border border-white/5 rounded-[inherit] pointer-events-none"></div>
+          </div>
+        </div>
+
+        <div className="space-y-1 w-full px-2">
+          <h4 className="text-[9px] md:text-lg font-black text-white uppercase tracking-tight leading-tight group-hover:text-emerald-400 transition-colors">
+            {title}
+          </h4>
+          <p className="text-slate-500 font-bold text-[5px] md:text-[10px] uppercase tracking-[0.3em] opacity-80 leading-none">
+            {subtitle}
+          </p>
+        </div>
+
+        <div className={`mt-2 md:mt-4 flex items-center gap-2 ${accentColor} font-black uppercase text-[6px] md:text-[9px] tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all duration-500`}>
+          <div className="w-3 h-[1.5px] bg-current"></div>
+          EXECUTE
+        </div>
+      </button>
     );
   };
 
-  const isRangeValid = range.start && range.end;
-  const isFuelRangeValid = fuelReportRange.start && fuelReportRange.end;
-  const isSummaryRangeValid = summaryRange.start && summaryRange.end;
-  const isAttendanceRangeValid = attendanceReportRange.start && attendanceReportRange.end;
-
-  const handlePaymentRangeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isRangeValid) setActiveStep('handoff-prompt');
+  const getSigState = () => {
+    if (activeStep === 'attendance-download-range') return withSignature;
+    if (activeStep === 'fuel-report-range') return fuelWithSignature;
+    if (activeStep === 'detailed-setup') return masterDataWithSignature;
+    return false;
   };
 
-  const handlePromptChoice = (choice: 'yes' | 'no') => {
-    if (choice === 'yes') {
-      setActiveStep('handoff-form');
-    } else {
-      (async () => {
-        setIsGenerating(true);
-        await generatePaymentSlip(bookings, range.start, range.end);
-        setIsGenerating(false);
-        setActiveStep('dashboard');
-      })();
-    }
+  const toggleSigState = () => {
+    const nextVal = !getSigState();
+    if (activeStep === 'attendance-download-range') setWithSignature(nextVal);
+    else if (activeStep === 'fuel-report-range') setFuelWithSignature(nextVal);
+    else if (activeStep === 'detailed-setup') setMasterDataWithSignature(nextVal);
   };
-
-  const handleHandoffSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsGenerating(true);
-    await generatePaymentSlip(bookings, range.start, range.end, handoffData);
-    setIsGenerating(false);
-    setActiveStep('dashboard');
-  };
-
-  const handleDetailedReportExport = async () => {
-    setIsGenerating(true);
-    await generateOverallReport(bookings, range.start, range.end, selectedFields);
-    setIsGenerating(false);
-    setActiveStep('dashboard');
-  };
-
-  const handleTripSummaryDownload = async (withGraph: boolean) => {
-    setIsGenerating(true);
-    await generateTripSummaryReport(bookings, summaryRange.start, summaryRange.end, withGraph);
-    setIsGenerating(false);
-    setActiveStep('trip-summary');
-  };
-
-  const inputClasses = "block w-full min-w-0 pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm font-bold text-white shadow-sm hover:border-white/20 box-border appearance-none";
-  const labelClasses = "text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1";
-
-  const StepHeader = ({ title, subtitle, onBackStep }: { title: string, subtitle: string, onBackStep: () => void }) => (
-    <div className="flex items-center gap-3 md:gap-4 mb-4 animate-in fade-in slide-in-from-left-4 duration-500">
-      <button 
-        onClick={onBackStep}
-        className="w-9 h-9 flex items-center justify-center bg-white/5 border border-white/10 text-slate-400 rounded-xl hover:bg-white hover:text-slate-900 transition-all active:scale-90 shadow-sm shrink-0"
-      >
-        <ArrowLeft size={18} />
-      </button>
-      <div className="min-w-0 flex-1">
-        <h3 className="text-sm md:text-xl font-black text-white uppercase tracking-tight leading-none truncate">{title}</h3>
-        <p className="text-slate-400 font-bold text-[8px] md:text-[10px] uppercase tracking-widest mt-0.5 truncate">{subtitle}</p>
-      </div>
-    </div>
-  );
-
-  const DateInput = ({ label, value, onChange }: any) => (
-    <div className="relative group w-full mb-1">
-      <label className={labelClasses}>{label}</label>
-      <div className="relative w-full overflow-hidden rounded-xl">
-        <CalendarIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none z-10" size={16} />
-        <input 
-          required
-          type="date" 
-          value={value}
-          onChange={onChange}
-          className={inputClasses}
-        />
-      </div>
-    </div>
-  );
 
   return (
-    <div className="flex flex-col max-w-4xl mx-auto w-full px-4 md:px-0 box-border min-h-0 h-full overflow-y-auto custom-scrollbar pb-10">
-      {activeStep === 'dashboard' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 md:space-y-6 py-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight truncate">Report Generator</h2>
-              <p className="text-slate-400 font-bold mt-0.5 uppercase text-[7px] md:text-[10px] tracking-[0.2em]">Choose a document type</p>
+    <div className="flex flex-col w-full h-full box-border relative bg-[#062c1e] overflow-hidden">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <img 
+          src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
+          alt="Watermark" 
+          className="w-[220px] md:w-[450px] h-[220px] md:h-[450px] object-cover rounded-full opacity-[0.04]" 
+        />
+      </div>
+
+      <div className="relative z-10 flex flex-col h-full w-full max-w-7xl mx-auto p-2 md:p-8 space-y-4 md:space-y-6 overflow-hidden">
+        {activeStep === 'dashboard' && (
+          <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 justify-center">
+            <div className="flex items-center justify-between mb-4 md:mb-8 shrink-0">
+              <div className="min-w-0">
+                <h2 className="text-sm md:text-3xl font-black text-white uppercase tracking-tighter leading-none flex items-center gap-3">
+                  REPORT COMMAND CENTER
+                  <div className="hidden md:block h-px w-20 bg-gradient-to-r from-emerald-500/50 to-transparent"></div>
+                </h2>
+              </div>
+              {onBack && (
+                <button 
+                  onClick={onBack} 
+                  className="group flex items-center gap-2 text-[7px] md:text-[10px] font-black text-slate-300 hover:text-white uppercase tracking-widest bg-white/5 px-3 py-1.5 md:px-5 md:py-2.5 rounded-lg md:rounded-xl border border-white/10 transition-all active:scale-95 overflow-hidden shadow-lg shrink-0"
+                >
+                  <X size={12} />
+                  <span>Exit Terminal</span>
+                </button>
+              )}
             </div>
-            {onBack && (
-              <button 
-                onClick={onBack}
-                className="flex items-center justify-center gap-2 text-[8px] md:text-[10px] font-black text-slate-300 hover:text-white transition-all uppercase tracking-widest bg-white/5 hover:bg-white/10 border border-white/10 px-4 md:px-6 py-2 rounded-lg md:rounded-xl shadow-sm shrink-0"
-              >
-                <ArrowLeft size={12} /> Back
-              </button>
-            )}
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button onClick={() => setActiveStep('payment-slip-range')} className="p-4 md:p-6 bg-[#062c1e] rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-xl hover:border-emerald-600 transition-all group text-left flex flex-col items-start">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                <FileText size={20} strokeWidth={2.5} />
-              </div>
-              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Payment Slip</h4>
-              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Handover bills with automated calculations and officer details.</p>
-              <div className="mt-auto flex items-center gap-2 text-emerald-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
-                Start Generation <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            </button>
-
-            <button onClick={() => setActiveStep('driver-attendance')} className="p-4 md:p-6 bg-[#062c1e] rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-xl hover:border-amber-500 transition-all group text-left flex flex-col items-start">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                <Clock size={20} strokeWidth={2.5} />
-              </div>
-              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Driver's Attendance</h4>
-              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Record daily In/Out times for Driver.</p>
-              <div className="mt-auto flex items-center gap-2 text-amber-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
-                Manage Timing <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            </button>
-
-            <button onClick={() => setActiveStep('fuel-report-range')} className="p-4 md:p-6 bg-[#062c1e] rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-xl hover:border-emerald-600 transition-all group text-left flex flex-col items-start">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-500 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                <Fuel size={20} strokeWidth={2.5} />
-              </div>
-              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">KILOMETERS AND FUEL REPORT</h4>
-              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Detailed report on vehicle mileage and fuel purchase history.</p>
-              <div className="mt-auto flex items-center gap-2 text-emerald-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
-                Export Fuel Logs <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            </button>
-
-            <button onClick={() => setActiveStep('detailed-setup')} className="p-4 md:p-6 bg-[#062c1e] rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-xl hover:border-blue-500 transition-all group text-left flex flex-col items-start">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                <Table size={20} strokeWidth={2.5} />
-              </div>
-              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Detailed Data Report</h4>
-              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">Custom spreadsheet-style export with specific columns and period range.</p>
-              <div className="mt-auto flex items-center gap-2 text-blue-400 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
-                Customize Export <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            </button>
-
-            <button onClick={() => setActiveStep('trip-summary')} className="p-4 md:p-6 bg-[#062c1e] rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-xl hover:border-amber-500 transition-all group text-left flex flex-col items-start">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-500 text-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                <BarChart3 size={20} strokeWidth={2.5} />
-              </div>
-              <h4 className="text-sm md:text-lg font-black text-white uppercase tracking-tight mb-1">Trip Summary</h4>
-              <p className="text-slate-400 font-medium text-[9px] md:text-xs leading-relaxed mb-4 opacity-80">View month-wise trip volume for the current year in an animated chart.</p>
-              <div className="mt-auto flex items-center gap-2 text-amber-500 font-black uppercase text-[8px] md:text-[10px] tracking-widest">
-                View Statistics <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {activeStep === 'fuel-report-range' && (
-        <div className="animate-in fade-in slide-in-from-right-6 duration-500 max-w-md mx-auto w-full py-8">
-          <StepHeader title="Fuel Report Range" subtitle="Choose period for fuel logs" onBackStep={() => setActiveStep('dashboard')} />
-          <form 
-            onSubmit={(e) => { e.preventDefault(); if(isFuelRangeValid) handleFuelReportDownload(); }} 
-            className="space-y-6 bg-[#062c1e] p-8 rounded-[2.5rem] border-2 border-white/5 shadow-2xl"
-          >
-             <div className="grid grid-cols-1 gap-6">
-               <DateInput label="Start Date" value={fuelReportRange.start} onChange={(e:any) => setFuelReportRange(p => ({...p, start: e.target.value}))} />
-               <DateInput label="End Date" value={fuelReportRange.end} onChange={(e:any) => setFuelReportRange(p => ({...p, end: e.target.value}))} />
-               
-               <div className="space-y-2">
-                 <label className={labelClasses}>Signature Policy</label>
-                 <div className="flex gap-4">
-                    <button 
-                      type="button"
-                      onClick={() => setFuelWithSignature(true)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${fuelWithSignature ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}
-                    >
-                      <ShieldCheck size={14} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">With Signature</span>
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setFuelWithSignature(false)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${!fuelWithSignature ? 'bg-amber-600 text-white border-amber-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-amber-500/30'}`}
-                    >
-                      <ShieldOff size={14} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Without Signature</span>
-                    </button>
-                 </div>
-                 <p className="text-[8px] font-bold text-slate-500 uppercase tracking-tight ml-1">
-                   {fuelWithSignature ? 'Includes Driver/JCO cols & Countersign' : 'Removes Driver/JCO cols & Countersign'}
-                 </p>
-               </div>
-             </div>
-             
-             <button 
-              type="submit" 
-              disabled={!isFuelRangeValid || isGenerating} 
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-xl shadow-emerald-900/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-95"
-             >
-                {isGenerating ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Generating PDF...
-                  </>
-                ) : (
-                  <>
-                    <Download size={18} />
-                    Download Fuel Report
-                  </>
-                )}
-             </button>
-          </form>
-        </div>
-      )}
-
-      {activeStep === 'driver-attendance' && (
-        <div className="animate-in fade-in slide-in-from-right-6 duration-500 max-w-lg mx-auto w-full py-6 space-y-10">
-          <StepHeader title="Driver Attendance" subtitle="Daily Log Management" onBackStep={() => setActiveStep('dashboard')} />
-          
-          <div className="bg-[#062c1e] p-6 rounded-3xl border-2 border-white/5 shadow-2xl space-y-6">
-            <div className="space-y-4">
-              <DateInput 
-                label="Attendance Date" 
-                value={attendanceForm.date} 
-                onChange={(e:any) => setAttendanceForm({...attendanceForm, date: e.target.value})} 
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 flex-1 max-h-fit content-center overflow-hidden">
+              <ReportTile 
+                onClick={() => setActiveStep('payment-slip-range')}
+                icon={FileText}
+                title="Payment Slip"
+                subtitle="MONTHLY BILLS"
+                color="bg-emerald-600"
+                accentColor="text-emerald-400"
               />
-
-              <div className="relative group">
-                <label className={labelClasses}>Driver's Name</label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none z-10" size={16} />
-                  <input 
-                    type="text"
-                    value={attendanceForm.driverName}
-                    onChange={(e) => setAttendanceForm({...attendanceForm, driverName: e.target.value})}
-                    className={inputClasses}
-                    placeholder="e.g., NAZRUL"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                 <div 
-                   onClick={toggleHoliday}
-                   className={`flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 cursor-pointer transition-all h-14 ${attendanceForm.isHoliday ? 'bg-amber-500/10 border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : 'bg-white/5 border-white/10 text-slate-300 hover:border-white/10'}`}
-                 >
-                   <div className="flex items-center gap-2">
-                     <Coffee size={14} className={attendanceForm.isHoliday ? 'text-amber-500' : 'text-slate-400'} />
-                     <h4 className={`text-[10px] font-black uppercase tracking-widest ${attendanceForm.isHoliday ? 'text-amber-500' : 'text-slate-300'}`}>Holiday</h4>
-                   </div>
-                 </div>
-                 
-                 <div className="grid grid-cols-2 gap-4">
-                   <div 
-                     onClick={() => handleDayTypeSelection('office')}
-                     className={`flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 cursor-pointer transition-all h-14 ${attendanceForm.isHoliday ? 'opacity-40 cursor-not-allowed grayscale bg-black/20 border-white/5' : attendanceForm.isOfficeDay ? 'bg-emerald-500/10 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10'}`}
-                   >
-                     <h4 className={`text-[10px] font-black uppercase tracking-widest ${attendanceForm.isOfficeDay ? 'text-emerald-500' : 'text-slate-300'}`}>Office Day</h4>
-                   </div>
-
-                   <div 
-                     onClick={() => handleDayTypeSelection('duty')}
-                     className={`flex flex-col items-center justify-center py-4 px-2 rounded-xl border-2 cursor-pointer transition-all h-14 ${attendanceForm.isDutyDay ? 'bg-emerald-500/10 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10'}`}
-                   >
-                     <h4 className={`text-[10px] font-black uppercase tracking-widest ${attendanceForm.isDutyDay ? 'text-emerald-500' : 'text-slate-300'}`}>Duty Day</h4>
-                   </div>
-                 </div>
-              </div>
-
-              {(!attendanceForm.isHoliday || attendanceForm.isDutyDay) && (
-                <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
-                  <div className="relative group">
-                    <label className={labelClasses}>In Time</label>
-                    <div className="relative">
-                      <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none z-10" size={16} />
-                      <input 
-                        type="time"
-                        value={attendanceForm.inTime}
-                        onChange={(e) => setAttendanceForm({...attendanceForm, inTime: e.target.value})}
-                        className={inputClasses}
-                      />
-                    </div>
-                  </div>
-                  <div className="relative group">
-                    <label className={labelClasses}>Out Time</label>
-                    <div className="relative">
-                      <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none z-10" size={16} />
-                      <input 
-                        type="time"
-                        value={attendanceForm.outTime}
-                        onChange={(e) => setAttendanceForm({...attendanceForm, outTime: e.target.value})}
-                        className={inputClasses}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Last Day Microbus Entry Time (To Cantonment): Disabled if no activity on previous day */}
-              <div className="relative group">
-                <label className={labelClasses}>Last Day Microbus Entry Time (To Cantonment)</label>
-                <div className="relative">
-                  <History className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${hasPreviousBooking ? 'text-emerald-500/60' : 'text-slate-500/30'} group-focus-within:text-emerald-500 transition-colors pointer-events-none z-10`} size={16} />
-                  <input 
-                    disabled={!hasPreviousBooking}
-                    type="time"
-                    value={attendanceForm.lastDayCompletionTime || ''}
-                    onChange={(e) => setAttendanceForm({...attendanceForm, lastDayCompletionTime: e.target.value})}
-                    className={`${inputClasses} ${hasPreviousBooking ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-black/20 border-white/5 text-slate-500 cursor-not-allowed'} focus:border-emerald-500`}
-                    placeholder={hasPreviousBooking ? "Select Time" : "No activity recorded"}
-                  />
-                  {!hasPreviousBooking && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600">
-                      <Lock size={14} />
-                    </div>
-                  )}
-                </div>
-                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-tight mt-1 ml-1">
-                  {hasPreviousBooking ? 'Automatically fetched from the previous day\'s reservation' : 'Field locked: No reservation found for previous day'}
-                </p>
-              </div>
-
-              <div className="relative group">
-                <label className={labelClasses}>Remarks</label>
-                <div className="relative">
-                  <AlignLeft className="absolute left-3.5 top-3 text-slate-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none z-10" size={16} />
-                  <textarea 
-                    value={attendanceForm.remarks || ''}
-                    onChange={(e) => setAttendanceForm({...attendanceForm, remarks: e.target.value})}
-                    className={`${inputClasses} pl-10 pt-2.5 min-h-[80px] resize-none font-medium text-xs`}
-                    placeholder="Enter any additional notes..."
-                  />
-                </div>
+              <ReportTile 
+                onClick={() => setActiveStep('driver-attendance')}
+                icon={Clock}
+                title="Driver's Attendence"
+                subtitle="LOG MANAGEMENT"
+                color="bg-amber-600"
+                accentColor="text-amber-400"
+              />
+              <ReportTile 
+                onClick={() => setActiveStep('fuel-report-range')}
+                icon={Fuel}
+                title="Fuel Report"
+                subtitle="MILEAGE DATA"
+                color="bg-cyan-600"
+                accentColor="text-cyan-400"
+              />
+              <ReportTile 
+                onClick={() => setActiveStep('detailed-setup')}
+                icon={Database}
+                title="Detailed Data Report"
+                subtitle="FULL EXPORT"
+                color="bg-blue-600"
+                accentColor="text-blue-400"
+              />
+              <ReportTile 
+                onClick={() => setActiveStep('trip-summary')}
+                icon={BarChart3}
+                title="Trip Statistics"
+                subtitle="ANNUAL REVIEW"
+                color="bg-indigo-600"
+                accentColor="text-indigo-400"
+              />
+              <div className="hidden md:flex p-6 bg-white/[0.02] border-2 border-dashed border-white/5 rounded-[2rem] flex-col items-center justify-center text-center opacity-30 group hover:opacity-50 transition-opacity">
+                <LayoutDashboard size={24} className="text-slate-400 mb-2" />
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] leading-relaxed">System Link Secure<br/>Monitoring Active</span>
               </div>
             </div>
-
-            <button 
-              onClick={handleSaveAttendance}
-              disabled={isSavingAttendance || saveSuccess}
-              className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-[0.98] ${saveSuccess ? 'bg-emerald-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20'}`}
-            >
-              {isSavingAttendance ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Saving Entry...
-                </>
-              ) : saveSuccess ? (
-                <>
-                  <CheckCircle2 size={18} />
-                  Attendance Saved!
-                </>
-              ) : (
-                <>
-                  <Save size={18} />
-                  Save Attendance
-                </>
-              )}
-            </button>
           </div>
+        )}
 
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10 w-full overflow-hidden">
-             <div className="flex flex-col md:flex-row md:items-end justify-between px-2 gap-4">
-                <div className="flex items-center gap-4">
-                   <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-600/10 text-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center border border-emerald-500/20 shadow-inner">
-                      <CalendarRange size={18} />
-                   </div>
-                   <div className="flex flex-col">
-                      <div className="flex items-baseline gap-2">
-                        <h4 className="text-[10px] md:text-sm font-black text-white uppercase tracking-tight whitespace-nowrap">DRIVER'S ATTENDANCE LOG</h4>
-                        <div className="flex items-center gap-1 bg-black/40 px-2 py-1 rounded-lg border border-white/10 shadow-lg shrink-0">
-                           <button onClick={() => setHistoryMonth(m => subMonths(m, 1))} className="text-slate-500 hover:text-emerald-400 active:scale-90 transition-colors"><ChevronLeft size={14} /></button>
-                           <span className="text-[8px] md:text-[10px] font-black text-emerald-400 uppercase tracking-widest min-w-[90px] text-center">
-                             {format(historyMonth, 'MMM yyyy')}
-                           </span>
-                           <button onClick={() => setHistoryMonth(m => addMonths(m, 1))} className="text-slate-500 hover:text-emerald-400 active:scale-90 transition-colors"><ChevronRight size={14} /></button>
+        {activeStep === 'driver-attendance' && (
+          <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-500 overflow-hidden relative">
+            <StepHeader title="Driver Attendance" subtitle="Log Access Terminal" onBackStep={() => setActiveStep('dashboard')} />
+            
+            {/* Delete Confirmation Overlay */}
+            {deletingId && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+                <div className="bg-[#0a1128] border-2 border-rose-500/50 p-6 md:p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-w-sm w-full text-center space-y-6">
+                  <div className="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20 shadow-inner">
+                    <AlertTriangle size={32} />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-xl font-black text-white uppercase tracking-tight">Delete record?</h4>
+                    <p className="text-xs font-medium text-slate-400 leading-relaxed">
+                      Are you sure you want to permanently remove this attendance log? This action cannot be undone.
+                    </p>
+                  </div>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setDeletingId(null)}
+                      className="flex-1 py-3.5 bg-white/5 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={confirmDeleteAttendance}
+                      className="flex-1 py-3.5 bg-rose-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-rose-900/20 hover:bg-rose-500 transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      <Trash2 size={14} /> Yes, Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0 overflow-hidden w-full">
+              <div className="w-full md:w-[35%] lg:w-[30%] flex flex-col gap-4 overflow-y-auto custom-scrollbar shrink-0 min-w-0">
+                {!isAddingAttendance ? (
+                  <div className="bg-black/30 backdrop-blur-xl p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 flex flex-col gap-4 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+                    <div className="text-center space-y-2 mb-2">
+                       <h5 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Log Entry Panel</h5>
+                       <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Select an action below</p>
+                    </div>
+                    
+                    <button 
+                      onClick={() => {
+                        setAttendanceForm({
+                          date: format(new Date(), 'yyyy-MM-dd'),
+                          driverName: 'NAZRUL',
+                          inTime: '08:00',
+                          outTime: '17:00',
+                          isHoliday: false,
+                          isOfficeDay: true,
+                          isDutyDay: false,
+                          lastDayCompletionTime: '',
+                          remarks: ''
+                        });
+                        setIsAddingAttendance(true);
+                      }}
+                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-xs shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2.5 border border-emerald-400/20 group"
+                    >
+                      <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Plus size={14} strokeWidth={4} />
+                      </div>
+                      <span>Add Attendance</span>
+                    </button>
+                    
+                    <div className="flex items-center gap-2 py-1 opacity-20">
+                      <div className="h-px flex-1 bg-white"></div>
+                      <span className="text-[7px] font-black text-white">READY</span>
+                      <div className="h-px flex-1 bg-white"></div>
+                    </div>
+                    
+                    <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-center">
+                      <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
+                        Attendance data is synchronized with the main database in real-time.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-black/30 backdrop-blur-xl p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-white/10 flex flex-col gap-5 animate-in slide-in-from-left-4 duration-300 shadow-2xl relative">
+                    <button 
+                      onClick={() => setIsAddingAttendance(false)}
+                      className="absolute right-4 top-4 text-slate-500 hover:text-white transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                    
+                    <div className="flex flex-col gap-1 w-full">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">LOG DATE</label>
+                      <input 
+                        type="date" 
+                        value={attendanceForm.date} 
+                        onChange={e => setAttendanceForm({...attendanceForm, date: e.target.value})} 
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all shadow-inner box-border" 
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2 w-full">
+                      <button 
+                        onClick={() => setAttendanceForm({...attendanceForm, isOfficeDay: true, isHoliday: false, isDutyDay: false})} 
+                        className={`py-2.5 rounded-xl text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isOfficeDay ? 'bg-emerald-600 border-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}
+                      >
+                        Office
+                      </button>
+                      <button 
+                        onClick={() => setAttendanceForm({...attendanceForm, isHoliday: !attendanceForm.isHoliday, isOfficeDay: false})} 
+                        className={`py-2.5 rounded-xl text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isHoliday ? 'bg-amber-600 border-amber-500 shadow-lg text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
+                      >
+                        Holiday
+                      </button>
+                      <button 
+                        onClick={() => setAttendanceForm({...attendanceForm, isDutyDay: !attendanceForm.isDutyDay, isOfficeDay: false})} 
+                        className={`py-2.5 rounded-xl text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isDutyDay ? 'bg-blue-600 border-blue-500 shadow-lg text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
+                      >
+                        Duty
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 w-full">
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">In Time</label>
+                        <div className="relative group">
+                          <input 
+                            type="time" 
+                            value={attendanceForm.inTime || ''} 
+                            onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} 
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-3 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border" 
+                          />
+                          {attendanceForm.inTime && (
+                            <button 
+                              onClick={() => setAttendanceForm({...attendanceForm, inTime: ''})}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-white transition-colors"
+                              title="Clear Time"
+                            >
+                              <X size={10} />
+                            </button>
+                          )}
                         </div>
                       </div>
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Out Time</label>
+                        <div className="relative group">
+                          <input 
+                            type="time" 
+                            value={attendanceForm.outTime || ''} 
+                            onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} 
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-3 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border" 
+                          />
+                          {attendanceForm.outTime && (
+                            <button 
+                              onClick={() => setAttendanceForm({...attendanceForm, outTime: ''})}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-white transition-colors"
+                              title="Clear Time"
+                            >
+                              <X size={10} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 relative group w-full">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 leading-tight">LAST DAY MICROBUS ENTRY TIME (TO CANTONMENT)</label>
+                      <div className="relative">
+                        <input 
+                          type="time" 
+                          value={attendanceForm.lastDayCompletionTime || ''} 
+                          onChange={e => setAttendanceForm({...attendanceForm, lastDayCompletionTime: e.target.value})} 
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-emerald-500 transition-all placeholder:text-slate-700 box-border" 
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                          {attendanceForm.lastDayCompletionTime && (
+                            <button 
+                              onClick={() => setAttendanceForm({...attendanceForm, lastDayCompletionTime: ''})}
+                              className="p-1 text-slate-500 hover:text-white transition-colors"
+                              title="Clear Time"
+                            >
+                              <X size={10} />
+                            </button>
+                          )}
+                          <div className="opacity-20 group-hover:opacity-100 transition-opacity">
+                            <RotateCw size={12} className="text-emerald-500" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 w-full">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">REMARKS</label>
+                      <textarea 
+                        value={attendanceForm.remarks || ''} 
+                        onChange={e => setAttendanceForm({...attendanceForm, remarks: e.target.value})} 
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-emerald-500 transition-all placeholder:text-slate-700 min-h-[70px] resize-none box-border" 
+                        placeholder="e.g., Late entry, Duty finished early"
+                      />
+                    </div>
+
+                    <button 
+                      onClick={handleSaveAttendance} 
+                      disabled={isSavingAttendance}
+                      className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mt-2"
+                    >
+                      {isSavingAttendance ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      {attendanceForm.id ? 'Update Record' : 'Save Record'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 flex flex-col min-h-0 min-w-0 gap-3">
+                <div className="flex-1 bg-black/40 rounded-xl md:rounded-[2rem] border border-white/10 overflow-hidden shadow-2xl w-full backdrop-blur-sm flex flex-col min-h-0 min-w-0">
+                   <div className="p-4 border-b border-white/10 bg-[#0a1128]/50 flex items-center justify-between">
+                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Operation Log History</span>
+                      <span className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.2em]">{filteredAttendance.length} Entries</span>
+                   </div>
+                   <div className="flex-1 overflow-y-auto custom-scrollbar">
+                      <table className="w-full text-left border-collapse table-fixed">
+                         <thead className="sticky top-0 z-20 bg-[#0a1128]">
+                            <tr className="border-b border-white/10">
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[22%]">Date</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[20%]">Day</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center border-r border-white/5 w-[18%]">In</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center border-r border-white/5 w-[18%]">Out</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center w-[22%]">Actions</th>
+                            </tr>
+                         </thead>
+                         <tbody className="divide-y divide-white/5">
+                            {filteredAttendance.map(r => {
+                               const dateObj = parseISO(r.date);
+                               return (
+                                  <tr key={r.id} className="group hover:bg-white/[0.04] transition-colors">
+                                     <td className="p-2 md:p-4 whitespace-nowrap border-r border-white/5 overflow-hidden text-ellipsis">
+                                        <span className="text-[9px] md:text-sm font-black text-white uppercase tracking-tight">
+                                           {format(dateObj, 'dd MMM yy')}
+                                        </span>
+                                     </td>
+                                     <td className="p-2 md:p-4 whitespace-nowrap border-r border-white/5 overflow-hidden text-ellipsis">
+                                        <span className="text-[7px] md:text-[10px] font-black text-white/60 uppercase tracking-widest">
+                                           {format(dateObj, 'EEEE')}
+                                        </span>
+                                     </td>
+                                     {r.isHoliday && !r.isDutyDay ? (
+                                        <td colSpan={2} className="p-2 md:p-4 text-center bg-amber-500/5 border-r border-white/5">
+                                           <div className="inline-flex items-center gap-1 md:gap-2 px-2 py-0.5 md:px-4 md:py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full">
+                                              <span className="text-[7px] md:text-[10px] font-black text-amber-500 uppercase tracking-widest">HOLIDAY</span>
+                                           </div>
+                                        </td>
+                                     ) : (
+                                        <>
+                                           <td className="p-2 md:p-4 text-center border-r border-white/5">
+                                              <div className="inline-flex items-center bg-white/5 px-1.5 py-0.5 md:px-3 md:py-1 rounded-md md:rounded-lg border border-white/10">
+                                                 <span className="text-[9px] md:text-xs font-black text-white">{r.inTime || '--:--'}</span>
+                                              </div>
+                                           </td>
+                                           <td className="p-2 md:p-4 text-center border-r border-white/5">
+                                              <div className="inline-flex items-center bg-amber-500/10 px-1.5 py-0.5 md:px-3 md:py-1 rounded-md md:rounded-lg border border-amber-500/20">
+                                                 <span className="text-[9px] md:text-xs font-black text-amber-400">{r.outTime || '--:--'}</span>
+                                              </div>
+                                           </td>
+                                        </>
+                                     )}
+                                     <td className="p-2 md:p-4 text-center">
+                                        <div className="flex items-center justify-center gap-1.5">
+                                           <button 
+                                              onClick={() => handleEditAttendance(r)}
+                                              className="p-1.5 bg-white/5 text-emerald-400 hover:bg-emerald-500/20 rounded-md transition-all active:scale-90"
+                                              title="Edit Log"
+                                           >
+                                              <Pencil size={14} />
+                                           </button>
+                                           <button 
+                                              onClick={() => r.id && setDeletingId(r.id)}
+                                              className="p-1.5 bg-white/5 text-rose-400 hover:bg-rose-500/20 rounded-md transition-all active:scale-90"
+                                              title="Delete Log"
+                                           >
+                                              <Trash2 size={14} />
+                                           </button>
+                                        </div>
+                                     </td>
+                                  </tr>
+                               );
+                            })}
+                         </tbody>
+                      </table>
                    </div>
                 </div>
                 
-                <div className="bg-emerald-500/5 border border-emerald-500/10 px-3 py-0.5 rounded-full self-start">
-                   <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-widest">
-                     {filteredAttendance.length} entries
-                   </span>
-                </div>
-             </div>
+                <button 
+                  onClick={() => setActiveStep('attendance-download-range')} 
+                  className="w-full py-3.5 bg-black/40 text-emerald-400 rounded-xl md:rounded-2xl font-black uppercase text-[10px] border border-emerald-500/20 shadow-lg flex items-center justify-center gap-2.5 hover:bg-emerald-500/10 transition-all active:scale-95 group shrink-0"
+                >
+                  <Download size={16} className="group-hover:-translate-y-0.5 transition-transform" /> 
+                  <span>Download Attendance Log</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-             <div className="bg-[#0a1128]/40 rounded-xl md:rounded-2xl border border-white/20 overflow-hidden shadow-2xl w-full">
-                {filteredAttendance.length > 0 ? (
-                  <div className="w-full">
-                    <table className="w-full text-left border-collapse border border-white/20 table-fixed">
-                      <thead>
-                        <tr className="bg-black/40">
-                          <th className="p-2 md:p-3 text-[8px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest w-[85px] md:w-[120px] border border-white/20">Date</th>
-                          <th className="p-2 md:p-3 text-[8px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border border-white/20 w-[70px] md:w-[100px]">Day</th>
-                          <th className="p-2 md:p-3 text-[8px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center border border-white/20 w-[60px] md:w-[80px]">In</th>
-                          <th className="p-2 md:p-3 text-[8px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center border border-white/20 w-[60px] md:w-[80px]">Out</th>
-                          <th className="p-2 md:p-3 text-[8px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-right border border-white/20 w-[70px] md:w-[90px]">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white/[0.02]">
-                        {filteredAttendance.map((record, index) => (
-                          <tr key={record.id || index} className="group hover:bg-white/[0.05] transition-colors">
-                            <td className="p-2 md:p-3 whitespace-nowrap border border-white/20 overflow-hidden text-ellipsis">
-                               <span className="text-[9px] md:text-sm font-black text-white uppercase tracking-tight">
-                                  {format(parseISO(record.date), 'dd MMM yy')}
-                               </span>
-                            </td>
-                            <td className="p-2 md:p-3 whitespace-nowrap border border-white/20 overflow-hidden text-ellipsis">
-                               <span className="text-[8px] md:text-xs font-black text-emerald-500/80 uppercase tracking-widest">
-                                  {format(parseISO(record.date), 'EEEE')}
-                               </span>
-                            </td>
-                            {record.isHoliday && !record.isDutyDay ? (
-                              <td colSpan={2} className="p-2 md:p-3 text-center border border-white/20 bg-amber-500/5">
-                                <div className="inline-flex items-center gap-1 px-2 py-1 border border-amber-500/20 rounded-md">
-                                   <span className="text-[7px] md:text-[10px] font-black text-amber-500 uppercase tracking-widest">HOLIDAY</span>
-                                </div>
-                              </td>
-                            ) : (
-                              <>
-                                <td className="p-2 md:p-3 text-center border border-white/20">
-                                   <div className="inline-flex items-center bg-emerald-500/5 px-1.5 py-0.5 rounded border border-emerald-500/10">
-                                      <span className="text-[8px] md:text-xs font-black text-emerald-400">{record.inTime}</span>
-                                   </div>
-                                </td>
-                                <td className="p-2 md:p-3 text-center border border-white/20">
-                                   <div className="inline-flex items-center bg-amber-500/5 px-1.5 py-0.5 rounded border border-emerald-500/10">
-                                      <span className="text-[8px] md:text-xs font-black text-emerald-400">{record.outTime}</span>
-                                   </div>
-                                </td>
-                              </>
-                            )}
-                            <td className="p-2 md:p-3 text-right border border-white/20">
-                               <div className="flex items-center justify-end gap-1 md:gap-2">
-                                 <button 
-                                   onClick={() => handleEditAttendance(record)}
-                                   className="w-7 h-7 md:w-8 md:h-8 rounded-md inline-flex items-center justify-center text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all"
-                                   title="Edit Entry"
-                                  >
-                                   <Pencil size={14} />
-                                 </button>
-                                 <button 
-                                   onClick={() => setAttendanceToDelete(record)}
-                                   className="w-7 h-7 md:w-8 md:h-8 rounded-md inline-flex items-center justify-center text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
-                                   title="Delete Entry"
-                                  >
-                                   <Trash2 size={14} />
-                                 </button>
-                               </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+        {(['payment-slip-range', 'fuel-report-range', 'attendance-download-range', 'detailed-setup', 'summary-download-range'] as ReportStep[]).includes(activeStep) && (
+          <div className="flex flex-col h-full md:justify-center animate-in fade-in slide-in-from-right-4 duration-500 overflow-y-auto custom-scrollbar pt-2 pb-8 md:p-0">
+             <div className={`${activeStep === 'detailed-setup' ? 'max-w-full md:max-w-[95%] xl:max-w-7xl' : 'max-w-md'} mx-auto w-full bg-black/40 backdrop-blur-2xl p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-2 border-white/5 shadow-2xl space-y-4 md:space-y-6 shrink-0`}>
+                <StepHeader 
+                  title={activeStep === 'detailed-setup' ? "Detailed Data Report" : "Report Config"} 
+                  subtitle={activeStep === 'detailed-setup' ? "Customize Full Master Export" : "Configure export parameters"} 
+                  onBackStep={() => setActiveStep(activeStep === 'attendance-download-range' ? 'driver-attendance' : (activeStep === 'summary-download-range' ? 'trip-summary' : 'dashboard'))} 
+                />
+                
+                <div className={`grid grid-cols-1 ${activeStep === 'detailed-setup' ? 'md:grid-cols-3' : ''} gap-4`}>
+                  <div className="space-y-1">
+                    <label className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
+                    <input type="date" value={range.start} onChange={e => setRange({...range, start: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-black text-white outline-none focus:border-emerald-500 transition-all" />
                   </div>
-                ) : (
-                  <div className="py-24 flex flex-col items-center justify-center opacity-40">
-                    <CalendarDays size={48} className="text-slate-600 mb-4" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">No logs for {format(historyMonth, 'MMMM yyyy')}</p>
-                    <p className="text-[8px] font-bold text-slate-600 uppercase mt-2 tracking-widest">AREA HQ BARISHAL</p>
+                  <div className="space-y-1">
+                    <label className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">End Date</label>
+                    <input type="date" value={range.end} onChange={e => setRange({...range, end: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-black text-white outline-none focus:border-emerald-500 transition-all" />
+                  </div>
+                  {activeStep === 'detailed-setup' && (
+                    <div className="space-y-1">
+                      <label className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                        <Type size={10} className="text-emerald-500" /> Custom Header (Optional)
+                      </label>
+                      <input 
+                        type="text" 
+                        value={customHeader} 
+                        onChange={e => setCustomHeader(e.target.value)} 
+                        placeholder="e.g., ANNUAL TRANSPORT AUDIT 2024"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-black text-white placeholder:text-slate-600 outline-none focus:border-emerald-500 transition-all shadow-inner" 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {activeStep === 'detailed-setup' && (
+                  <div className="space-y-3 pt-2">
+                    <label className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                       <Table size={12} className="text-emerald-500" /> Selective Data Columns
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:max-h-none p-1.5 bg-black/20 rounded-2xl border border-white/5 overflow-y-auto max-h-[40vh]">
+                       {BOOKING_FIELDS.map(f => (
+                         <button 
+                           key={f.value} 
+                           onClick={() => toggleField(f.value as BookingField)} 
+                           className={`flex items-center gap-2 px-3 py-3 rounded-xl text-[8px] md:text-[9px] font-black uppercase tracking-tight border transition-all ${selectedFields.includes(f.value as BookingField) ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-lg' : 'bg-black/20 text-slate-500 border-white/5 hover:border-white/20'}`}
+                         >
+                           <div className={`w-3 h-3 md:w-4 md:h-4 rounded flex items-center justify-center border ${selectedFields.includes(f.value as BookingField) ? 'bg-emerald-600 border-emerald-400' : 'border-slate-700'}`}>
+                             {selectedFields.includes(f.value as BookingField) && <Check size={12} className="text-white" />}
+                           </div>
+                           <span className="truncate">{f.label}</span>
+                         </button>
+                       ))}
+                    </div>
                   </div>
                 )}
-             </div>
 
-             <div className="pt-6 flex flex-col items-center">
+                {(activeStep === 'attendance-download-range' || activeStep === 'fuel-report-range' || activeStep === 'detailed-setup') && (
+                  <div className="pt-2 border-t border-white/5 space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <h5 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Report Output Options</h5>
+                    </div>
+                    
+                    <button 
+                      onClick={toggleSigState}
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 ${
+                        getSigState()
+                          ? 'bg-emerald-600/20 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.15)]' 
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                        getSigState() 
+                          ? 'bg-emerald-500 text-white shadow-lg' 
+                          : 'bg-white/5 text-slate-600'
+                      }`}>
+                        {getSigState() ? <ShieldCheck size={22} /> : <ShieldOff size={22} />}
+                      </div>
+                      <div className="text-left flex-1">
+                        <p className={`text-[12px] font-black uppercase tracking-widest ${
+                          getSigState() ? 'text-white' : 'text-slate-500'
+                        }`}>Add Signature Lines</p>
+                        <p className="text-[8px] font-bold text-slate-600 uppercase mt-0.5">
+                          {getSigState() ? 'Authorized Official Document Mode' : 'Raw Data Export Mode'}
+                        </p>
+                      </div>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
+                        getSigState() ? 'bg-emerald-500 border-emerald-400 shadow-sm' : 'border-slate-800'
+                      }`}>
+                        {getSigState() && <Check size={14} className="text-white" />}
+                      </div>
+                    </button>
+                  </div>
+                )}
+
                 <button 
-                  onClick={() => setActiveStep('attendance-download-range')}
-                  className="flex items-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(16,185,129,0.2)] transition-all active:scale-[0.98] group border-2 border-white/10"
+                  onClick={() => {
+                    if(activeStep === 'payment-slip-range') setActiveStep('handoff-prompt');
+                    else if(activeStep === 'fuel-report-range') handleFuelReportDownload();
+                    else if(activeStep === 'detailed-setup') handleDetailedReportExport();
+                    else if(activeStep === 'summary-download-range') setActiveStep('graph-choice');
+                    else handleAttendanceSheetDownload();
+                  }}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-black uppercase text-[10px] md:text-[14px] tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  <FileDown size={18} className="group-hover:translate-y-0.5 transition-transform" />
-                  Download Attendance Sheet
+                  {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  {isGenerating ? 'Processing...' : 'Proceed to Export'}
                 </button>
              </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeStep === 'attendance-download-range' && (
-        <div className="animate-in fade-in slide-in-from-right-6 duration-500 max-w-md mx-auto w-full py-8">
-          <StepHeader title="Attendance Range" subtitle="Choose export period" onBackStep={() => setActiveStep('driver-attendance')} />
-          <form 
-            onSubmit={(e) => { e.preventDefault(); if(isAttendanceRangeValid) handleAttendanceSheetDownload(); }} 
-            className="space-y-6 bg-[#062c1e] p-8 rounded-[2.5rem] border-2 border-white/5 shadow-2xl"
-          >
-             <div className="grid grid-cols-1 gap-6">
-               <DateInput label="Start Date" value={attendanceReportRange.start} onChange={(e:any) => setAttendanceReportRange(p => ({...p, start: e.target.value}))} />
-               <DateInput label="End Date" value={attendanceReportRange.end} onChange={(e:any) => setAttendanceReportRange(p => ({...p, end: e.target.value}))} />
-               
-               <div className="space-y-2">
-                 <label className={labelClasses}>Signature Policy</label>
-                 <div className="flex gap-4">
-                    <button 
-                      type="button"
-                      onClick={() => setWithSignature(true)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${withSignature ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}
-                    >
-                      <ShieldCheck size={14} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">With Signature</span>
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setWithSignature(false)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all ${!withSignature ? 'bg-amber-600 text-white border-amber-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}
-                    >
-                      <ShieldOff size={14} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Without Signature</span>
-                    </button>
-                 </div>
-                 <p className="text-[8px] font-bold text-slate-500 uppercase tracking-tight ml-1">
-                   {withSignature ? 'Includes Driver/JCO cols & Countersign' : 'Removes Driver/JCO cols & Countersign'}
-                 </p>
-               </div>
+        {activeStep === 'handoff-form' && (
+          <div className="flex flex-col h-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
+             <div className="max-w-4xl mx-auto w-full bg-black/40 backdrop-blur-3xl p-5 md:p-8 rounded-[2rem] border-2 border-white/5 shadow-2xl flex flex-col min-h-0">
+                <StepHeader 
+                  title="Authorization Setup" 
+                  subtitle="Input personnel details for official handover" 
+                  onBackStep={() => setActiveStep('handoff-prompt')} 
+                />
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4 bg-white/5 p-5 rounded-2xl border border-white/5 shadow-inner">
+                    <div className="flex items-center gap-2 mb-2">
+                       <ShieldCheck className="text-emerald-500" size={16} />
+                       <h5 className="text-[10px] font-black text-white uppercase tracking-widest">Provider Information</h5>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Army No</label>
+                        <input type="text" value={handoffData.providerArmyNo} onChange={e => setHandoffData({...handoffData, providerArmyNo: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none focus:border-emerald-500 transition-all" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Rank</label>
+                        <input type="text" value={handoffData.providerRank} onChange={e => setHandoffData({...handoffData, providerRank: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none focus:border-emerald-500 transition-all" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Name</label>
+                        <input type="text" value={handoffData.providerName} onChange={e => setHandoffData({...handoffData, providerName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none focus:border-emerald-500 transition-all" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-4 bg-white/5 p-5 rounded-2xl border border-white/5 shadow-inner">
+                    <div className="flex items-center gap-2 mb-2">
+                       <UserCheck className="text-emerald-500" size={16} />
+                       <h5 className="text-[10px] font-black text-white uppercase tracking-widest">Receiver Information</h5>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Army No</label>
+                        <input type="text" value={handoffData.receiverArmyNo} onChange={e => setHandoffData({...handoffData, receiverArmyNo: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none focus:border-emerald-500 transition-all" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Rank</label>
+                        <input type="text" value={handoffData.receiverRank} onChange={e => setHandoffData({...handoffData, receiverRank: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none focus:border-emerald-500 transition-all" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Name</label>
+                        <input type="text" value={handoffData.receiverName} onChange={e => setHandoffData({...handoffData, receiverName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white outline-none focus:border-emerald-500 transition-all" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  onClick={handlePaymentSlipGenerate}
+                  disabled={isGenerating}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 mt-6 rounded-xl font-black uppercase text-[10px] md:text-[12px] tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Fingerprint size={16} />}
+                  {isGenerating ? 'Processing...' : 'Finalize & Export PDF'}
+                </button>
              </div>
-             
-             <button 
-              type="submit" 
-              disabled={!isAttendanceRangeValid || isGenerating} 
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-xl shadow-emerald-900/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-95"
-             >
-                {isGenerating ? (
+          </div>
+        )}
+
+        {activeStep === 'trip-summary' && (
+          <div className="flex flex-col h-full animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+            <div className="flex items-center justify-between mb-2 shrink-0">
+              <StepHeader title="Trip Statistics" subtitle={`Annual Overview ${selectedYear}`} onBackStep={() => setActiveStep('dashboard')} />
+              <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-white/10 shrink-0 shadow-xl">
+                 <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 text-slate-400 hover:text-white"><ChevronLeft size={16}/></button>
+                 <span className="text-[10px] font-black text-white px-2">{selectedYear}</span>
+                 <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 text-slate-400 hover:text-white"><ChevronRight size={16}/></button>
+              </div>
+            </div>
+            <div className="flex-1 bg-black/20 p-4 md:p-8 rounded-[2rem] border-2 border-white/5 flex flex-col min-h-0 overflow-hidden shadow-inner">
+               <div className="flex-1 relative flex items-end gap-1 md:gap-4 pt-10 pb-6 min-h-0">
+                  <div className="flex flex-col justify-between h-full text-right pr-2 border-r border-white/5 select-none shrink-0">
+                     {scaleValues.map(val => (
+                       <span key={`l-${val}`} className="text-[7px] md:text-[10px] font-black text-slate-500 tabular-nums">{val}</span>
+                     ))}
+                  </div>
+                  <div className="flex-1 relative h-full flex items-end justify-between gap-1 md:gap-4 px-1 border-b-2 border-white/10">
+                    {monthlyStats.map((stat, i) => {
+                      const heightPercent = Math.min((stat.count / maxScale) * 100, 100);
+                      const finalHeight = Math.max(heightPercent, stat.count > 0 ? 3 : 0);
+                      return (
+                        <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative h-full justify-end">
+                           <div 
+                             className="w-full max-w-[18px] md:max-w-[40px] rounded-t-md md:rounded-t-lg shadow-2xl animate-bar-grow transition-all border-x border-t border-white/10"
+                             style={{ 
+                               height: `${finalHeight}%`,
+                               animationDelay: `${i * 60}ms`,
+                               background: stat.style.gradient,
+                               backgroundColor: stat.style.color
+                             }}
+                           ></div>
+                           <span className="absolute -bottom-5 text-[6px] md:text-[9px] font-black text-slate-400 uppercase tracking-tighter">{stat.month}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+               </div>
+               <div className="mt-6 flex justify-between items-center shrink-0">
+                 <div className="bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+                   <span className="text-[7px] md:text-[10px] font-black text-emerald-400 uppercase tracking-widest">Aggregate: {monthlyStats.reduce((a, b) => a + b.count, 0)} Trips</span>
+                 </div>
+                 <button onClick={() => setActiveStep('summary-download-range')} className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all shadow-xl">
+                   <Download size={14} /> EXPORT PDF
+                 </button>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {(activeStep === 'handoff-prompt' || activeStep === 'graph-choice') && (
+          <div className="flex flex-col h-full justify-center animate-in fade-in zoom-in-95 duration-500">
+            <div className="max-w-md mx-auto w-full text-center space-y-6 bg-emerald-950/60 backdrop-blur-3xl rounded-[3rem] border-2 border-white/5 p-8 md:p-12 shadow-2xl">
+              <div className="w-14 h-14 bg-emerald-600/10 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/20 shadow-inner">
+                {activeStep === 'handoff-prompt' ? <UserCheck size={28} /> : <BarChart size={28} />}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none">
+                  {activeStep === 'handoff-prompt' ? 'AUTHORIZED SIGNATURES' : 'DATA VISUALIZATION'}
+                </h3>
+                <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest leading-relaxed opacity-60">
+                  {activeStep === 'handoff-prompt' ? 'Include officer identity for handover' : 'Select preferred reporting presentation'}
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                {activeStep === 'handoff-prompt' ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Generating PDF...
+                    <button onClick={() => setActiveStep('handoff-form')} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg active:scale-95 transition-all">Yes, Include Info</button>
+                    <button 
+                      onClick={handlePaymentSlipGenerate} 
+                      className="w-full bg-white/5 text-slate-300 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 hover:bg-white/10 transition-all active:scale-95"
+                    >No, Skip</button>
                   </>
                 ) : (
                   <>
-                    <Download size={18} />
-                    Download PDF Sheet
+                    <button onClick={() => handleTripSummaryDownload(true)} disabled={isGenerating} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg active:scale-95 transition-all">With Statistical Chart</button>
+                    <button onClick={() => handleTripSummaryDownload(false)} disabled={isGenerating} className="w-full bg-white/5 text-slate-300 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 hover:bg-white/10 transition-all active:scale-95">Data Table Only</button>
                   </>
                 )}
-             </button>
-          </form>
-        </div>
-      )}
-
-      {activeStep === 'trip-summary' && (
-        <div className="animate-in fade-in zoom-in-95 duration-500 w-full flex flex-col py-1 md:py-2 h-full min-h-0 overflow-hidden">
-          <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-1 shrink-0 mb-1">
-            <StepHeader 
-              title="Trip Statistics" 
-              subtitle={`Total Days Booked per Month (${selectedYear})`} 
-              onBackStep={() => setActiveStep('dashboard')} 
-            />
-            <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/10 self-end md:self-center shadow-lg">
-               <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90"><ChevronLeft size={16} /></button>
-               <span className="text-xs font-black text-white min-w-[50px] text-center tracking-widest">{selectedYear}</span>
-               <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90"><ChevronRight size={16} /></button>
-            </div>
-          </div>
-          
-          <div className="w-full bg-[#062c1e] p-3 md:p-6 rounded-2xl md:rounded-[2rem] border-2 border-white/5 shadow-2xl relative flex flex-col flex-1 overflow-hidden min-h-0">
-            <div className="flex items-center gap-3 mb-4 md:mb-6 shrink-0">
-               <div className="w-8 h-8 bg-emerald-500/10 text-emerald-500 rounded-lg flex items-center justify-center">
-                  <TrendingUp size={18} />
-               </div>
-               <div>
-                  <h3 className="text-sm md:text-lg font-black text-white uppercase tracking-tight">MONTH WISE TRIP STATISTICS</h3>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">Trip Analysis for {selectedYear}</p>
-               </div>
-            </div>
-
-            <div className="flex items-end gap-1 md:gap-4 relative group flex-1 pt-12 pb-6 min-h-0">
-              <div className="flex flex-col justify-between h-full text-right pr-1 md:pr-2 select-none border-r border-white/5 pb-6">
-                 {scaleValues.map(val => (
-                   <div key={`l-${val}`} className="flex items-center justify-end gap-1">
-                     <span className="text-[8px] md:text-[10px] font-black text-slate-500">{val}</span>
-                     <div className="w-1 h-[1px] bg-slate-600"></div>
-                   </div>
-                 ))}
-              </div>
-
-              <div className="flex-1 relative h-full flex items-end justify-between gap-1 md:gap-4 px-1 md:px-2 border-b-2 border-white/10 pb-6">
-                 <div className="absolute inset-0 flex flex-col pointer-events-none opacity-[0.05] px-2 pb-6">
-                    <div className="absolute left-0 right-0 border-t border-white" style={{ bottom: '100%' }}></div>
-                    <div className="absolute left-0 right-0 border-t border-white" style={{ bottom: '80%' }}></div>
-                    <div className="absolute left-0 right-0 border-t border-white" style={{ bottom: '40%' }}></div>
-                    <div className="absolute left-0 right-0" style={{ bottom: '0%' }}></div>
-                 </div>
-
-                 {monthlyStats.map((stat, i) => {
-                   const heightPercent = Math.min((stat.count / maxScale) * 100, 100);
-                   const finalHeight = Math.max(heightPercent, stat.count > 0 ? 3 : 0);
-                   return (
-                     <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative z-10 h-full justify-end">
-                        <div 
-                          className="w-full max-w-[20px] md:max-w-[48px] rounded-t-sm md:rounded-t-lg shadow-lg animate-bar-grow transition-all cursor-default border-x border-t border-white/10 hover:brightness-125 block"
-                          style={{ 
-                            height: `${finalHeight}%`,
-                            animationDelay: `${i * 80}ms`,
-                            background: stat.style.gradient,
-                            backgroundColor: stat.style.color
-                          }}
-                        ></div>
-                        <span className="absolute -bottom-6 text-[7px] md:text-[10px] font-black text-slate-400 uppercase tracking-tight group-hover/bar:text-white transition-colors">
-                          {stat.month}
-                        </span>
-                        {stat.count > 0 && (
-                          <span className="absolute -top-7 md:-top-10 text-[10px] md:text-[12px] font-black text-white bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-md z-30 shadow-sm border border-white/10 whitespace-nowrap">
-                            {stat.count}
-                          </span>
-                        )}
-                     </div>
-                   );
-                 })}
-              </div>
-
-              <div className="flex flex-col justify-between h-full text-left pl-1 md:pl-2 select-none border-l border-white/5 pb-6">
-                 {scaleValues.map(val => (
-                   <div key={`r-${val}`} className="flex items-center gap-1">
-                     <div className="w-1 h-[1px] bg-slate-600"></div>
-                     <span className="text-[8px] md:text-[10px] font-black text-slate-500">{val}</span>
-                   </div>
-                 ))}
               </div>
             </div>
-            
-            <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between shrink-0">
-               <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
-                  <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div>
-                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Trip Statistics</span>
-               </div>
-               <div className="px-4 py-1.5 bg-emerald-600/10 rounded-xl border border-emerald-500/20">
-                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <BarChart3 size={12} /> Total Booked Days: {monthlyStats.reduce((a, b) => a + b.count, 0)}
-                  </span>
-               </div>
-            </div>
           </div>
-
-          <div className="mt-2 flex flex-col items-center shrink-0 pb-4">
-            <button
-              onClick={() => setActiveStep('summary-download-range')}
-              className="flex items-center gap-2 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-[0.98] group border border-white/10"
-            >
-              <Download size={16} />
-              Download Trip Summary
-            </button>
-          </div>
-        </div>
-      )}
-
-      {activeStep === 'summary-download-range' && (
-        <div className="animate-in fade-in slide-in-from-right-6 duration-500 max-w-md mx-auto w-full py-6">
-          <StepHeader title="Summary Range" subtitle="Select period" onBackStep={() => setActiveStep('trip-summary')} />
-          <form onSubmit={(e) => { e.preventDefault(); if(isSummaryRangeValid) setActiveStep('graph-choice'); }} className="space-y-4 bg-[#062c1e] p-6 rounded-2xl border-2 border-white/5 shadow-2xl">
-             <div className="grid grid-cols-1 gap-4">
-               <DateInput label="Start Month" value={summaryRange.start} onChange={(e:any) => setSummaryRange(p => ({...p, start: e.target.value}))} />
-               <DateInput label="End Month" value={summaryRange.end} onChange={(e:any) => setSummaryRange(p => ({...p, end: e.target.value}))} />
-             </div>
-             <button type="submit" disabled={!isSummaryRangeValid} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-lg disabled:opacity-50 mt-2">Continue <ArrowRight size={14} className="inline ml-1" /></button>
-          </form>
-        </div>
-      )}
-
-      {activeStep === 'graph-choice' && (
-        <div className="animate-in fade-in zoom-in-95 duration-500 max-md:max-w-md mx-auto text-center space-y-6 py-12">
-          <div className="w-14 h-14 bg-blue-600/10 text-blue-500 rounded-2xl flex items-center justify-center mx-auto shadow-inner"><BarChart size={24} /></div>
-          <div className="space-y-1">
-            <h3 className="text-lg font-black text-white uppercase tracking-tight">Report Format</h3>
-            <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest leading-relaxed">Choose whether to include a chart in your summary PDF.</p>
-          </div>
-          <div className="flex flex-col gap-3 px-6">
-            <button onClick={() => handleTripSummaryDownload(true)} disabled={isGenerating} className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg flex items-center justify-center gap-2">
-              {isGenerating ? 'Processing...' : <><BarChart3 size={16} /> With Graph</>}
-            </button>
-            <button onClick={() => handleTripSummaryDownload(false)} disabled={isGenerating} className="w-full bg-white/10 text-slate-300 py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2">
-              {isGenerating ? 'Processing...' : <><Table size={16} /> Without Graph</>}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {activeStep === 'payment-slip-range' && (
-        <div className="animate-in fade-in slide-in-from-right-6 duration-500 max-w-md mx-auto w-full py-8">
-          <StepHeader title="Step 1: Period" subtitle="Choose date range" onBackStep={() => setActiveStep('dashboard')} />
-          <form onSubmit={handlePaymentRangeSubmit} className="space-y-4 bg-[#062c1e] p-6 rounded-2xl border-2 border-white/5 shadow-2xl">
-             <div className="flex gap-2 justify-center mb-1">
-                <button type="button" onClick={() => setRange({ start: format(startOfMonth(new Date()), 'yyyy-MM-dd'), end: format(endOfMonth(new Date()), 'yyyy-MM-dd') })} className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">This Month</button>
-                <button type="button" onClick={() => {
-                  const last = subMonths(new Date(), 1);
-                  setRange({ start: format(startOfMonth(last), 'yyyy-MM-dd'), end: format(endOfMonth(last), 'yyyy-MM-dd') });
-                }} className="px-3 py-1.5 bg-white/10 text-slate-300 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-white/20">Last Month</button>
-             </div>
-             <div className="grid grid-cols-1 gap-4">
-               <DateInput label="From Date" value={range.start} onChange={(e:any) => setRange(p => ({...p, start: e.target.value}))} />
-               <DateInput label="To Date" value={range.end} onChange={(e:any) => setRange(p => ({...p, end: e.target.value}))} />
-             </div>
-             <button type="submit" disabled={!isRangeValid} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-lg disabled:opacity-50 mt-2">Next Step <ArrowRight size={14} className="inline ml-1" /></button>
-          </form>
-        </div>
-      )}
-
-      {activeStep === 'handoff-prompt' && (
-        <div className="animate-in fade-in zoom-in-95 duration-500 max-md:max-w-md mx-auto text-center space-y-6 py-12">
-          <div className="w-14 h-14 bg-emerald-600/10 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto"><UserCheck size={24} /></div>
-          <div className="space-y-1">
-            <h3 className="text-lg font-black text-white uppercase tracking-tight">Add Signatures?</h3>
-            <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest leading-relaxed">Include officer info for the official handover section?</p>
-          </div>
-          <div className="flex flex-col gap-2 px-8">
-            <button onClick={() => handlePromptChoice('yes')} className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg">Yes, Add Info</button>
-            <button onClick={() => handlePromptChoice('no')} className="w-full bg-white/10 text-slate-300 py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px]">No, Skip</button>
-          </div>
-        </div>
-      )}
-
-      {activeStep === 'handoff-form' && (
-        <div className="animate-in fade-in slide-in-from-right-6 duration-500 max-md:max-w-md mx-auto w-full py-4 overflow-y-auto custom-scrollbar pr-1">
-          <StepHeader title="Personnel Info" subtitle="Handover details" onBackStep={() => setActiveStep('handoff-prompt')} />
-          <form onSubmit={handleHandoffSubmit} className="space-y-4">
-            <div className="bg-[#062c1e] p-5 rounded-[1.5rem] border-2 border-white/5 shadow-xl space-y-3">
-              <h5 className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Provider</h5>
-              <div className="grid grid-cols-1 gap-2">
-                <input required value={handoffData.providerArmyNo} onChange={e => setHandoffData({...handoffData, providerArmyNo: e.target.value})} className={inputClasses} placeholder="Army No" />
-                <input required value={handoffData.providerRank} onChange={e => setHandoffData({...handoffData, providerRank: e.target.value})} className={inputClasses} placeholder="Rank" />
-                <input required value={handoffData.providerName} onChange={e => setHandoffData({...handoffData, providerName: e.target.value})} className={inputClasses} placeholder="Full Name" />
-              </div>
-            </div>
-            <div className="bg-[#062c1e] p-5 rounded-[1.5rem] border-2 border-white/5 shadow-xl space-y-3">
-              <h5 className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Receiver</h5>
-              <div className="grid grid-cols-1 gap-2">
-                <input required value={handoffData.receiverArmyNo} onChange={e => setHandoffData({...handoffData, receiverArmyNo: e.target.value})} className={inputClasses} placeholder="Army No" />
-                <input required value={handoffData.receiverRank} onChange={e => setHandoffData({...handoffData, receiverRank: e.target.value})} className={inputClasses} placeholder="Rank" />
-                <input required value={handoffData.receiverName} onChange={e => setHandoffData({...handoffData, receiverName: e.target.value})} className={inputClasses} placeholder="Full Name" />
-              </div>
-            </div>
-            <button type="submit" disabled={isGenerating} className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl">{isGenerating ? 'Processing...' : 'Finalize PDF'}</button>
-          </form>
-        </div>
-      )}
-
-      {activeStep === 'detailed-setup' && (
-        <div className="animate-in fade-in slide-in-from-right-6 duration-500 w-full max-w-xl mx-auto py-8">
-          <StepHeader title="Detailed Export" subtitle="Select options" onBackStep={() => setActiveStep('dashboard')} />
-          <div className="bg-[#062c1e] p-6 rounded-[2rem] border-2 border-white/5 shadow-xl space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DateInput label="From Date" value={range.start} onChange={(e:any) => setRange(p => ({...p, start: e.target.value}))} />
-              <DateInput label="To Date" value={range.end} onChange={(e:any) => setRange(p => ({...p, end: e.target.value}))} />
-            </div>
-            <div className="space-y-3">
-              <h4 className="text-[9px] font-black text-white uppercase tracking-tight border-b border-white/5 pb-1">Select Columns</h4>
-              <div className="flex flex-col gap-2">
-                {BOOKING_FIELDS.map(f => (
-                  <button key={f.value} onClick={() => toggleField(f.value as BookingField)} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest border-2 transition-all ${selectedFields.includes(f.value as BookingField) ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-white/5 text-slate-500 border-white/5 hover:border-emerald-500/30'}`}>
-                    <div className={`w-3 h-3 rounded flex items-center justify-center border ${selectedFields.includes(f.value as BookingField) ? 'bg-white border-white text-emerald-600' : 'border-white/20'}`}>
-                      {selectedFields.includes(f.value as BookingField) && <div className="w-1.5 h-1.5 bg-emerald-600 rounded-sm"></div>}
-                    </div>
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <button onClick={handleDetailedReportExport} disabled={!isRangeValid || selectedFields.length === 0 || isGenerating} className="w-full bg-emerald-600 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg disabled:opacity-30">{isGenerating ? 'Generating...' : 'Export PDF'}</button>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal for Deletion */}
-      <Modal 
-        isOpen={!!attendanceToDelete} 
-        onClose={() => setAttendanceToDelete(null)} 
-        title="Delete Confirmation" 
-        variant="dark"
-      >
-        <div className="flex flex-col items-center space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
-          <div className="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center border border-rose-500/20 shadow-inner">
-            <AlertTriangle size={32} />
-          </div>
-          
-          <div className="space-y-2">
-            <h4 className="text-lg font-black text-white uppercase tracking-tight">Are you sure?</h4>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
-              This will permanently delete the attendance record for <span className="text-white">{attendanceToDelete ? format(parseISO(attendanceToDelete.date), 'dd MMMM yyyy') : ''}</span>. 
-              This action cannot be undone.
-            </p>
-          </div>
-
-          <div className="flex w-full gap-3">
-            <button 
-              onClick={() => setAttendanceToDelete(null)}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white/5 text-slate-300 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
-            >
-              <X size={16} /> Cancel
-            </button>
-            <button 
-              onClick={confirmDeleteAttendance}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-900/20 hover:bg-rose-500 transition-all active:scale-95"
-            >
-              <Check size={16} /> Yes, Delete
-            </button>
-          </div>
-        </div>
-      </Modal>
+        )}
+      </div>
     </div>
   );
 };

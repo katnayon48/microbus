@@ -1,3 +1,4 @@
+
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
@@ -8,6 +9,13 @@ const DATE_FORMAT = 'dd-MM-yyyy';
 const LOGO_URL = "https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg";
 const PAID_SEAL_URL = "https://i.ibb.co.com/Qv2Y07rG/IMG-0753.webp";
 const UNPAID_SEAL_URL = "https://i.ibb.co.com/QjTgvXHt/IMG-0754.jpg";
+
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString(undefined, { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  });
+};
 
 const loadCircularLogo = (): Promise<string | null> => {
   return new Promise((resolve) => {
@@ -92,6 +100,18 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
   doc.text('1815124 CPL (CLK) BILLAL, ASC', centerX, isSlip ? startY + 10 : startY + 7, { align: 'center' });
 };
 
+const filterByRange = (bookings: Booking[], start: string, end: string) => {
+  if (!start || !end) return bookings.filter(b => !b.isSpecialNote);
+  const s = parseISO(start);
+  const e = parseISO(end);
+  return bookings.filter(b => {
+    if (b.isSpecialNote) return false;
+    const bStart = parseISO(b.startDate);
+    const bEnd = parseISO(b.endDate);
+    return (bStart <= e && bEnd >= s);
+  }).sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+};
+
 export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy?: string) => {
   if (booking.isSpecialNote) return;
 
@@ -107,8 +127,6 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     ]);
 
     const margin = 20;
-
-    // Header Background
     doc.setFillColor(15, 23, 42); 
     doc.setDrawColor(15, 23, 42);
     doc.rect(-2, -2, 214, 42, 'F'); 
@@ -173,7 +191,6 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     });
 
     const finalY = (doc as any).lastAutoTable?.finalY || 150;
-    
     doc.setFillColor(248, 250, 252);
     doc.rect(margin, finalY + 10, 170, 20, 'F');
     doc.setDrawColor(0, 0, 0);
@@ -182,13 +199,8 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    
     doc.text('TOTAL FARE:', 140, finalY + 23, { align: 'right' });
-    
-    const fareDisplayText = booking.isExempt 
-      ? 'NOT REQUIRED' 
-      : `BDT ${(booking.fare || 0).toLocaleString()}.00`;
-      
+    const fareDisplayText = booking.isExempt ? 'NOT REQUIRED' : `BDT ${(booking.fare || 0).toLocaleString()}.00`;
     doc.text(fareDisplayText, 190 - 5, finalY + 23, { align: 'right' });
 
     if (sealInfo) {
@@ -203,9 +215,7 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
       }
       doc.addImage(sealInfo.data, 'PNG', 190 - drawWidth, finalY + 40, drawWidth, drawHeight);
     }
-    
     drawDeveloperFooter(doc, 278, true);
-    
     doc.save(`Slip_${(booking.rankName || 'User').replace(/\s+/g, '_')}.pdf`);
   } catch (error) { 
     console.error("PDF generation failed:", error); 
@@ -213,23 +223,10 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
   }
 };
 
-const filterByRange = (bookings: Booking[], start: string, end: string) => {
-  if (!start || !end) return bookings.filter(b => !b.isSpecialNote);
-  const s = parseISO(start);
-  const e = parseISO(end);
-  return bookings.filter(b => {
-    if (b.isSpecialNote) return false;
-    const bStart = parseISO(b.startDate);
-    const bEnd = parseISO(b.endDate);
-    return (bStart <= e && bEnd >= s);
-  }).sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
-};
-
 export const generatePaymentSlip = async (bookings: Booking[], startDate: string, endDate: string, handoff?: HandoffInfo) => {
   try {
     const doc = new jsPDF();
     doc.setFont('helvetica');
-
     const filtered = filterByRange(bookings, startDate, endDate);
     const mainHeading = "MONTHLY PAYMENT SLIP - CIVIL MICROBUS";
     let monthYearText = "";
@@ -272,17 +269,10 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       body: filtered.map((b, i) => {
         const totalDays = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
         const fareVal = b.isExempt ? 'EXEMPTED' : b.fare.toLocaleString();
-          
         return [
-          i + 1, 
-          (b.rankName || '').toUpperCase(), 
-          (b.unit || '').toUpperCase(),
-          format(parseISO(b.startDate), DATE_FORMAT), 
-          format(parseISO(b.endDate), DATE_FORMAT), 
-          totalDays, 
-          b.duration,
-          fareVal, 
-          (b.remarks || '-')
+          i + 1, (b.rankName || '').toUpperCase(), (b.unit || '').toUpperCase(),
+          format(parseISO(b.startDate), DATE_FORMAT), format(parseISO(b.endDate), DATE_FORMAT), 
+          totalDays, b.duration, fareVal, (b.remarks || '-')
         ];
       }),
       foot: [[
@@ -291,35 +281,9 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
         { content: '', styles: { fillColor: [220, 220, 220], lineWidth: 0.1 } }
       ]],
       theme: 'grid',
-      headStyles: { 
-        fillColor: [220, 220, 220], 
-        textColor: [0, 0, 0],       
-        fontSize: 9, 
-        halign: 'center',
-        fontStyle: 'bold',
-        font: 'helvetica'
-      },
-      styles: { 
-        font: 'helvetica',
-        fontSize: 9, 
-        cellPadding: 1.5, 
-        lineColor: [0, 0, 0], 
-        lineWidth: 0.1, 
-        halign: 'center', 
-        textColor: [0, 0, 0], 
-        overflow: 'visible' 
-      },
-      columnStyles: {
-        0: { cellWidth: 10 }, 
-        1: { cellWidth: 45, halign: 'left' }, 
-        2: { cellWidth: 32, halign: 'left' }, 
-        3: { cellWidth: 20 }, 
-        4: { cellWidth: 20 },
-        5: { cellWidth: 12 }, 
-        6: { cellWidth: 18 },
-        7: { cellWidth: 20 }, 
-        8: { cellWidth: 'auto' }
-      },
+      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 9, halign: 'center', fontStyle: 'bold', font: 'helvetica' },
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.1, halign: 'center', textColor: [0, 0, 0], overflow: 'visible' },
+      columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 45, halign: 'left' }, 2: { cellWidth: 32, halign: 'left' }, 3: { cellWidth: 20 }, 4: { cellWidth: 20 }, 5: { cellWidth: 12 }, 6: { cellWidth: 18 }, 7: { cellWidth: 20 }, 8: { cellWidth: 'auto' } },
       margin: { left: 8, right: 8 }
     });
 
@@ -366,7 +330,6 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
     }
 
     drawDeveloperFooter(doc, 288);
-    
     doc.save(`Monthly_Slip_${monthYearText.replace(/\s+/g, '_') || 'Report'}.pdf`);
   } catch (error) {
     console.error("PDF generation failed:", error);
@@ -374,18 +337,15 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
   }
 };
 
-export const generateOverallReport = async (bookings: Booking[], startDate: string, endDate: string, fields: BookingField[]) => {
+export const generateOverallReport = async (bookings: Booking[], startDate: string, endDate: string, fields: BookingField[], customHeader?: string, withSignature: boolean = false) => {
   try {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFont('helvetica');
-
     const filtered = filterByRange(bookings, startDate, endDate);
-    
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    const titleText = "DETAILED BOOKING REPORT";
+    const titleText = (customHeader && customHeader.trim() !== '') ? customHeader.toUpperCase() : "DETAILED BOOKING REPORT";
     doc.text(titleText, 148, 15, { align: 'center' });
-    
     const titleWidth = doc.getTextWidth(titleText);
     doc.setLineWidth(0.5);
     doc.setDrawColor(0, 0, 0);
@@ -396,7 +356,6 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
       doc.setFont('helvetica', 'normal');
       const periodText = `Period: ${format(parseISO(startDate), DATE_FORMAT)} to ${format(parseISO(endDate), DATE_FORMAT)}`;
       doc.text(periodText, 148, 22, { align: 'center' });
-      
       const periodWidth = doc.getTextWidth(periodText);
       doc.setLineWidth(0.3);
       doc.setDrawColor(0, 0, 0);
@@ -404,14 +363,10 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
     }
 
     const headers = fields.map(f => BOOKING_FIELDS.find(bf => bf.value === f)?.label || f.toUpperCase());
-    
     const colStyles: any = {};
     fields.forEach((f, index) => {
-      if (f === 'rankName' || f === 'unit' || f === 'destination' || f === 'remarks') {
-        colStyles[index] = { halign: 'left' };
-      } else {
-        colStyles[index] = { halign: 'center' };
-      }
+      if (f === 'rankName' || f === 'unit' || f === 'destination' || f === 'remarks') colStyles[index] = { halign: 'left' };
+      else colStyles[index] = { halign: 'center' };
     });
 
     autoTable(doc, {
@@ -419,15 +374,9 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
       head: [headers],
       body: filtered.map(b => {
         return fields.map(f => {
-          if (f === 'totalDays') {
-            return differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
-          }
-          if (f === 'startDate' || f === 'endDate') {
-            return b[f as keyof Booking] ? format(parseISO(b[f as keyof Booking] as string), DATE_FORMAT) : 'N/A';
-          }
-          if (f === 'fare') {
-            return b.isExempt ? 'EXEMPTED' : (b.fare || 0).toLocaleString();
-          }
+          if (f === 'totalDays') return differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
+          if (f === 'startDate' || f === 'endDate') return b[f as keyof Booking] ? format(parseISO(b[f as keyof Booking] as string), DATE_FORMAT) : 'N/A';
+          if (f === 'fare') return b.isExempt ? 'EXEMPTED' : (b.fare || 0).toLocaleString();
           if (f === 'outTime' || f === 'inTime') {
             const val = b[f as keyof Booking];
             return val ? `${val} hrs` : 'N/A';
@@ -437,28 +386,30 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
         });
       }),
       theme: 'grid',
-      headStyles: { 
-        fillColor: [220, 220, 220], 
-        textColor: [0, 0, 0], 
-        fontSize: 9, 
-        fontStyle: 'bold',
-        halign: 'center',
-        font: 'helvetica'
-      },
-      styles: { 
-        font: 'helvetica',
-        fontSize: 8, 
-        cellPadding: 1.5, 
-        textColor: [0, 0, 0], 
-        lineColor: [0, 0, 0], 
-        lineWidth: 0.1 
-      },
+      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 9, fontStyle: 'bold', halign: 'center', font: 'helvetica' },
+      styles: { font: 'helvetica', fontSize: 8, cellPadding: 1.5, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
       columnStyles: colStyles,
       margin: { left: 10, right: 10 }
     });
 
+    if (withSignature) {
+      const finalY = (doc as any).lastAutoTable?.finalY || 150;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const sigY = Math.min(finalY + 20, 185); 
+      doc.setFontSize(10); 
+      doc.setFont('helvetica', 'bold');
+      doc.line(20, sigY, 70, sigY);
+      doc.text("Driver", 45, sigY + 5, { align: 'center' });
+      doc.line(pageWidth - 70, sigY, pageWidth - 20, sigY);
+      doc.text("JCO/NCO", pageWidth - 45, sigY + 5, { align: 'center' });
+      const countersignY = sigY + 12;
+      const csText = "COUNTERSIGN";
+      doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
+      const csWidth = doc.getTextWidth(csText);
+      doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
+    }
+
     drawDeveloperFooter(doc, 200);
-    
     doc.save(`Detailed_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   } catch (error) {
     console.error("Overall report generation failed:", error);
@@ -470,57 +421,40 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
   try {
     const doc = new jsPDF();
     doc.setFont('helvetica');
-
     const startDate = startOfMonth(parseISO(start));
     const endDate = endOfMonth(parseISO(end));
     const months = eachMonthOfInterval({ start: startDate, end: endDate });
-
     const stats = months.map(m => {
       const mStart = startOfMonth(m);
       const mEnd = endOfMonth(m);
       let monthTotalDays = 0;
-
       bookings.forEach(b => {
         if (b.isSpecialNote) return;
         const bStart = parseISO(b.startDate);
         const bEnd = parseISO(b.endDate);
-
         const overlapStart = max([bStart, mStart]);
         const overlapEnd = min([bEnd, mEnd]);
-
         if (overlapStart <= overlapEnd) {
           const days = differenceInDays(overlapEnd, overlapStart) + 1;
           monthTotalDays += days;
         }
       });
-
-      return {
-        label: format(m, 'MMM yyyy').toUpperCase(),
-        count: monthTotalDays
-      };
+      return { label: format(m, 'MMM yyyy').toUpperCase(), count: monthTotalDays };
     });
 
     const totalDaysSum = stats.reduce((sum, s) => sum + s.count, 0);
-
-    // Header Section
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.setDrawColor(0, 0, 0); // Black color for underlines
-    
-    // Line 1: TRIP SUMMARY REPORT
+    doc.setDrawColor(0, 0, 0); 
     const title1 = 'TRIP SUMMARY REPORT';
     doc.text(title1, 105, 15, { align: 'center' });
     const title1Width = doc.getTextWidth(title1);
     doc.setLineWidth(0.5);
     doc.line(105 - (title1Width / 2), 17, 105 + (title1Width / 2), 17);
-
-    // Line 2: CIVIL MICROBUS (AREA HQ BARISHAL)
     const title2 = 'CIVIL MICROBUS (AREA HQ BARISHAL)';
     doc.text(title2, 105, 25, { align: 'center' });
     const title2Width = doc.getTextWidth(title2);
     doc.line(105 - (title2Width / 2), 27, 105 + (title2Width / 2), 27);
-
-    // Period Info - Uppercase, Bold, Underlined
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     const periodText = `PERIOD: ${format(startDate, 'MMM yyyy').toUpperCase()} TO ${format(endDate, 'MMM yyyy').toUpperCase()}`;
@@ -528,95 +462,58 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
     const periodWidth = doc.getTextWidth(periodText);
     doc.setLineWidth(0.3);
     doc.line(105 - (periodWidth / 2), 35.5, 105 + (periodWidth / 2), 35.5);
-    
-    // Separator line
     doc.setLineWidth(0.3);
     doc.line(20, 38, 190, 38);
 
     let nextY = 48;
-
     if (withGraph && stats.length > 0) {
       const chartHeight = 80;
       const chartWidth = 160;
       const marginX = 25;
       const baseY = nextY + chartHeight;
-      const maxScale = 25; // Matched with UI
-
-      // Draw Grid Lines & Labels - Darkened for better visibility
-      doc.setDrawColor(180, 180, 180); // Darker gray for grid lines
-      doc.setLineWidth(0.2); // Slightly thicker line
+      const maxScale = 25; 
+      doc.setDrawColor(180, 180, 180); 
+      doc.setLineWidth(0.2); 
       doc.setFontSize(8);
-      doc.setTextColor(60, 60, 60); // Darker gray for labels
-
-      [0, 10, 20, 25].forEach(val => { // Matched with UI
+      doc.setTextColor(60, 60, 60); 
+      [0, 10, 20, 25].forEach(val => {
         const yPos = baseY - (val / maxScale) * chartHeight;
         doc.line(marginX, yPos, marginX + chartWidth, yPos);
         doc.text(val.toString(), marginX - 5, yPos + 1.5, { align: 'right' });
         doc.text(val.toString(), marginX + chartWidth + 2, yPos + 1.5);
       });
-
-      // Draw Bars
       const barSpacing = chartWidth / stats.length;
       const barWidth = Math.min(barSpacing * 0.7, 15);
-      
       stats.forEach((s, i) => {
         const h = Math.min((s.count / maxScale) * chartHeight, chartHeight);
         const x = marginX + (i * barSpacing) + (barSpacing - barWidth) / 2;
-        
-        // Bar
-        doc.setFillColor(16, 185, 129); // Emerald-600 color
+        doc.setFillColor(16, 185, 129); 
         if (h > 0) doc.rect(x, baseY - h, barWidth, h, 'F');
-        
-        // Label
         doc.setFontSize(6);
         doc.setTextColor(60, 60, 60);
         doc.text(s.label.split(' ')[0], x + barWidth/2, baseY + 5, { align: 'center' });
         if (s.count > 0) {
-          doc.setTextColor(0, 0, 0); // Black for numerical values
+          doc.setTextColor(0, 0, 0); 
           doc.setFont('helvetica', 'bold');
           doc.text(s.count.toString(), x + barWidth/2, baseY - h - 2, { align: 'center' });
           doc.setFont('helvetica', 'normal');
         }
       });
-
       nextY = baseY + 20;
     }
 
-    // Data Table
     autoTable(doc, {
       startY: nextY,
       head: [['MONTHLY PERIOD', 'TOTAL DAYS']],
       body: stats.map(s => [s.label, s.count]),
       foot: [['SUBTOTAL DAYS', totalDaysSum.toString()]],
       theme: 'grid',
-      headStyles: { 
-        fillColor: [220, 220, 220], // Light ash color
-        textColor: [0, 0, 0],       // Black text
-        halign: 'center',
-        fontStyle: 'bold',
-        lineColor: [0, 0, 0],       // Black border
-        lineWidth: 0.1
-      },
-      footStyles: {
-        fillColor: [220, 220, 220], // Light ash color
-        textColor: [0, 0, 0],       // Black text
-        halign: 'center',
-        fontStyle: 'bold',
-        lineColor: [0, 0, 0],       // Black border
-        lineWidth: 0.1
-      },
-      styles: { 
-        fontSize: 10, 
-        halign: 'center',
-        lineColor: [0, 0, 0],       // All borders black
-        lineWidth: 0.1,
-        textColor: [0, 0, 0],
-        font: 'helvetica'
-      },
+      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], halign: 'center', fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.1 },
+      footStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], halign: 'center', fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.1 },
+      styles: { fontSize: 10, halign: 'center', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], font: 'helvetica' },
       columnStyles: { 0: { halign: 'left' } },
       margin: { left: 40, right: 40 }
     });
-
     drawDeveloperFooter(doc, 285);
     doc.save(`Trip_Summary_${format(new Date(), 'yyyyMMdd')}.pdf`);
   } catch (error) {
@@ -629,140 +526,51 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
   try {
     const doc = new jsPDF({ orientation: 'p' });
     doc.setFont('helvetica');
-
     const startDate = parseISO(start);
     const endDate = parseISO(end);
-    
-    const filtered = records
-      .filter(r => {
-        const rd = parseISO(r.date);
-        return rd >= startDate && rd <= endDate;
-      })
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    // Heading Configuration - Two-line heading
+    const filtered = records.filter(r => { const rd = parseISO(r.date); return rd >= startDate && rd <= endDate; }).sort((a, b) => a.date.localeCompare(b.date));
     const mainHeading = "ATTENDANCE SHEET (CIVIL MICROBUS DRIVER)";
-    // Full month names (MMMM)
     const rangeText = `${format(startDate, 'dd MMMM yyyy')} TO ${format(endDate, 'dd MMMM yyyy')}`.toUpperCase();
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11); 
-    doc.setFont('helvetica', 'bold');
-    
-    // Line 1: Main Title
+    doc.setTextColor(0, 0, 0); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
     doc.text(mainHeading, 105, 12, { align: 'center' });
-    let headingWidth = doc.getTextWidth(mainHeading);
-    doc.setLineWidth(0.5);
-    doc.line(105 - (headingWidth / 2), 14, 105 + (headingWidth / 2), 14);
-
-    // Line 2: Date Range
+    let headingWidth = doc.getTextWidth(mainHeading); doc.setLineWidth(0.5); doc.line(105 - (headingWidth / 2), 14, 105 + (headingWidth / 2), 14);
     doc.text(rangeText, 105, 20, { align: 'center' });
-    headingWidth = doc.getTextWidth(rangeText);
-    doc.line(105 - (headingWidth / 2), 22, 105 + (headingWidth / 2), 22);
-
-    // Table Headers - With Newline for (TO CANTONMENT)
+    headingWidth = doc.getTextWidth(rangeText); doc.line(105 - (headingWidth / 2), 22, 105 + (headingWidth / 2), 22);
     const headers = [['DATE', 'DAY', 'IN TIME', 'OUT TIME', 'LAST DAY MICROBUS ENTRY TIME\n(TO CANTONMENT)', 'REMARKS']];
-
     autoTable(doc, {
-      startY: 28, 
-      head: headers,
+      startY: 28, head: headers,
       body: filtered.map((r) => {
         const dateObj = parseISO(r.date);
-        const baseData = [
-          format(dateObj, 'dd MMM yy').toUpperCase(),
-          format(dateObj, 'EEEE').toUpperCase()
-        ];
-        
-        let dynamicColumns;
-        if (r.isHoliday) {
-          dynamicColumns = [
-            { content: 'HOLIDAY', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 250] } },
-            r.lastDayCompletionTime || '-'
-          ];
-        } else {
-          dynamicColumns = [
-            r.inTime || '-',
-            r.outTime || '-',
-            r.lastDayCompletionTime || '-'
-          ];
-        }
-
-        // Remarks logic: If isDutyDay is true, put "DUTY" in remarks column
-        const finalRemarks = r.isDutyDay ? 'DUTY' : (r.remarks || '');
-
-        return [...baseData, ...dynamicColumns, finalRemarks];
+        const baseData = [format(dateObj, 'dd MMM yy').toUpperCase(), format(dateObj, 'EEEE').toUpperCase()];
+        let dynamicColumns = r.isHoliday && !r.isDutyDay ? [{ content: 'HOLIDAY', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 250] } }, r.lastDayCompletionTime || '-'] : [r.inTime || '-', r.outTime || '-', r.lastDayCompletionTime || '-'];
+        return [...baseData, ...dynamicColumns, r.isDutyDay ? 'DUTY' : (r.remarks || '')];
       }),
       theme: 'grid',
-      headStyles: { 
-        fillColor: [220, 220, 220], 
-        textColor: [0, 0, 0], 
-        fontSize: 6.5, 
-        fontStyle: 'bold',
-        halign: 'center',
-        lineColor: [0, 0, 0],
-        lineWidth: 0.1,
-        valign: 'middle'
-      },
-      styles: { 
-        font: 'helvetica',
-        fontSize: 7, 
-        cellPadding: 0.8, 
-        lineColor: [0, 0, 0], 
-        lineWidth: 0.1, 
-        halign: 'center', 
-        textColor: [0, 0, 0],
-        valign: 'middle',
-        overflow: 'linebreak'
-      },
-      columnStyles: {
-        0: { cellWidth: 26 }, // Date
-        1: { cellWidth: 28 }, // Day
-        2: { cellWidth: 20 }, // In Time
-        3: { cellWidth: 20 }, // Out Time
-        4: { cellWidth: 62 }, // Last Day Entry (TO CANTONMENT)
-        5: { cellWidth: 34 }  // Remarks
-      },
+      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 6.5, fontStyle: 'bold', halign: 'center', lineColor: [0, 0, 0], lineWidth: 0.1, valign: 'middle' },
+      styles: { font: 'helvetica', fontSize: 7, cellPadding: 0.8, lineColor: [0, 0, 0], lineWidth: 0.1, halign: 'center', textColor: [0, 0, 0], valign: 'middle', overflow: 'linebreak' },
+      columnStyles: { 0: { cellWidth: 26 }, 1: { cellWidth: 28 }, 2: { cellWidth: 20 }, 3: { cellWidth: 20 }, 4: { cellWidth: 62 }, 5: { cellWidth: 34 } },
       margin: { left: 10, right: 10 }
     });
-
     if (withSignature) {
       const finalY = (doc as any).lastAutoTable?.finalY || 150;
       const pageWidth = doc.internal.pageSize.getWidth();
-      
       const sigY = Math.min(finalY + 12, 275);
-
-      doc.setFontSize(9); 
-      doc.setFont('helvetica', 'bold');
-      
-      // Driver signature line (Left)
-      doc.line(10, sigY, 55, sigY);
-      doc.text("Driver", 32.5, sigY + 4, { align: 'center' });
-
-      // JCO/NCO signature line (Right)
-      doc.line(pageWidth - 55, sigY, pageWidth - 10, sigY);
-      doc.text("JCO/NCO", pageWidth - 32.5, sigY + 4, { align: 'center' });
-
-      // Countersign (Center)
+      doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.line(10, sigY, 55, sigY); doc.text("Driver", 32.5, sigY + 4, { align: 'center' });
+      doc.line(pageWidth - 55, sigY, pageWidth - 10, sigY); doc.text("JCO/NCO", pageWidth - 32.5, sigY + 4, { align: 'center' });
       const countersignY = sigY + 14;
-      const csText = "COUNTERSIGN";
-      doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
-      const csWidth = doc.getTextWidth(csText);
-      doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
+      const csText = "COUNTERSIGN"; doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
+      const csWidth = doc.getTextWidth(csText); doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
     }
-
     drawDeveloperFooter(doc, 285);
     doc.save(`Attendance_Sheet_${format(startDate, 'MMM_yyyy')}.pdf`);
-  } catch (error) {
-    console.error("Attendance PDF generation failed:", error);
-    alert("Error generating attendance PDF.");
-  }
+  } catch (error) { console.error("Attendance PDF generation failed:", error); alert("Error generating attendance PDF."); }
 };
 
 export const generateFuelReport = async (bookings: Booking[], startDate: string, endDate: string, withSignature: boolean = true) => {
   try {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFont('helvetica');
-
     const sDate = parseISO(startDate);
     const eDate = parseISO(endDate);
     const filtered = filterByRange(bookings, startDate, endDate);
@@ -785,55 +593,44 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
     doc.line(148.5 - (headingWidth / 2), 21.5, 148.5 + (headingWidth / 2), 21.5);
 
     const tableBody: any[] = [];
-    let serial = 1;
+    filtered.forEach((b, i) => {
+      const start = parseISO(b.startDate);
+      const end = parseISO(b.endDate);
+      const days = differenceInDays(end, start) + 1;
+      
+      const purchaseCount = (b.fuelPurchases && b.fuelPurchases.length > 0) ? b.fuelPurchases.length : 1;
+      
+      for (let j = 0; j < purchaseCount; j++) {
+        const p = b.fuelPurchases?.[j];
+        const isFirst = j === 0;
+        const row: any[] = [];
+        
+        if (isFirst) {
+          row.push({ content: i + 1, rowSpan: purchaseCount, styles: { valign: 'top' } }); // SER
+          row.push({ content: (b.rankName || '').toUpperCase(), rowSpan: purchaseCount, styles: { valign: 'top' } }); // NAME
+          row.push({ content: format(start, DATE_FORMAT), rowSpan: purchaseCount, styles: { valign: 'top' } }); // FROM
+          row.push({ content: format(end, DATE_FORMAT), rowSpan: purchaseCount, styles: { valign: 'top' } }); // TO
+          row.push({ content: days, rowSpan: purchaseCount, styles: { valign: 'top' } }); // DAYS
+          row.push({ content: (b.destination || '-').toUpperCase(), rowSpan: purchaseCount, styles: { valign: 'top' } }); // DESTINATION
+          row.push({ content: b.kmStart !== undefined ? b.kmStart : '-', rowSpan: purchaseCount, styles: { valign: 'top' } }); // START
+          row.push({ content: b.kmEnd !== undefined ? b.kmEnd : '-', rowSpan: purchaseCount, styles: { valign: 'top' } }); // END
+          row.push({ content: b.totalKm !== undefined ? b.totalKm : '-', rowSpan: purchaseCount, styles: { valign: 'top' } }); // TOTAL KM
+        }
+        
+        // FUEL DATA - NOT MERGED. Show dash if truly missing.
+        const fuelStr = p?.purchasedFuel !== undefined ? p.purchasedFuel.toString() : (isFirst && b.purchasedFuel !== undefined ? b.purchasedFuel.toString() : '-');
+        const rateStr = p?.fuelRate !== undefined ? p.fuelRate.toString() : (isFirst && b.fuelRate !== undefined ? b.fuelRate.toString() : '-');
+        const takaStr = p?.totalFuelPrice !== undefined ? formatCurrency(p.totalFuelPrice) : (isFirst && b.totalFuelPrice !== undefined ? formatCurrency(b.totalFuelPrice) : '-');
 
-    filtered.forEach((b) => {
-      const days = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
-      const numPurchases = (b.fuelPurchases && b.fuelPurchases.length > 0) ? b.fuelPurchases.length : 1;
-
-      if (b.fuelPurchases && b.fuelPurchases.length > 0) {
-        b.fuelPurchases.forEach((p, pIdx) => {
-          if (pIdx === 0) {
-            // First row for this booking contains common info with rowSpan for merging
-            tableBody.push([
-              { content: serial++, rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
-              { content: (b.rankName || '').toUpperCase(), rowSpan: numPurchases, styles: { valign: 'top', halign: 'left' } },
-              { content: format(parseISO(b.startDate), DATE_FORMAT), rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
-              { content: format(parseISO(b.endDate), DATE_FORMAT), rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
-              { content: days, rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
-              { content: (b.destination || '-').toUpperCase(), rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
-              { content: b.kmStart ?? '-', rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
-              { content: b.kmEnd ?? '-', rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
-              { content: b.totalKm ?? '-', rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } },
-              p.purchasedFuel ?? '-',
-              p.fuelRate ?? '-',
-              p.totalFuelPrice ? p.totalFuelPrice.toLocaleString() : '-',
-              { content: b.remarks || '-', rowSpan: numPurchases, styles: { valign: 'top', halign: 'center' } }
-            ]);
-          } else {
-            // Subsequent rows for the same booking
-            tableBody.push([
-              p.purchasedFuel ?? '-',
-              p.fuelRate ?? '-',
-              p.totalFuelPrice ? p.totalFuelPrice.toLocaleString() : '-'
-            ]);
-          }
-        });
-      } else {
-        // Single row base entry
-        tableBody.push([
-          serial++,
-          (b.rankName || '').toUpperCase(),
-          format(parseISO(b.startDate), DATE_FORMAT),
-          format(parseISO(b.endDate), DATE_FORMAT),
-          days,
-          (b.destination || '-').toUpperCase(),
-          b.kmStart ?? '-',
-          b.kmEnd ?? '-',
-          b.totalKm ?? '-',
-          '-', '-', '-',
-          b.remarks || '-'
-        ]);
+        row.push(fuelStr);
+        row.push(rateStr);
+        row.push(takaStr);
+        
+        if (isFirst) {
+          row.push({ content: (b.remarks || '-'), rowSpan: purchaseCount, styles: { valign: 'top' } }); // REMARKS
+        }
+        
+        tableBody.push(row);
       }
     });
 
@@ -841,17 +638,17 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
       startY: 28,
       head: [
         [
-          { content: 'SER', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-          { content: 'NAME AND RANK', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'SER', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'NAME AND RANK', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
           { content: 'BOOKING DATE', colSpan: 2, styles: { halign: 'center' } },
-          { content: 'DAYS', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-          { content: 'DESTINATION', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'DAYS', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'DESTINATION', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
           { content: 'KILOMETERS', colSpan: 2, styles: { halign: 'center' } },
-          { content: 'TOTAL KILOMETRES', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-          { content: 'PURCHASED FUEL', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-          { content: 'RATE', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-          { content: 'TOTAL TAKA', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-          { content: 'REMARKS', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } }
+          { content: 'TOTAL KILOMETRES', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'PURCHASED FUEL', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'RATE', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'TOTAL TAKA', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+          { content: 'REMARKS', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } }
         ],
         [
           { content: 'FROM', styles: { halign: 'center' } },
@@ -862,74 +659,40 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
       ],
       body: tableBody,
       theme: 'grid',
-      headStyles: { 
-        fillColor: [220, 220, 220], 
-        textColor: [0, 0, 0], 
-        fontSize: 7.5, 
-        fontStyle: 'bold',
-        halign: 'center',
-        lineColor: [0, 0, 0],
-        lineWidth: 0.1,
-        valign: 'middle'
-      },
-      styles: { 
-        font: 'helvetica',
-        fontSize: 8, 
-        cellPadding: 1, 
-        lineColor: [0, 0, 0], 
-        lineWidth: 0.1, 
-        halign: 'center', 
-        textColor: [0, 0, 0],
-        valign: 'middle'
-      },
-      columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 41, halign: 'left' },
-        2: { cellWidth: 22 },
-        3: { cellWidth: 22 },
-        4: { cellWidth: 12 },
-        5: { cellWidth: 25, halign: 'center' },
-        6: { cellWidth: 18 },
-        7: { cellWidth: 18 },
-        8: { cellWidth: 22 },
-        9: { cellWidth: 22 },
+      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 8, halign: 'center', fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.1 },
+      styles: { font: 'helvetica', fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.1, halign: 'center', textColor: [0, 0, 0], valign: 'top' },
+      columnStyles: { 
+        1: { halign: 'left', cellWidth: 40 }, 
+        5: { halign: 'left' },
+        9: { cellWidth: 20 },
         10: { cellWidth: 15 },
-        11: { cellWidth: 20 },
-        12: { cellWidth: 30 }
+        11: { cellWidth: 20 }
       },
-      margin: { left: 10, right: 10 }
+      margin: { left: 8, right: 8 }
     });
 
     if (withSignature) {
       const finalY = (doc as any).lastAutoTable?.finalY || 150;
       const pageWidth = doc.internal.pageSize.getWidth();
+      const sigY = Math.min(finalY + 20, 185);
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
       
-      // Position signatures significantly below the table
-      const sigY = Math.min(finalY + 15, 180); 
-
-      doc.setFontSize(9); 
-      doc.setFont('helvetica', 'bold');
-      
-      // Driver signature line (Left)
       doc.line(20, sigY, 70, sigY);
-      doc.text("Driver", 45, sigY + 4, { align: 'center' });
-
-      // JCO/NCO signature line (Right)
+      doc.text("Driver", 45, sigY + 5, { align: 'center' });
+      
       doc.line(pageWidth - 70, sigY, pageWidth - 20, sigY);
-      doc.text("JCO/NCO", pageWidth - 45, sigY + 4, { align: 'center' });
-
-      // Countersign (Center)
-      const countersignY = sigY + 12;
-      const csText = "COUNTERSIGN";
-      doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
-      const csWidth = doc.getTextWidth(csText);
-      doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
+      doc.text("JCO/NCO", pageWidth - 45, sigY + 5, { align: 'center' });
+      
+      const csY = sigY + 12;
+      doc.text("COUNTERSIGN", pageWidth / 2, csY, { align: 'center' });
+      const csW = doc.getTextWidth("COUNTERSIGN");
+      doc.line(pageWidth / 2 - csW / 2, csY + 1, pageWidth / 2 + csW / 2, csY + 1);
     }
 
     drawDeveloperFooter(doc, 200);
     doc.save(`Fuel_Report_${format(sDate, 'MMM_yyyy')}.pdf`);
   } catch (error) {
-    console.error("Fuel PDF generation failed:", error);
-    alert("Error generating fuel report PDF.");
+    console.error("Fuel report generation failed:", error);
+    alert("Error generating fuel report.");
   }
 };

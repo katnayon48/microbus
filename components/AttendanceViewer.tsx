@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { getDatabase, ref, onValue } from 'firebase/database';
 import { format, parseISO, subMonths, addMonths } from 'date-fns';
@@ -20,7 +21,7 @@ const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginCli
     const unsubscribe = onValue(attendanceRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const list = Object.keys(data).map(key => ({ ...data[key] }));
+        const list = Object.keys(data).map(key => ({ ...data[key], id: key }));
         setAttendanceRecords(list.sort((a, b) => b.date.localeCompare(a.date)));
       } else {
         setAttendanceRecords([]);

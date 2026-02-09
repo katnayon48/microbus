@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { LogOut, FileText, Loader2, ArrowLeft, Phone } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -271,9 +272,9 @@ const App: React.FC = () => {
         </header>
 
         <main className="p-1 md:p-2 flex flex-col gap-1 md:gap-2 flex-1 overflow-hidden min-h-0 relative z-10">
-          {view === 'calendar' ? (
-            <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-0">
-              <div className="bg-[#062c1e] rounded-2xl md:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden flex flex-col flex-1 min-h-0">
+          <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-0">
+            <div className="bg-[#062c1e] rounded-2xl md:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden flex flex-col flex-1 min-h-0">
+              {view === 'calendar' ? (
                 <Calendar 
                   currentDate={currentDate} 
                   setCurrentDate={setCurrentDate} 
@@ -287,17 +288,13 @@ const App: React.FC = () => {
                   onReportClick={() => { setView('reports'); setReportInitialStep('dashboard'); }}
                   isAppLoading={isLoading}
                 />
-              </div>
+              ) : view === 'attendance' ? (
+                <AttendanceViewer isAdmin={isAdmin} onLoginClick={handleAttendanceLoginRedirect} />
+              ) : (
+                <ReportManager bookings={bookings} onBack={() => { setView('calendar'); setReportInitialStep('dashboard'); }} initialStep={reportInitialStep} />
+              )}
             </div>
-          ) : view === 'attendance' ? (
-            <div className="max-w-4xl mx-auto w-full h-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300 p-2 md:p-4">
-              <AttendanceViewer isAdmin={isAdmin} onLoginClick={handleAttendanceLoginRedirect} />
-            </div>
-          ) : (
-            <div className="max-w-5xl mx-auto w-full h-full overflow-y-auto animate-in fade-in slide-in-from-right-4 duration-300 custom-scrollbar p-2">
-              <ReportManager bookings={bookings} onBack={() => { setView('calendar'); setReportInitialStep('dashboard'); }} initialStep={reportInitialStep} />
-            </div>
-          )}
+          </div>
         </main>
 
         {view === 'calendar' && (
