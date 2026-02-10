@@ -15,4 +15,10 @@ export const BOOKING_FIELDS: { label: string; value: string }[] = [
   { label: 'Fare Status', value: 'fareStatus' },
   { label: 'Out Time', value: 'outTime' },
   { label: 'In Time', value: 'inTime' },
+  { label: 'Kilometres Start', value: 'kmStart' },
+  { label: 'Kilometres End', value: 'kmEnd' },
+  { label: 'Total Kilometres', value: 'totalKm' },
+  { label: 'Purchased Fuel', value: 'purchasedFuel' },
+  { label: 'Rate', value: 'fuelRate' },
+  { label: 'Total Taka', value: 'totalFuelPrice' },
 ];

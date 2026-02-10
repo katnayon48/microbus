@@ -185,14 +185,14 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
       setAttendanceForm({ 
         date: format(new Date(), 'yyyy-MM-dd'),
         driverName: 'NAZRUL',
-        inTime: '08:00',
-        outTime: '17:00',
         id: undefined, 
         remarks: '', 
         isDutyDay: false, 
         isOfficeDay: true, 
         isHoliday: false,
-        lastDayCompletionTime: '' 
+        lastDayCompletionTime: '',
+        inTime: '08:00',
+        outTime: '17:00'
       });
       lastAutoPopDate.current = null;
       setIsAddingAttendance(false);
@@ -424,14 +424,24 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                       <div className="grid grid-cols-2 gap-4 w-full max-w-[220px] box-border">
                         <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">In Time</label>
-                          <div className="relative group">
-                            <input type="time" value={attendanceForm.inTime || ''} onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border" />
+                          <div className="relative group w-full">
+                            <input type="time" value={attendanceForm.inTime || ''} onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6" />
+                            {attendanceForm.inTime && (
+                              <button onClick={() => setAttendanceForm({...attendanceForm, inTime: ''})} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-rose-400 transition-colors">
+                                <X size={10} />
+                              </button>
+                            )}
                           </div>
                         </div>
                         <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">Out Time</label>
-                          <div className="relative group">
-                            <input type="time" value={attendanceForm.outTime || ''} onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border" />
+                          <div className="relative group w-full">
+                            <input type="time" value={attendanceForm.outTime || ''} onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6" />
+                            {attendanceForm.outTime && (
+                              <button onClick={() => setAttendanceForm({...attendanceForm, outTime: ''})} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-rose-400 transition-colors">
+                                <X size={10} />
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

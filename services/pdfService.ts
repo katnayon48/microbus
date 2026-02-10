@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
@@ -362,32 +361,96 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
       doc.line(148 - (periodWidth / 2), 23.5, 148 + (periodWidth / 2), 23.5);
     }
 
-    const headers = fields.map(f => BOOKING_FIELDS.find(bf => bf.value === f)?.label || f.toUpperCase());
+    // Dynamic 2-row header generation for merged groupings
+    const headRow1: any[] = [];
+    const headRow2: any[] = [];
+
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      // Force all labels to uppercase for professional consistency in the Detailed Report
+      const label = (BOOKING_FIELDS.find(bf => bf.value === f)?.label || f.toString()).toUpperCase();
+
+      // Check for Start/End Kilometres group
+      if ((f === 'kmStart' && fields[i+1] === 'kmEnd') || (f === 'kmEnd' && fields[i+1] === 'kmStart')) {
+        headRow1.push({ content: 'KILOMETRES', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold' } });
+        headRow2.push({ content: 'START', styles: { halign: 'center', fontStyle: 'bold' } });
+        headRow2.push({ content: 'END', styles: { halign: 'center', fontStyle: 'bold' } });
+        i++; // skip next since it's merged
+        continue;
+      }
+
+      // Check for From/To Date group
+      if ((f === 'startDate' && fields[i+1] === 'endDate') || (f === 'endDate' && fields[i+1] === 'startDate')) {
+        headRow1.push({ content: 'BOOKING DATE', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold' } });
+        headRow2.push({ content: 'FROM', styles: { halign: 'center', fontStyle: 'bold' } });
+        headRow2.push({ content: 'TO', styles: { halign: 'center', fontStyle: 'bold' } });
+        i++; // skip next
+        continue;
+      }
+
+      // Regular single row field
+      headRow1.push({ content: label, rowSpan: 2, styles: { valign: 'middle', halign: 'center', fontStyle: 'bold' } });
+    }
+
     const colStyles: any = {};
     fields.forEach((f, index) => {
-      if (f === 'rankName' || f === 'unit' || f === 'destination' || f === 'remarks') colStyles[index] = { halign: 'left' };
+      if (['rankName', 'unit', 'destination', 'remarks'].includes(f)) colStyles[index] = { halign: 'left' };
       else colStyles[index] = { halign: 'center' };
+    });
+
+    const tableBody: any[] = [];
+    const fuelFields = ['purchasedFuel', 'fuelRate', 'totalFuelPrice'];
+    const hasFuelFields = fields.some(f => fuelFields.includes(f as string));
+
+    filtered.forEach((b) => {
+      // Determine how many rows this booking needs based on fuel purchases
+      const purchaseCount = (hasFuelFields && b.fuelPurchases && b.fuelPurchases.length > 0) ? b.fuelPurchases.length : 1;
+      
+      for (let j = 0; j < purchaseCount; j++) {
+        const p = hasFuelFields ? b.fuelPurchases?.[j] : null;
+        const isFirst = j === 0;
+        const row: any[] = [];
+        
+        fields.forEach((f) => {
+          // If this is a fuel-specific varying field, don't merge (don't add rowSpan)
+          if (fuelFields.includes(f as string)) {
+            const val = p ? p[f as keyof typeof p] : b[f as keyof Booking];
+            if (f === 'totalFuelPrice') {
+              row.push(val !== undefined ? formatCurrency(val as number) : '-');
+            } else if (f === 'purchasedFuel') {
+              row.push(val !== undefined ? `${val} L` : '-');
+            } else {
+              row.push(val !== undefined ? val.toString() : '-');
+            }
+          } else {
+            // Non-fuel varying field: only add the content for the first row of this group and apply rowSpan
+            if (isFirst) {
+              let content: any = '';
+              if (f === 'totalDays') content = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
+              else if (f === 'startDate' || f === 'endDate') content = b[f as keyof Booking] ? format(parseISO(b[f as keyof Booking] as string), DATE_FORMAT) : 'N/A';
+              else if (f === 'fare') content = b.isExempt ? 'EXEMPTED' : (b.fare !== undefined ? b.fare.toLocaleString() : '-');
+              else if (f === 'outTime' || f === 'inTime') {
+                const val = b[f as keyof Booking];
+                content = val ? `${val} hrs` : 'N/A';
+              } else {
+                const val = b[f as keyof Booking];
+                content = val === undefined || val === null ? '' : val.toString();
+              }
+              row.push({ content, rowSpan: purchaseCount, styles: { valign: 'top' } });
+            }
+          }
+        });
+        tableBody.push(row);
+      }
     });
 
     autoTable(doc, {
       startY: 30,
-      head: [headers],
-      body: filtered.map(b => {
-        return fields.map(f => {
-          if (f === 'totalDays') return differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
-          if (f === 'startDate' || f === 'endDate') return b[f as keyof Booking] ? format(parseISO(b[f as keyof Booking] as string), DATE_FORMAT) : 'N/A';
-          if (f === 'fare') return b.isExempt ? 'EXEMPTED' : (b.fare || 0).toLocaleString();
-          if (f === 'outTime' || f === 'inTime') {
-            const val = b[f as keyof Booking];
-            return val ? `${val} hrs` : 'N/A';
-          }
-          const val = b[f as keyof Booking];
-          return val === undefined || val === null ? '' : val.toString();
-        });
-      }),
+      head: [headRow1, headRow2],
+      body: tableBody,
       theme: 'grid',
-      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 9, fontStyle: 'bold', halign: 'center', font: 'helvetica' },
-      styles: { font: 'helvetica', fontSize: 8, cellPadding: 1.5, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
+      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 8, fontStyle: 'bold', halign: 'center', font: 'helvetica' },
+      styles: { font: 'helvetica', fontSize: 7, cellPadding: 1.5, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
       columnStyles: colStyles,
       margin: { left: 10, right: 10 }
     });
