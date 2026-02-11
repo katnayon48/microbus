@@ -68,6 +68,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
   const sigLabel1 = appSettings.branding.pdfSignatureLabel1 || "Driver";
   const sigLabel2 = appSettings.branding.pdfSignatureLabel2 || "JCO/NCO";
   const bgColor = appSettings.ui.bgColor || "#062c1e";
+  const themeColor = appSettings.ui.themeColor || "#10b981";
 
   const [handoffData, setHandoffData] = useState<HandoffInfo>({
     providerArmyNo: '',
@@ -172,7 +173,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
   }, [bookings, selectedYear]);
 
   const maxScale = 25;
-  const scaleValues = [25, 20, 10, 0];
+  const scaleValues = [25, 20, 15, 10, 5, 0];
 
   const handleSaveAttendance = async () => {
     setIsSavingAttendance(true);
@@ -439,7 +440,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                     </div>
 
                     <div className="flex flex-col items-center gap-3 w-full box-border">
-                      <div className="grid grid-cols-2 gap-4 w-full max-w-[220px] box-border">
+                      <div className="grid grid-cols-2 gap-8 w-full max-w-[300px] box-border">
                         <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">In Time</label>
                           <div className="relative group w-full">
@@ -519,6 +520,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                          <thead className="sticky top-0 z-20 bg-[#0a1128]">
                             <tr className="border-b border-white/10">
                                <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">Date</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">Day</th>
                                <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">In</th>
                                <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">Out</th>
                                <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center w-[25%]">Edit</th>
@@ -567,6 +569,82 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                   <span>Export Log</span>
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeStep === 'trip-summary' && (
+          <div className="flex flex-col h-full animate-in fade-in zoom-in-95 duration-500 overflow-hidden w-full box-border">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-4 shrink-0 w-full box-border px-1 gap-3 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
+                <button 
+                  onClick={() => setActiveStep('dashboard')}
+                  className="hidden md:flex w-8 h-8 items-center justify-center bg-white/5 border border-white/10 text-slate-400 rounded-lg hover:bg-emerald-600 hover:text-white transition-all active:scale-90 shadow-lg"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <div className="min-w-0">
+                  <h3 className="text-[14px] md:text-2xl font-black text-white uppercase tracking-tighter leading-none">TRIP STATISTICS</h3>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center gap-1 bg-black/40 p-1 rounded-lg md:rounded-xl border border-white/10 shrink-0 w-fit mx-auto md:mx-0">
+                 <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 text-slate-400 hover:text-white transition-colors"><ChevronLeft size={14}/></button>
+                 <span className="text-[14px] md:text-xl font-black text-white px-3 min-w-[60px] md:min-w-[80px] text-center tracking-widest">{selectedYear}</span>
+                 <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 text-slate-400 hover:text-white transition-colors"><ChevronRight size={14}/></button>
+              </div>
+            </div>
+
+            <div className="flex-1 bg-black/20 p-4 md:p-12 rounded-[1.5rem] md:rounded-[3rem] border border-white/5 flex flex-col min-h-0 overflow-hidden shadow-inner w-full box-border relative">
+               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.03]">
+                 <img src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" alt="Watermark" className="w-[280px] md:w-[550px] h-[280px] md:h-[550px] object-cover rounded-full" />
+               </div>
+
+               <div className="flex-1 relative flex items-end gap-1.5 md:gap-8 pt-10 pb-8 min-h-0 w-full box-border z-10">
+                  <div className="flex flex-col justify-between h-full text-right pr-1.5 md:pr-4 border-r border-white/5 select-none shrink-0 pb-10">
+                     {scaleValues.map(val => (
+                       <span key={`l-${val}`} className="text-[8px] md:text-sm font-black text-slate-500/80 tabular-nums">{val}</span>
+                     ))}
+                  </div>
+                  <div className="flex-1 relative h-full flex items-end justify-between gap-1 px-1 border-b-2 border-white/10 pb-10">
+                    <div className="absolute inset-0 flex flex-col pointer-events-none opacity-[0.03] px-1 pb-10">
+                      {scaleValues.slice(0, -1).map((_, i) => (
+                        <div key={i} className="flex-1 border-t border-white"></div>
+                      ))}
+                    </div>
+
+                    {monthlyStats.map((stat, i) => {
+                      const heightPercent = Math.min((stat.count / maxScale) * 100, 100);
+                      const finalHeight = Math.max(heightPercent, stat.count > 0 ? 4 : 0);
+                      return (
+                        <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative h-full justify-end">
+                           {stat.count > 0 && (
+                             <span className="absolute text-[8px] md:text-sm font-black text-white drop-shadow-md z-40 animate-in fade-in" style={{ bottom: `calc(${finalHeight}% + 4px)` }}>
+                                {stat.count}
+                             </span>
+                           )}
+                           
+                           <div className="w-full max-w-[16px] md:max-w-[50px] rounded-t-sm md:rounded-t-2xl shadow-2xl animate-bar-grow transition-all border-x border-t border-white/10"
+                             style={{ height: `${finalHeight}%`, animationDelay: `${i * 80}ms`, background: stat.style.gradient, backgroundColor: stat.style.color }}></div>
+                           <span className="absolute -bottom-8 md:-bottom-10 text-[6.5px] md:text-[12px] font-black text-slate-500 uppercase tracking-tighter">{stat.month}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+               </div>
+
+               <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-4 shrink-0 w-full box-border z-10">
+                 <div className="px-4 py-2 md:px-8 md:py-3.5 bg-white rounded-lg md:rounded-2xl shadow-2xl border border-slate-200 flex items-center justify-center shrink-0">
+                    <span className="text-[10px] md:text-lg font-black text-slate-950 uppercase tracking-widest flex items-center gap-2 md:gap-3 leading-none">
+                      <TrendingUp size={12} md:size={20} className="text-emerald-600" /> 
+                      ANNUAL TOTAL: {monthlyStats.reduce((a, b) => a + b.count, 0)} DAYS
+                    </span>
+                 </div>
+                 
+                 <button onClick={() => setActiveStep('summary-download-range')} className="flex items-center gap-2 px-6 py-2 md:px-8 md:py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[9px] md:text-xs font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 border border-emerald-400/20">
+                   <Download size={14} /> EXPORT PDF
+                 </button>
+               </div>
             </div>
           </div>
         )}
@@ -673,49 +751,6 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                   </button>
                 </div>
              </div>
-          </div>
-        )}
-
-        {activeStep === 'trip-summary' && (
-          <div className="flex flex-col h-full animate-in fade-in zoom-in-95 duration-500 overflow-hidden w-full box-border">
-            <div className="flex items-center justify-between mb-2 shrink-0 w-full box-border px-1">
-              <StepHeader title="Trip Stats" subtitle={`Annual ${selectedYear}`} onBackStep={() => setActiveStep('dashboard')} />
-              <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-white/10 shrink-0">
-                 <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 text-slate-400 hover:text-white transition-colors"><ChevronLeft size={16}/></button>
-                 <span className="text-[10px] font-black text-white px-2 min-w-[40px] text-center">{selectedYear}</span>
-                 <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 text-slate-400 hover:text-white transition-colors"><ChevronRight size={16}/></button>
-              </div>
-            </div>
-            <div className="flex-1 bg-black/20 p-4 md:p-8 rounded-[2rem] border border-white/5 flex flex-col min-h-0 overflow-hidden shadow-inner w-full box-border mx-auto">
-               <div className="flex-1 relative flex items-end gap-1.5 md:gap-4 pt-10 pb-6 min-h-0 w-full box-border">
-                  <div className="flex flex-col justify-between h-full text-right pr-1.5 border-r border-white/5 select-none shrink-0">
-                     {scaleValues.map(val => (
-                       <span key={`l-${val}`} className="text-[8px] md:text-[10px] font-black text-slate-500 tabular-nums">{val}</span>
-                     ))}
-                  </div>
-                  <div className="flex-1 relative h-full flex items-end justify-between gap-1 px-1 border-b-2 border-white/10">
-                    {monthlyStats.map((stat, i) => {
-                      const heightPercent = Math.min((stat.count / maxScale) * 100, 100);
-                      const finalHeight = Math.max(heightPercent, stat.count > 0 ? 3 : 0);
-                      return (
-                        <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative h-full justify-end">
-                           <div className="w-full max-w-[16px] md:max-w-[40px] rounded-t-sm md:rounded-t-lg shadow-2xl animate-bar-grow transition-all border-x border-t border-white/10"
-                             style={{ height: `${finalHeight}%`, animationDelay: `${i * 80}ms`, background: stat.style.gradient, backgroundColor: stat.style.color }}></div>
-                           <span className="absolute -bottom-5 text-[6.5px] md:text-[9px] font-black text-slate-400 uppercase tracking-tighter">{stat.month}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-               </div>
-               <div className="mt-8 flex justify-between items-center shrink-0 w-full box-border">
-                 <div className="bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-500/20 truncate mr-2">
-                   <span className="text-[8px] md:text-[11px] font-black text-emerald-400 uppercase tracking-widest">Aggregate: {monthlyStats.reduce((a, b) => a + b.count, 0)} Trips</span>
-                 </div>
-                 <button onClick={() => setActiveStep('summary-download-range')} className="flex items-center gap-2 px-5 md:px-7 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[8px] md:text-[11px] font-black uppercase tracking-widest shadow-xl shrink-0 transition-all active:scale-95">
-                   <Download size={14} /> EXPORT
-                 </button>
-               </div>
-            </div>
           </div>
         )}
 

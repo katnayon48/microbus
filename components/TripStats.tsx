@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart3, TrendingUp } from 'lucide-react';
 import { Booking, AppSettings } from '../types';
 import { format, parseISO, getYear, startOfMonth, endOfMonth, differenceInDays, max, min } from 'date-fns';
 
@@ -71,64 +71,63 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
       className="flex flex-col w-full h-[85vh] overflow-hidden animate-stats-reveal relative px-2 md:px-8 py-4"
       style={{ backgroundColor: bgColor }}
     >
-      {/* Header Bar */}
-      <div className="w-full flex items-center justify-between gap-4 mb-8 shrink-0 relative z-10">
-         <div className="flex items-center gap-4">
+      {/* Header Bar - Optimized for Mobile */}
+      <div className="w-full flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 mb-4 md:mb-8 shrink-0 relative z-10 text-center">
+         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
             <div 
-              className="w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center border shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]"
+              className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center border shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]"
               style={{ backgroundColor: `${themeColor}22`, borderColor: `${themeColor}44`, color: themeColor }}
             >
-               <BarChart3 size={24} md:size={32} />
+               <BarChart3 size={20} className="md:w-8 md:h-8" />
             </div>
             <div className="min-w-0">
-               <h3 className="text-xl md:text-4xl font-black text-white uppercase tracking-tighter leading-none">TRIP STATISTICS</h3>
+               <h3 className="text-[14px] md:text-4xl font-black text-white uppercase tracking-tighter leading-none">TRIP STATISTICS</h3>
             </div>
          </div>
          
-         <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10 shadow-2xl shrink-0">
+         {/* Year Selector - Centered on mobile */}
+         <div className="flex items-center justify-center gap-1.5 bg-black/40 p-1 md:p-1.5 rounded-xl md:rounded-2xl border border-white/10 shadow-2xl shrink-0 w-fit mx-auto md:mx-0">
             <button 
               onClick={() => setSelectedYear(y => y - 1)} 
-              className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
+              className="w-8 h-8 md:w-12 md:h-12 flex items-center justify-center hover:bg-white/5 rounded-lg md:rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
             >
-              <ChevronLeft size={20} md:size={24} />
+              <ChevronLeft size={16} className="md:w-6 md:h-6" />
             </button>
-            <div className="px-4 md:px-8 flex flex-col items-center">
+            <div className="px-3 md:px-8 flex flex-col items-center min-w-[60px] md:min-w-[100px]">
               <span className="text-[14px] md:text-2xl font-black text-white tabular-nums tracking-widest">{selectedYear}</span>
             </div>
             <button 
               onClick={() => setSelectedYear(y => y + 1)} 
-              className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
+              className="w-8 h-8 md:w-12 md:h-12 flex items-center justify-center hover:bg-white/5 rounded-lg md:rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
             >
-              <ChevronRight size={20} md:size={24} />
+              <ChevronRight size={16} className="md:w-6 md:h-6" />
             </button>
          </div>
       </div>
 
       {/* Main Chart Card */}
-      <div className="w-full flex-1 bg-black/20 rounded-[2rem] md:rounded-[3rem] border border-white/5 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)] relative flex flex-col overflow-hidden p-6 md:p-12">
-        {/* Background Watermark */}
+      <div className="w-full flex-1 bg-black/20 rounded-[1.5rem] md:rounded-[3rem] border border-white/5 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)] relative flex flex-col overflow-hidden p-3 md:p-12">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.03]">
           <img 
             src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
             alt="Watermark" 
-            className="w-[300px] md:w-[600px] h-[300px] md:h-[600px] object-cover rounded-full" 
+            className="w-[280px] md:w-[600px] h-[280px] md:h-[600px] object-cover rounded-full" 
           />
         </div>
 
-        <div className="flex items-end gap-2 md:gap-8 relative flex-1 min-h-0 h-full z-10">
+        <div className="flex items-end gap-1 md:gap-8 relative flex-1 min-h-0 h-full z-10">
           {/* Y-Axis Scale */}
-          <div className="flex flex-col justify-between h-full text-right pr-2 md:pr-6 select-none border-r border-white/5 pb-10">
+          <div className="flex flex-col justify-between h-full text-right pr-1 md:pr-6 select-none border-r border-white/5 pb-10">
              {scaleValues.map(val => (
-               <div key={`l-${val}`} className="flex items-center justify-end gap-2 md:gap-4 relative group">
-                 <span className="text-[9px] md:text-sm font-black text-slate-500/80 group-hover:text-slate-300 transition-colors">{val}</span>
-                 <div className="w-2 md:w-3 h-[1px] bg-slate-700"></div>
+               <div key={`l-${val}`} className="flex items-center justify-end gap-1 md:gap-4 relative group">
+                 <span className="text-[8px] md:text-sm font-black text-slate-500/80">{val}</span>
+                 <div className="w-1 md:w-3 h-[1px] bg-slate-700"></div>
                </div>
              ))}
           </div>
 
           {/* Visualization Area */}
-          <div className="flex-1 relative h-full flex items-end justify-between gap-1.5 md:gap-6 px-1 md:px-6 border-b-2 border-white/10 pb-10">
-             {/* Grid Lines */}
+          <div className="flex-1 relative h-full flex items-end justify-between gap-1 md:gap-6 px-1 md:px-6 border-b-2 border-white/10 pb-10">
              <div className="absolute inset-0 flex flex-col pointer-events-none opacity-[0.03] px-6 pb-10">
                 {scaleValues.slice(0, -1).map((_, i) => (
                   <div key={i} className="flex-1 border-t border-white"></div>
@@ -140,22 +139,20 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
                const finalHeight = Math.max(heightPercent, stat.count > 0 ? 4 : 0);
                return (
                  <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative z-10 h-full justify-end">
-                    {/* Tooltip on top */}
+                    
+                    {/* Always visible Count on top - Pure White */}
                     {stat.count > 0 && (
-                      <div 
-                        className="absolute opacity-0 group-hover/bar:opacity-100 transition-all duration-300 transform translate-y-2 group-hover/bar:translate-y-0 z-40"
-                        style={{ bottom: `calc(${finalHeight}% + 12px)` }}
+                      <span 
+                        className="absolute text-[8px] md:text-sm font-black text-white drop-shadow-md z-40 animate-in fade-in"
+                        style={{ bottom: `calc(${finalHeight}% + 4px)` }}
                       >
-                        <div className="bg-white text-[#062c1e] px-3 py-1.5 rounded-xl font-black text-xs md:text-sm shadow-2xl whitespace-nowrap border border-white/20">
-                          {stat.count} Trips
-                        </div>
-                        <div className="w-2 h-2 bg-white rotate-45 mx-auto -mt-1 border-r border-b border-white/20"></div>
-                      </div>
+                        {stat.count}
+                      </span>
                     )}
 
                     {/* The Bar */}
                     <div 
-                      className="w-full max-w-[24px] md:max-w-[70px] rounded-t-lg md:rounded-t-2xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] animate-bar-grow transition-all cursor-default border-x border-t border-white/10 group-hover/bar:brightness-125 group-hover/bar:scale-x-105 z-10"
+                      className="w-full max-w-[18px] md:max-w-[70px] rounded-t md:rounded-t-2xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] animate-bar-grow transition-all cursor-default border-x border-t border-white/10 z-10"
                       style={{ 
                         height: `${finalHeight}%`,
                         animationDelay: `${i * 100}ms`,
@@ -163,14 +160,12 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
                         backgroundColor: stat.style.color
                       }}
                     >
-                      {/* Glossy overlay on bar */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50 rounded-t-lg md:rounded-t-2xl"></div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50 rounded-t md:rounded-t-2xl"></div>
                     </div>
 
                     {/* X-Axis Label */}
                     <span 
-                      className="absolute -bottom-8 md:-bottom-10 text-[8px] md:text-[13px] font-black text-slate-500 uppercase tracking-tight group-hover/bar:text-emerald-400 transition-colors"
-                      style={{ color: stat.count > 0 ? '' : '#475569' }}
+                      className="absolute -bottom-8 md:-bottom-10 text-[7px] md:text-[13px] font-black text-slate-500 uppercase tracking-tight"
                     >
                       {stat.month}
                     </span>
@@ -180,24 +175,15 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
           </div>
         </div>
         
-        {/* Footer Statistics Bar */}
-        <div className="mt-12 pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-6 z-10">
-           <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 px-5 py-3 bg-white/5 rounded-2xl border border-white/5">
-                <Info size={16} style={{ color: themeColor }} />
-                <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest leading-none">Monthly Usage Summary</span>
-              </div>
-           </div>
-           
-           <div className="flex items-center gap-4">
-             <div 
-                className="px-6 md:px-10 py-3.5 md:py-4 rounded-[1.2rem] md:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border"
-                style={{ backgroundColor: themeColor, borderColor: `${themeColor}44` }}
-             >
-                <span className="text-xs md:text-lg font-black text-white uppercase tracking-widest flex items-center gap-3">
-                  <TrendingUp size={16} md:size={24} /> Annual Total: {monthlyStats.reduce((a, b) => a + b.count, 0)} Days
-                </span>
-             </div>
+        {/* Footer Statistics Bar - Small, White Button, Centered */}
+        <div className="mt-8 md:mt-12 flex items-center justify-center shrink-0 z-10">
+           <div 
+              className="px-4 md:px-10 py-2 md:py-4 bg-white rounded-lg md:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-200 flex items-center justify-center"
+           >
+              <span className="text-[10px] md:text-lg font-black text-slate-950 uppercase tracking-widest flex items-center gap-2 md:gap-3">
+                <TrendingUp size={12} className="text-emerald-600 md:w-6 md:h-6" /> 
+                ANNUAL TOTAL: {monthlyStats.reduce((a, b) => a + b.count, 0)} DAYS
+              </span>
            </div>
         </div>
       </div>

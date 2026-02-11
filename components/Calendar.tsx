@@ -160,7 +160,7 @@ const Calendar: React.FC<CalendarProps> = ({
               <h2 className="text-[10px] md:text-2xl font-black text-white tracking-tight uppercase whitespace-nowrap">
                 {format(currentDate, 'MMM yy')}
               </h2>
-              <ChevronDown size={8} className="transition-colors md:w-4 md:h-4 shrink-0" style={{ color: themeColor }} />
+              <ChevronDown size={8} className="transition-colors md:w-4 md:h-4 shrink-0 text-white" />
             </button>
             <button 
               onClick={onAttendanceViewerClick}
@@ -183,9 +183,7 @@ const Calendar: React.FC<CalendarProps> = ({
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-1 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-slate-300 uppercase tracking-tight md:tracking-wider whitespace-nowrap transition-colors"
-              onMouseEnter={(e) => e.currentTarget.style.color = themeColor}
-              onMouseLeave={(e) => e.currentTarget.style.color = ""}
+              className="px-1 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-white uppercase tracking-tight md:tracking-wider whitespace-nowrap transition-colors"
             >
               Today
             </button>
