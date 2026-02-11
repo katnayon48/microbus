@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   FileText, Table, ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
@@ -8,7 +9,7 @@ import {
   X, Check, Droplets, Fuel, Sparkles, LayoutDashboard, Database,
   Type, UserPlus, Fingerprint, FileSpreadsheet, RotateCw, CheckCircle, Plus
 } from 'lucide-react';
-import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
+import { Booking, BookingField, HandoffInfo, DriverAttendance, AppSettings } from '../types';
 import { 
   generatePaymentSlip, generateOverallReport, generateTripSummaryReport, 
   generateAttendanceSheet, generateFuelReport 
@@ -25,6 +26,7 @@ import Modal from './Modal';
 
 interface ReportManagerProps {
   bookings: Booking[];
+  appSettings: AppSettings;
   onBack?: () => void;
   initialStep?: ReportStep;
 }
@@ -46,7 +48,7 @@ const MONTH_BAR_STYLES = [
   { color: '#14b8a6', gradient: 'linear-gradient(to top, #134e4a, #14b8a6)' }
 ];
 
-const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initialStep = 'dashboard' }) => {
+const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, onBack, initialStep = 'dashboard' }) => {
   const [activeStep, setActiveStep] = useState<ReportStep>(initialStep);
   const [selectedYear, setSelectedYear] = useState(() => getYear(new Date()));
   const [isGenerating, setIsGenerating] = useState(false);
@@ -62,6 +64,10 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
   const [masterDataWithSignature, setMasterDataWithSignature] = useState(false);
   const [customHeader, setCustomHeader] = useState('');
   const [selectedFields, setSelectedFields] = useState<BookingField[]>([]);
+
+  const sigLabel1 = appSettings.branding.pdfSignatureLabel1 || "Driver";
+  const sigLabel2 = appSettings.branding.pdfSignatureLabel2 || "JCO/NCO";
+  const bgColor = appSettings.ui.bgColor || "#062c1e";
 
   const [handoffData, setHandoffData] = useState<HandoffInfo>({
     providerArmyNo: '',
@@ -217,14 +223,14 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
 
   const handleAttendanceSheetDownload = async () => {
     setIsGenerating(true);
-    await generateAttendanceSheet(attendanceRecords, range.start, range.end, withSignature);
+    await generateAttendanceSheet(attendanceRecords, range.start, range.end, withSignature, sigLabel1, sigLabel2);
     setIsGenerating(false);
     setActiveStep('driver-attendance');
   };
 
   const handleFuelReportDownload = async () => {
     setIsGenerating(true);
-    await generateFuelReport(bookings, range.start, range.end, fuelWithSignature);
+    await generateFuelReport(bookings, range.start, range.end, fuelWithSignature, sigLabel1, sigLabel2);
     setIsGenerating(false);
     setActiveStep('dashboard');
   };
@@ -232,14 +238,14 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
   const handleDetailedReportDownload = async () => {
     setIsGenerating(true);
     const allFields: BookingField[] = BOOKING_FIELDS.map(f => f.value as BookingField);
-    await generateOverallReport(bookings, range.start, range.end, allFields, "DETAILED MASTER DATA REPORT", masterDataWithSignature);
+    await generateOverallReport(bookings, range.start, range.end, allFields, "DETAILED MASTER DATA REPORT", masterDataWithSignature, sigLabel1, sigLabel2);
     setIsGenerating(false);
     setActiveStep('dashboard');
   };
 
   const handleDetailedReportExport = async () => {
     setIsGenerating(true);
-    await generateOverallReport(bookings, range.start, range.end, selectedFields, customHeader, masterDataWithSignature);
+    await generateOverallReport(bookings, range.start, range.end, selectedFields, customHeader, masterDataWithSignature, sigLabel1, sigLabel2);
     setIsGenerating(false);
     setActiveStep('dashboard');
   };
@@ -327,7 +333,10 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
   };
 
   return (
-    <div className="flex flex-col w-full h-full box-border relative bg-[#062c1e] overflow-hidden">
+    <div 
+      className="flex flex-col w-full h-full box-border relative overflow-hidden"
+      style={{ backgroundColor: bgColor }}
+    >
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
         <img 
           src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
@@ -417,7 +426,16 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, onBack, initial
                     <div className="grid grid-cols-3 gap-1.5 w-full box-border">
                       <button onClick={() => setAttendanceForm({...attendanceForm, isOfficeDay: true, isHoliday: false, isDutyDay: false})} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isOfficeDay ? 'bg-emerald-600 border-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}>Office</button>
                       <button onClick={() => setAttendanceForm({...attendanceForm, isHoliday: !attendanceForm.isHoliday, isOfficeDay: false})} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isHoliday ? 'bg-amber-600 border-amber-500 shadow-lg text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}>Holiday</button>
-                      <button onClick={() => setAttendanceForm({...attendanceForm, isDutyDay: !attendanceForm.isDutyDay, isOfficeDay: false})} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isDutyDay ? 'bg-blue-600 border-blue-500 shadow-lg text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}>Duty</button>
+                      <button onClick={() => {
+                        const nextDuty = !attendanceForm.isDutyDay;
+                        setAttendanceForm({
+                          ...attendanceForm, 
+                          isDutyDay: nextDuty, 
+                          isOfficeDay: false, 
+                          isHoliday: false,
+                          remarks: nextDuty ? 'Duty' : (attendanceForm.remarks === 'Duty' ? '' : attendanceForm.remarks)
+                        });
+                      }} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isDutyDay ? 'bg-blue-600 border-blue-500 shadow-lg text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}>Duty</button>
                     </div>
 
                     <div className="flex flex-col items-center gap-3 w-full box-border">

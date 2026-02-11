@@ -1,16 +1,19 @@
 
 import React from 'react';
-import { Booking } from '../types';
+import { Booking, AppSettings } from '../types';
 import { User, Landmark, MapPin, Calendar, Clock, Banknote, Wallet, AlignLeft, Info, Shield, Phone } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 
 interface ViewBookingModalProps {
   booking: Booking;
+  appSettings: AppSettings;
 }
 
-const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking }) => {
+const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking, appSettings }) => {
+  const themeColor = appSettings?.ui?.themeColor || "#10b981";
+
   const detailItem = (icon: React.ReactNode, label: string, value: string | number | undefined, colorClass: string = "text-white") => (
-    <div className="flex flex-col gap-1 p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/5 hover:border-emerald-500/30 transition-colors z-10">
+    <div className="flex flex-col gap-1 p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/5 transition-colors z-10">
       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
         {icon}
         {label}
@@ -26,12 +29,6 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking }) => {
 
   return (
     <div className="relative">
-      {/* 
-        Sticky Watermark: 
-        This container stays fixed relative to the modal's scroll view.
-        Using h-0 and overflow-visible ensures it doesn't displace the actual content.
-        Opacity reduced from 0.12 to 0.08 for a lighter effect.
-      */}
       <div className="sticky top-[35%] pointer-events-none z-0 flex justify-center h-0 overflow-visible opacity-[0.08]">
         <img 
           src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
@@ -41,30 +38,36 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking }) => {
       </div>
 
       <div className="relative z-10 space-y-6">
-        <div className="flex items-center gap-3 p-4 bg-emerald-900/20 backdrop-blur-sm border border-emerald-500/20 rounded-2xl">
-          <div className="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md shrink-0">
+        <div 
+          className="flex items-center gap-3 p-4 backdrop-blur-sm border rounded-2xl"
+          style={{ backgroundColor: `${themeColor}22`, borderColor: `${themeColor}44` }}
+        >
+          <div 
+            className="w-10 h-10 text-white rounded-xl flex items-center justify-center shadow-md shrink-0"
+            style={{ backgroundColor: themeColor }}
+          >
             <Info size={20} />
           </div>
           <div className="min-w-0">
             <h4 className="text-sm font-black text-white uppercase tracking-tight truncate">Booking Details</h4>
-            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest truncate">Reserved Schedule Info</p>
+            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest truncate opacity-80">Reserved Schedule Info</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {detailItem(<User size={12} className="text-emerald-500" />, "Rank and Name", booking.rankName)}
-          {detailItem(<Landmark size={12} className="text-emerald-500" />, "Unit", booking.unit)}
-          {detailItem(<Phone size={12} className="text-emerald-500" />, "Mobile Number", booking.mobileNumber)}
-          {detailItem(<Shield size={12} className="text-emerald-500" />, "Garrison Status", booking.garrisonStatus)}
-          {detailItem(<MapPin size={12} className="text-emerald-500" />, "Destination", booking.destination)}
-          {detailItem(<Calendar size={12} className="text-emerald-500" />, "Start Date", formatDate(booking.startDate))}
-          {detailItem(<Calendar size={12} className="text-emerald-500" />, "End Date", formatDate(booking.endDate))}
-          {detailItem(<Info size={12} className="text-emerald-500" />, "Duration", booking.duration)}
-          {detailItem(<Clock size={12} className="text-emerald-500" />, "Out Time", booking.outTime)}
-          {detailItem(<Clock size={12} className="text-emerald-500" />, "In Time", booking.inTime)}
-          {detailItem(<Banknote size={12} className="text-emerald-500" />, "Fare", fareValue, fareColor)}
+          {detailItem(<User size={12} style={{ color: themeColor }} />, "Rank and Name", booking.rankName)}
+          {detailItem(<Landmark size={12} style={{ color: themeColor }} />, "Unit", booking.unit)}
+          {detailItem(<Phone size={12} style={{ color: themeColor }} />, "Mobile Number", booking.mobileNumber)}
+          {detailItem(<Shield size={12} style={{ color: themeColor }} />, "Garrison Status", booking.garrisonStatus)}
+          {detailItem(<MapPin size={12} style={{ color: themeColor }} />, "Destination", booking.destination)}
+          {detailItem(<Calendar size={12} style={{ color: themeColor }} />, "Start Date", formatDate(booking.startDate))}
+          {detailItem(<Calendar size={12} style={{ color: themeColor }} />, "End Date", formatDate(booking.endDate))}
+          {detailItem(<Info size={12} style={{ color: themeColor }} />, "Duration", booking.duration)}
+          {detailItem(<Clock size={12} style={{ color: themeColor }} />, "Out Time", booking.outTime)}
+          {detailItem(<Clock size={12} style={{ color: themeColor }} />, "In Time", booking.inTime)}
+          {detailItem(<Banknote size={12} style={{ color: themeColor }} />, "Fare", fareValue, fareColor)}
           {detailItem(
-            <Wallet size={12} className="text-emerald-500" />, 
+            <Wallet size={12} style={{ color: themeColor }} />, 
             "Payment Status", 
             booking.isExempt ? "Exempted" : booking.fareStatus,
             booking.isExempt ? "text-emerald-400" : (booking.fareStatus === 'Paid' ? 'text-green-400' : 'text-amber-400')
@@ -73,7 +76,7 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking }) => {
 
         <div className="flex flex-col gap-1 p-4 bg-black/40 backdrop-blur-sm rounded-xl border border-white/5">
           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            <AlignLeft size={12} className="text-emerald-400" />
+            <AlignLeft size={12} style={{ color: themeColor }} />
             Remarks
           </div>
           <div className="text-xs font-medium text-slate-300 pl-5 italic leading-relaxed">

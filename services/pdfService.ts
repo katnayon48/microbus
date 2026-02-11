@@ -1,3 +1,4 @@
+
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
@@ -336,7 +337,7 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
   }
 };
 
-export const generateOverallReport = async (bookings: Booking[], startDate: string, endDate: string, fields: BookingField[], customHeader?: string, withSignature: boolean = false) => {
+export const generateOverallReport = async (bookings: Booking[], startDate: string, endDate: string, fields: BookingField[], customHeader?: string, withSignature: boolean = false, label1: string = "Driver", label2: string = "JCO/NCO") => {
   try {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFont('helvetica');
@@ -462,9 +463,9 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
       doc.setFontSize(10); 
       doc.setFont('helvetica', 'bold');
       doc.line(20, sigY, 70, sigY);
-      doc.text("Driver", 45, sigY + 5, { align: 'center' });
+      doc.text(label1, 45, sigY + 5, { align: 'center' });
       doc.line(pageWidth - 70, sigY, pageWidth - 20, sigY);
-      doc.text("JCO/NCO", pageWidth - 45, sigY + 5, { align: 'center' });
+      doc.text(label2, pageWidth - 45, sigY + 5, { align: 'center' });
       const countersignY = sigY + 12;
       const csText = "COUNTERSIGN";
       doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
@@ -585,7 +586,7 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
   }
 };
 
-export const generateAttendanceSheet = async (records: DriverAttendance[], start: string, end: string, withSignature: boolean = true) => {
+export const generateAttendanceSheet = async (records: DriverAttendance[], start: string, end: string, withSignature: boolean = true, label1: string = "Driver", label2: string = "JCO/NCO") => {
   try {
     const doc = new jsPDF({ orientation: 'p' });
     doc.setFont('helvetica');
@@ -619,8 +620,8 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
       const pageWidth = doc.internal.pageSize.getWidth();
       const sigY = Math.min(finalY + 12, 275);
       doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.line(10, sigY, 55, sigY); doc.text("Driver", 32.5, sigY + 4, { align: 'center' });
-      doc.line(pageWidth - 55, sigY, pageWidth - 10, sigY); doc.text("JCO/NCO", pageWidth - 32.5, sigY + 4, { align: 'center' });
+      doc.line(10, sigY, 55, sigY); doc.text(label1, 32.5, sigY + 4, { align: 'center' });
+      doc.line(pageWidth - 55, sigY, pageWidth - 10, sigY); doc.text(label2, pageWidth - 32.5, sigY + 4, { align: 'center' });
       const countersignY = sigY + 14;
       const csText = "COUNTERSIGN"; doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
       const csWidth = doc.getTextWidth(csText); doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
@@ -630,7 +631,7 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
   } catch (error) { console.error("Attendance PDF generation failed:", error); alert("Error generating attendance PDF."); }
 };
 
-export const generateFuelReport = async (bookings: Booking[], startDate: string, endDate: string, withSignature: boolean = true) => {
+export const generateFuelReport = async (bookings: Booking[], startDate: string, endDate: string, withSignature: boolean = true, label1: string = "Driver", label2: string = "JCO/NCO") => {
   try {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFont('helvetica');
@@ -741,10 +742,10 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
       doc.setFontSize(10); doc.setFont('helvetica', 'bold');
       
       doc.line(20, sigY, 70, sigY);
-      doc.text("Driver", 45, sigY + 5, { align: 'center' });
+      doc.text(label1, 45, sigY + 5, { align: 'center' });
       
       doc.line(pageWidth - 70, sigY, pageWidth - 20, sigY);
-      doc.text("JCO/NCO", pageWidth - 45, sigY + 5, { align: 'center' });
+      doc.text(label2, pageWidth - 45, sigY + 5, { align: 'center' });
       
       const csY = sigY + 12;
       doc.text("COUNTERSIGN", pageWidth / 2, csY, { align: 'center' });

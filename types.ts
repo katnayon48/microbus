@@ -1,6 +1,61 @@
+
 export type DurationType = 'Full Day' | 'Half Day';
 export type FareStatusType = 'Paid' | 'Unpaid';
 export type GarrisonStatusType = 'In Garrison' | 'Out Garrison';
+export type UserRole = 'viewer' | 'admin' | 'master';
+
+export interface DriverInfo {
+  name: string;
+  phone: string;
+  isActive: boolean;
+}
+
+export interface AppSettings {
+  security: {
+    adminPin: string;
+    masterPin: string;
+    maintenanceMode: boolean;
+    maintenanceMessage?: string;
+    autoLockTimer: number; // In minutes
+    maskPinInput: boolean;
+  };
+  fares: {
+    inGarrisonFull: number;
+    inGarrisonHalf: number;
+    outGarrisonFull: number;
+    outGarrisonHalf: number;
+    currencySymbol: string;
+    taxRate: number; // Percentage
+    currencyPosition: 'prefix' | 'suffix';
+  };
+  branding: {
+    title: string;
+    subtitle: string;
+    footerText: string;
+    footerPhone: string;
+    footerLines: string[]; // New: Dynamic list of footer lines
+    systemVersion: string;
+    pdfSignatureLabel1?: string;
+    pdfSignatureLabel2?: string;
+  };
+  ui: {
+    watermarkOpacity: number;
+    gridOpacity: number;
+    themeColor: string;
+    bgColor: string;
+    glassIntensity: number; // 0 to 1
+    borderRadius: number; // in px
+  };
+  logistics: {
+    drivers: string[]; // Keep for compatibility
+    driverDetails?: DriverInfo[];
+    units?: string[];
+    weeklyHolidays: string[];
+    defaultInTime?: string;
+    defaultOutTime?: string;
+    maxBookingDays: number;
+  };
+}
 
 export interface FuelPurchase {
   id: string;
@@ -26,13 +81,11 @@ export interface Booking {
   remarks?: string;
   isExempt?: boolean;
   isSpecialNote?: boolean;
-  // Fuel fields
   isFuelEntry?: boolean;
   kmStart?: number;
   kmEnd?: number;
   totalKm?: number;
   fuelPurchases?: FuelPurchase[];
-  // Summary fuel fields
   purchasedFuel?: number;
   fuelRate?: number;
   totalFuelPrice?: number;

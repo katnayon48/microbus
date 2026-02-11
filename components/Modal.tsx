@@ -9,6 +9,7 @@ interface ModalProps {
   children: ReactNode;
   variant?: 'light' | 'dark';
   size?: string; // e.g., 'max-w-xl', 'max-w-4xl', 'max-w-full'
+  customBgColor?: string;
 }
 
 const Modal: React.FC<ModalProps> = ({ 
@@ -17,22 +18,26 @@ const Modal: React.FC<ModalProps> = ({
   title, 
   children, 
   variant = 'light',
-  size = 'max-w-xl'
+  size = 'max-w-xl',
+  customBgColor
 }) => {
   if (!isOpen) return null;
 
   const isDark = variant === 'dark';
   const isFull = size === 'max-w-full';
+  
+  const bgColor = customBgColor || (isDark ? '#062c1e' : '#f8fafc');
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
       <div 
         className={`
           ${isDark 
-            ? 'bg-[#062c1e] border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]' 
-            : 'bg-slate-50 border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)]'} 
+            ? 'border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]' 
+            : 'border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)]'} 
           rounded-2xl md:rounded-3xl w-full ${size} overflow-hidden flex flex-col ${isFull ? 'h-[96vh]' : 'max-h-[92vh]'} border animate-in zoom-in-95 duration-200
         `}
+        style={{ backgroundColor: bgColor }}
       >
         <div className={`px-4 md:px-8 py-3 md:py-5 border-b flex items-center justify-between shrink-0 ${isDark ? 'border-white/5 bg-black/20' : 'border-slate-200 bg-slate-50'}`}>
           <div className="flex flex-col">

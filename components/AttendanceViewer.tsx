@@ -1,15 +1,17 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { getDatabase, ref, onValue } from 'firebase/database';
 import { format, parseISO, subMonths, addMonths } from 'date-fns';
 import { ChevronLeft, ChevronRight, CalendarRange, CalendarDays, LogIn, Plus } from 'lucide-react';
-import { DriverAttendance } from '../types';
+import { DriverAttendance, AppSettings } from '../types';
 
 interface AttendanceViewerProps {
   isAdmin: boolean;
   onLoginClick: () => void;
+  appSettings: AppSettings;
 }
 
-const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginClick }) => {
+const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginClick, appSettings }) => {
   const [attendanceRecords, setAttendanceRecords] = useState<DriverAttendance[]>([]);
   const [historyMonth, setHistoryMonth] = useState(new Date());
   const [isLoading, setIsLoading] = useState(true);
@@ -36,8 +38,13 @@ const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginCli
       .sort((a, b) => a.date.localeCompare(b.date)); 
   }, [attendanceRecords, historyMonth]);
 
+  const bgColor = appSettings?.ui?.bgColor || "#062c1e";
+
   return (
-    <div className="relative h-full w-full bg-[#062c1e] rounded-2xl md:rounded-3xl p-3 md:p-4 border border-white/10 shadow-2xl overflow-hidden flex flex-col box-border">
+    <div 
+      className="relative h-full w-full rounded-2xl md:rounded-3xl p-3 md:p-4 border border-white/10 shadow-2xl overflow-hidden flex flex-col box-border"
+      style={{ backgroundColor: bgColor }}
+    >
       {/* Watermark Logo */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
         <img 
