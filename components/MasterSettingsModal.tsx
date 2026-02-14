@@ -5,7 +5,7 @@ import {
   ShieldAlert, Download, Palette, AlertTriangle, 
   Database, Trash2, Plus, Globe, Settings2, FileJson, 
   Sliders, Info, Layout, Clock, FileText, Monitor, ShieldCheck, 
-  Hash, Zap, Activity, UserCog, Landmark, HardDrive, ListChecks, MessageSquare, PenTool, Key
+  Hash, Zap, Activity, UserCog, Landmark, HardDrive, ListChecks, MessageSquare, PenTool
 } from 'lucide-react';
 import { AppSettings, Booking } from '../types';
 
@@ -24,11 +24,6 @@ const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<AppSettings>(settings);
   const [activeTab, setActiveTab] = useState<'fares' | 'branding' | 'ui' | 'security' | 'system'>('fares');
-  
-  // States for secure deletion
-  const [showDeleteAuth, setShowDeleteAuth] = useState(false);
-  const [deleteInputPin, setDeleteInputPin] = useState('');
-  const [deletePinError, setDeletePinError] = useState(false);
 
   const handleUpdate = (category: keyof AppSettings, field: string, value: any) => {
     setFormData(prev => ({
@@ -70,19 +65,6 @@ const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-  };
-
-  const handleSecureWipeInitiate = () => {
-    if (deleteInputPin === "4848") {
-      if (window.confirm("CRITICAL WARNING: This action will permanently delete all records. Are you absolutely sure?")) {
-        onWipeData();
-        setShowDeleteAuth(false);
-        setDeleteInputPin('');
-      }
-    } else {
-      setDeletePinError(true);
-      setTimeout(() => setDeletePinError(false), 2000);
-    }
   };
 
   const tabs = [
@@ -394,50 +376,7 @@ const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-8 bg-rose-950/20 rounded-[2.5rem] border-2 border-rose-900/40 space-y-8 shadow-2xl relative overflow-hidden">
-                {/* Secure Wipe Overlay */}
-                {showDeleteAuth && (
-                  <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 space-y-6 animate-in fade-in duration-300">
-                    <div className="w-16 h-16 bg-rose-600 rounded-2xl flex items-center justify-center text-white shadow-2xl animate-pulse">
-                      <Key size={32} />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <h4 className="text-lg font-black text-white uppercase tracking-tight">Security Verification</h4>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Enter Deletion Authorization PIN</p>
-                    </div>
-                    
-                    <div className={`space-y-4 w-full max-w-[200px] ${deletePinError ? 'animate-shake' : ''}`}>
-                      <input 
-                        type="password" 
-                        maxLength={4} 
-                        value={deleteInputPin} 
-                        onChange={e => setDeleteInputPin(e.target.value.replace(/\D/g, ''))}
-                        className={`w-full text-center text-3xl tracking-[0.6em] py-4 bg-white/5 border-2 rounded-2xl outline-none transition-all font-mono ${deletePinError ? 'border-rose-600 text-rose-600' : 'border-white/10 text-white focus:border-emerald-500'}`}
-                        placeholder="••••"
-                        autoFocus
-                      />
-                      {deletePinError && (
-                        <p className="text-center text-[9px] font-black text-rose-500 uppercase animate-bounce">Access Denied: Invalid Pin</p>
-                      )}
-                    </div>
-                    
-                    <div className="flex gap-4 w-full max-w-[280px]">
-                      <button 
-                        onClick={() => { setShowDeleteAuth(false); setDeleteInputPin(''); }}
-                        className="flex-1 py-3 bg-white/10 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest"
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        onClick={handleSecureWipeInitiate}
-                        className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl"
-                      >
-                        Confirm
-                      </button>
-                    </div>
-                  </div>
-                )}
-
+              <div className="p-8 bg-rose-950/20 rounded-[2.5rem] border-2 border-rose-900/40 space-y-8 shadow-2xl">
                 <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-rose-600 text-white rounded-2xl flex items-center justify-center border border-rose-400/30 shadow-2xl shrink-0">
                     <Trash2 size={32} />
@@ -450,14 +389,18 @@ const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({
                 <div className="p-4 bg-black/40 rounded-xl border border-rose-500/20 flex items-start gap-3">
                   <AlertTriangle className="text-rose-500 shrink-0 mt-0.5" size={18} />
                   <p className="text-[10px] font-medium text-rose-300 leading-relaxed uppercase">
-                    Warning: A factory reset cannot be undone. All firebase records will be purged instantly. Authorization is required.
+                    Warning: A factory reset cannot be undone. All firebase records will be purged instantly. Please ensure you have a backup.
                   </p>
                 </div>
                 <button 
-                  onClick={() => setShowDeleteAuth(true)}
+                  onClick={() => {
+                    if (window.confirm("FATAL ACTION: ARE YOU SURE? ALL DATA WILL BE PERMANENTLY DELETED.")) {
+                      onWipeData();
+                    }
+                  }}
                   className="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-black uppercase text-[12px] tracking-[0.4em] transition-all active:scale-[0.98] shadow-2xl"
                 >
-                  DELETE ALL DATA
+                  Execute Data Purge
                 </button>
               </div>
             </div>
