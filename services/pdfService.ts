@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
@@ -200,7 +199,7 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
     doc.text('TOTAL FARE:', 140, finalY + 23, { align: 'right' });
-    const fareDisplayText = booking.isExempt ? 'NOT REQUIRED' : `BDT ${(booking.fare || 0).toLocaleString()}.00`;
+    const fareDisplayText = booking.isExempt ? 'EXEMPTED' : `BDT ${formatCurrency(booking.fare || 0)}`;
     doc.text(fareDisplayText, 190 - 5, finalY + 23, { align: 'right' });
 
     if (sealInfo) {
@@ -268,7 +267,7 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       ],
       body: filtered.map((b, i) => {
         const totalDays = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
-        const fareVal = b.isExempt ? 'EXEMPTED' : b.fare.toLocaleString();
+        const fareVal = b.isExempt ? 'EXEMPTED' : formatCurrency(b.fare);
         return [
           i + 1, (b.rankName || '').toUpperCase(), (b.unit || '').toUpperCase(),
           format(parseISO(b.startDate), DATE_FORMAT), format(parseISO(b.endDate), DATE_FORMAT), 
@@ -277,7 +276,7 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       }),
       foot: [[
         { content: 'TOTAL FARE', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
-        { content: totalFare.toLocaleString(), styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
+        { content: formatCurrency(totalFare), styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
         { content: '', styles: { fillColor: [220, 220, 220], lineWidth: 0.1 } }
       ]],
       theme: 'grid',
@@ -362,34 +361,29 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
       doc.line(148 - (periodWidth / 2), 23.5, 148 + (periodWidth / 2), 23.5);
     }
 
-    // Dynamic 2-row header generation for merged groupings
     const headRow1: any[] = [];
     const headRow2: any[] = [];
 
     for (let i = 0; i < fields.length; i++) {
       const f = fields[i];
-      // Force all labels to uppercase for professional consistency in the Detailed Report
       const label = (BOOKING_FIELDS.find(bf => bf.value === f)?.label || f.toString()).toUpperCase();
 
-      // Check for Start/End Kilometres group
       if ((f === 'kmStart' && fields[i+1] === 'kmEnd') || (f === 'kmEnd' && fields[i+1] === 'kmStart')) {
         headRow1.push({ content: 'KILOMETRES', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold' } });
         headRow2.push({ content: 'START', styles: { halign: 'center', fontStyle: 'bold' } });
         headRow2.push({ content: 'END', styles: { halign: 'center', fontStyle: 'bold' } });
-        i++; // skip next since it's merged
+        i++; 
         continue;
       }
 
-      // Check for From/To Date group
       if ((f === 'startDate' && fields[i+1] === 'endDate') || (f === 'endDate' && fields[i+1] === 'startDate')) {
         headRow1.push({ content: 'BOOKING DATE', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold' } });
         headRow2.push({ content: 'FROM', styles: { halign: 'center', fontStyle: 'bold' } });
         headRow2.push({ content: 'TO', styles: { halign: 'center', fontStyle: 'bold' } });
-        i++; // skip next
+        i++; 
         continue;
       }
 
-      // Regular single row field
       headRow1.push({ content: label, rowSpan: 2, styles: { valign: 'middle', halign: 'center', fontStyle: 'bold' } });
     }
 
@@ -404,7 +398,6 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
     const hasFuelFields = fields.some(f => fuelFields.includes(f as string));
 
     filtered.forEach((b) => {
-      // Determine how many rows this booking needs based on fuel purchases
       const purchaseCount = (hasFuelFields && b.fuelPurchases && b.fuelPurchases.length > 0) ? b.fuelPurchases.length : 1;
       
       for (let j = 0; j < purchaseCount; j++) {
@@ -413,7 +406,6 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
         const row: any[] = [];
         
         fields.forEach((f) => {
-          // If this is a fuel-specific varying field, don't merge (don't add rowSpan)
           if (fuelFields.includes(f as string)) {
             const val = p ? p[f as keyof typeof p] : b[f as keyof Booking];
             if (f === 'totalFuelPrice') {
@@ -424,12 +416,11 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
               row.push(val !== undefined ? val.toString() : '-');
             }
           } else {
-            // Non-fuel varying field: only add the content for the first row of this group and apply rowSpan
             if (isFirst) {
               let content: any = '';
               if (f === 'totalDays') content = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
               else if (f === 'startDate' || f === 'endDate') content = b[f as keyof Booking] ? format(parseISO(b[f as keyof Booking] as string), DATE_FORMAT) : 'N/A';
-              else if (f === 'fare') content = b.isExempt ? 'EXEMPTED' : (b.fare !== undefined ? b.fare.toLocaleString() : '-');
+              else if (f === 'fare') content = b.isExempt ? 'EXEMPTED' : (b.fare !== undefined ? formatCurrency(b.fare) : '-');
               else if (f === 'outTime' || f === 'inTime') {
                 const val = b[f as keyof Booking];
                 content = val ? `${val} hrs` : 'N/A';
@@ -681,7 +672,6 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
           row.push({ content: b.totalKm !== undefined ? b.totalKm : '-', rowSpan: purchaseCount, styles: { valign: 'top' } }); // TOTAL KM
         }
         
-        // FUEL DATA - NOT MERGED. Show dash if truly missing.
         const fuelStr = p?.purchasedFuel !== undefined ? p.purchasedFuel.toString() : (isFirst && b.purchasedFuel !== undefined ? b.purchasedFuel.toString() : '-');
         const rateStr = p?.fuelRate !== undefined ? p.fuelRate.toString() : (isFirst && b.fuelRate !== undefined ? b.fuelRate.toString() : '-');
         const takaStr = p?.totalFuelPrice !== undefined ? formatCurrency(p.totalFuelPrice) : (isFirst && b.totalFuelPrice !== undefined ? formatCurrency(b.totalFuelPrice) : '-');

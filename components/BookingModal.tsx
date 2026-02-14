@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Booking, DurationType, GarrisonStatusType, FuelPurchase } from '../types';
+import { Booking, DurationType, GarrisonStatusType, FuelPurchase, AppSettings } from '../types';
 import { Trash2, User, Landmark, MapPin, Calendar, Clock, Banknote, Wallet, AlignLeft, FileDown, Shield, Check, Phone, Loader2, X, Gauge, Droplets, CircleDollarSign, Fuel, RotateCw, PlusCircle, AlertTriangle } from 'lucide-react';
 import { generateIndividualPaymentSlip } from '../services/pdfService';
 import { differenceInDays, parseISO, format, isBefore } from 'date-fns';
@@ -13,6 +13,7 @@ interface BookingModalProps {
   initialDate?: Date;
   existingBooking?: Booking | null;
   bookings?: Booking[];
+  appSettings: AppSettings;
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ 
@@ -22,7 +23,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
   onDelete,
   initialDate, 
   existingBooking,
-  bookings = []
+  bookings = [],
+  appSettings
 }) => {
   const [formData, setFormData] = useState<Partial<Booking>>({
     rankName: '',
@@ -138,9 +140,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
         if (days > 0) {
           let rate = 0;
           if (formData.garrisonStatus === 'In Garrison') {
-            rate = formData.duration === 'Full Day' ? 1200 : 800;
+            rate = formData.duration === 'Full Day' ? appSettings.fares.inGarrisonFull : appSettings.fares.inGarrisonHalf;
           } else {
-            rate = formData.duration === 'Full Day' ? 1500 : 1000;
+            rate = formData.duration === 'Full Day' ? appSettings.fares.outGarrisonFull : appSettings.fares.outGarrisonHalf;
           }
           const calculatedFare = rate * days;
           if (formData.fare !== calculatedFare) {
@@ -153,7 +155,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         console.error("Fare calculation error:", e);
       }
     }
-  }, [formData.startDate, formData.endDate, formData.garrisonStatus, formData.duration, formData.isExempt, formData.isSpecialNote]);
+  }, [formData.startDate, formData.endDate, formData.garrisonStatus, formData.duration, formData.isExempt, formData.isSpecialNote, appSettings]);
 
   const calculateSummaries = (purchases: FuelPurchase[]) => {
     let totalFuel = 0;
@@ -262,7 +264,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   const handleToggle = (name: keyof Booking, val: any) => {
-    setFormData(prev => ({ ...prev, [name]: val }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: val };
+      if (name === 'isExempt' && val === true) {
+        next.fare = 0;
+        next.fareStatus = 'Paid';
+      }
+      return next;
+    });
   };
 
   const setMode = (mode: 'reservation' | 'special') => {
@@ -295,8 +304,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
     setIsDownloading(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!formData.isSpecialNote && !formData.rankName) {
       alert("Please enter Rank and Name.");
       return;
@@ -306,7 +315,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
       return;
     }
 
-    // Comprehensive data cleanup for Firebase compatibility
     const rawBooking: any = {
       id: existingBooking?.id || '',
       rankName: formData.rankName || (formData.isSpecialNote ? 'SPECIAL NOTE' : 'N/A'),
@@ -327,7 +335,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
       isFuelEntry: !!formData.isFuelEntry,
     };
 
-    // Only include fuel consumption details if toggled ON and data exists
     if (formData.isFuelEntry) {
       if (formData.kmStart !== undefined) rawBooking.kmStart = formData.kmStart;
       if (formData.kmEnd !== undefined) rawBooking.kmEnd = formData.kmEnd;
@@ -336,7 +343,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
       if (formData.fuelRate !== undefined) rawBooking.fuelRate = formData.fuelRate;
       if (formData.totalFuelPrice !== undefined) rawBooking.totalFuelPrice = formData.totalFuelPrice;
 
-      // Clean up fuelPurchases array to remove undefined values before sending to Firebase
       if (formData.fuelPurchases && formData.fuelPurchases.length > 0) {
         const cleanedPurchases = formData.fuelPurchases
           .filter(p => p.purchasedFuel !== undefined || p.fuelRate !== undefined || p.totalFuelPrice !== undefined)
@@ -448,15 +454,23 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
 
                 <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-5">
-                  <div>
-                    <label className={labelClasses}>Duration</label>
-                    <div className="flex gap-4">
-                      {(['Full Day', 'Half Day'] as DurationType[]).map((d) => (
-                        <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-sm' : 'bg-transparent border-white/10 text-slate-500 hover:border-emerald-500/50'}`}>
-                          <input type="radio" name="duration" checked={formData.duration === d} onChange={() => handleToggle('duration', d)} className="hidden" />
-                          <span className="text-xs font-bold">{d}</span>
-                        </label>
-                      ))}
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <label className={labelClasses}>Duration</label>
+                      <div className="flex gap-4">
+                        {(['Full Day', 'Half Day'] as DurationType[]).map((d) => (
+                          <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-sm' : 'bg-transparent border-white/10 text-slate-500 hover:border-emerald-500/50'}`}>
+                            <input type="radio" name="duration" checked={formData.duration === d} onChange={() => handleToggle('duration', d)} className="hidden" />
+                            <span className="text-xs font-bold">{d}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="ml-6 flex items-end pb-1">
+                      <label className="flex items-center gap-2 cursor-pointer bg-emerald-950/20 border border-emerald-500/20 px-4 py-2.5 rounded-xl hover:bg-emerald-600/10 transition-all">
+                        <input type="checkbox" checked={formData.isExempt} onChange={e => handleToggle('isExempt', e.target.checked)} className="w-4 h-4 rounded border-white/10 accent-emerald-500" />
+                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Exempt Fare</span>
+                      </label>
                     </div>
                   </div>
                   
@@ -486,15 +500,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
                   <div className="relative">
                     <label className={labelClasses}><Wallet size={12} className="text-emerald-500" /> Status</label>
-                    <select name="fareStatus" value={formData.fareStatus || 'Unpaid'} onChange={handleChange} disabled={formData.isExempt} className={inputClasses}>
+                    <select name="fareStatus" value={formData.fareStatus || 'Unpaid'} onChange={handleChange} disabled={formData.isExempt} className={`${inputClasses} ${formData.isExempt ? 'opacity-50 grayscale' : ''}`}>
                       <option value="Paid" className="bg-[#062c1e]">Paid</option>
                       <option value="Unpaid" className="bg-[#062c1e]">Unpaid</option>
                     </select>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
         </div>
 
         <div className="pt-4 space-y-4">
@@ -537,7 +550,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
               </div>
 
-              {/* MULTIPLE FUEL ENTRIES SECTION */}
               <div className="space-y-4 pt-4 border-t border-white/5">
                 <div className="flex items-center justify-between">
                   <h6 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Fuel Purchase Entries</h6>
@@ -579,7 +591,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
                 ))}
 
-                {/* SUMMARY SECTION */}
                 <div className="bg-emerald-900/10 p-5 rounded-2xl border border-emerald-500/20 space-y-4 shadow-inner">
                   <h6 className="text-[10px] font-black text-white/50 uppercase tracking-widest text-center">Summary (Editable)</h6>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -617,7 +628,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
         </div>
       </form>
 
-      {/* Delete Confirmation Slider Panel */}
       {isConfirmingDelete && (
         <div className="absolute inset-x-0 bottom-0 bg-[#062c1e] p-6 border-t border-rose-500/30 animate-in slide-in-from-bottom duration-300 z-[60] shadow-[0_-15px_35px_rgba(0,0,0,0.5)]">
           <div className="flex flex-col items-center text-center space-y-5">
@@ -679,7 +689,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
               Download Slip
             </button>
           )}
-          <button type="button" onClick={handleSubmit} className={`flex-1 font-bold py-3.5 rounded-xl shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 ${formData.isSpecialNote ? 'bg-amber-500' : 'bg-emerald-600'} text-white uppercase tracking-widest text-xs`}>
+          <button type="button" onClick={() => handleSubmit()} className={`flex-1 font-bold py-3.5 rounded-xl shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 ${formData.isSpecialNote ? 'bg-amber-500' : 'bg-emerald-600'} text-white uppercase tracking-widest text-xs`}>
             {existingBooking ? 'Update Entry' : 'Save Entry'}
           </button>
         </div>
