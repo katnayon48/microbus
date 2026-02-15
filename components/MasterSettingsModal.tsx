@@ -1,19 +1,19 @@
-
 import React, { useState } from 'react';
 import { 
   Banknote, Save, Lock, Type, Check, X, 
   ShieldAlert, Download, Palette, AlertTriangle, 
   Database, Trash2, Plus, Globe, Settings2, FileJson, 
   Sliders, Info, Layout, Clock, FileText, Monitor, ShieldCheck, 
-  Hash, Zap, Activity, UserCog, Landmark, HardDrive, ListChecks, MessageSquare, PenTool
+  Hash, Zap, Activity, UserCog, Landmark, HardDrive, ListChecks, MessageSquare, PenTool, Calendar, ArrowRight, ArrowLeft
 } from 'lucide-react';
 import { AppSettings, Booking } from '../types';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 interface MasterSettingsModalProps {
   settings: AppSettings;
   onSave: (settings: AppSettings) => void;
   bookings: Booking[];
-  onWipeData: () => void;
+  onWipeData: (range?: { start: string, end: string }) => void;
 }
 
 const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({ 
@@ -24,6 +24,15 @@ const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<AppSettings>(settings);
   const [activeTab, setActiveTab] = useState<'fares' | 'branding' | 'ui' | 'security' | 'system'>('fares');
+
+  // Selective Purge States
+  const [purgeStep, setPurgeStep] = useState<'idle' | 'dates' | 'pin' | 'confirm'>('idle');
+  const [purgeRange, setPurgeRange] = useState({
+    start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+    end: format(endOfMonth(new Date()), 'yyyy-MM-dd')
+  });
+  const [purgePin, setPurgePin] = useState('');
+  const [purgeError, setPurgeError] = useState('');
 
   const handleUpdate = (category: keyof AppSettings, field: string, value: any) => {
     setFormData(prev => ({
@@ -65,6 +74,23 @@ const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
+  };
+
+  const handlePurgeSubmit = () => {
+    if (purgeStep === 'dates') {
+      setPurgeStep('pin');
+    } else if (purgeStep === 'pin') {
+      if (purgePin === '4856') {
+        setPurgeStep('confirm');
+        setPurgeError('');
+      } else {
+        setPurgeError('Incorrect PIN. Authorization failed.');
+        setPurgePin('');
+      }
+    } else if (purgeStep === 'confirm') {
+      onWipeData(purgeRange);
+      setPurgeStep('idle');
+    }
   };
 
   const tabs = [
@@ -376,32 +402,92 @@ const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-8 bg-rose-950/20 rounded-[2.5rem] border-2 border-rose-900/40 space-y-8 shadow-2xl">
+              <div className="p-8 bg-rose-950/20 rounded-[2.5rem] border-2 border-rose-900/40 space-y-8 shadow-2xl relative overflow-hidden">
                 <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-rose-600 text-white rounded-2xl flex items-center justify-center border border-rose-400/30 shadow-2xl shrink-0">
                     <Trash2 size={32} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-lg font-black text-white uppercase tracking-tight">Factory State Reset</p>
-                    <p className="text-[10px] font-bold text-rose-500 uppercase tracking-[0.2em] mt-1">This will permanently delete all {bookings.length} reservations</p>
+                    <p className="text-[10px] font-bold text-rose-500 uppercase tracking-[0.2em] mt-1">Selective Data Deletion Protocols</p>
                   </div>
                 </div>
-                <div className="p-4 bg-black/40 rounded-xl border border-rose-500/20 flex items-start gap-3">
-                  <AlertTriangle className="text-rose-500 shrink-0 mt-0.5" size={18} />
-                  <p className="text-[10px] font-medium text-rose-300 leading-relaxed uppercase">
-                    Warning: A factory reset cannot be undone. All firebase records will be purged instantly. Please ensure you have a backup.
-                  </p>
-                </div>
-                <button 
-                  onClick={() => {
-                    if (window.confirm("FATAL ACTION: ARE YOU SURE? ALL DATA WILL BE PERMANENTLY DELETED.")) {
-                      onWipeData();
-                    }
-                  }}
-                  className="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-black uppercase text-[12px] tracking-[0.4em] transition-all active:scale-[0.98] shadow-2xl"
-                >
-                  Execute Data Purge
-                </button>
+
+                {purgeStep === 'idle' ? (
+                  <button 
+                    onClick={() => setPurgeStep('dates')}
+                    className="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-black uppercase text-[12px] tracking-[0.4em] transition-all active:scale-[0.98] shadow-2xl"
+                  >
+                    Execute Data Purge
+                  </button>
+                ) : (
+                  <div className="bg-black/40 backdrop-blur-xl p-6 rounded-3xl border border-rose-500/30 space-y-6 animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center justify-between">
+                       <h6 className="text-[11px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2">
+                         {purgeStep === 'dates' && <><Calendar size={14} /> Step 1: Range Selection</>}
+                         {purgeStep === 'pin' && <><Lock size={14} /> Step 2: Authentication</>}
+                         {purgeStep === 'confirm' && <><ShieldAlert size={14} /> Step 3: Final Approval</>}
+                       </h6>
+                       <button onClick={() => setPurgeStep('idle')} className="text-slate-500 hover:text-white"><X size={18} /></button>
+                    </div>
+
+                    {purgeStep === 'dates' && (
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <label className={labelClasses}>From Date</label>
+                            <input type="date" value={purgeRange.start} onChange={e => setPurgeRange({...purgeRange, start: e.target.value})} className={inputClasses} />
+                         </div>
+                         <div className="space-y-2">
+                            <label className={labelClasses}>To Date</label>
+                            <input type="date" value={purgeRange.end} onChange={e => setPurgeRange({...purgeRange, end: e.target.value})} className={inputClasses} />
+                         </div>
+                      </div>
+                    )}
+
+                    {purgeStep === 'pin' && (
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                          <input 
+                            type="password" 
+                            maxLength={4} 
+                            value={purgePin} 
+                            onChange={e => { setPurgePin(e.target.value.replace(/\D/g, '')); setPurgeError(''); }} 
+                            className={`${inputClasses} pl-12 text-2xl tracking-[0.8em] font-mono text-center`}
+                            placeholder="••••"
+                            autoFocus
+                          />
+                        </div>
+                        {purgeError && <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest text-center">{purgeError}</p>}
+                      </div>
+                    )}
+
+                    {purgeStep === 'confirm' && (
+                      <div className="text-center space-y-4">
+                        <div className="bg-rose-600/10 p-4 rounded-xl border border-rose-500/30">
+                           <p className="text-sm font-black text-white uppercase tracking-tight">Delete Selected Scope?</p>
+                           <p className="text-[10px] font-bold text-rose-500 mt-2 uppercase tracking-widest">
+                             {format(new Date(purgeRange.start), 'dd MMM')} TO {format(new Date(purgeRange.end), 'dd MMM')}
+                           </p>
+                        </div>
+                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-relaxed">
+                          THIS ACTION IS IRREVERSIBLE. DATA RECOVERY IS NOT POSSIBLE.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <button onClick={() => setPurgeStep('idle')} className="flex-1 py-3 bg-white/5 text-slate-400 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all">Cancel</button>
+                      <button 
+                        onClick={handlePurgeSubmit} 
+                        className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg flex items-center justify-center gap-2"
+                      >
+                         {purgeStep === 'confirm' ? 'Confirm Purge' : 'Continue'}
+                         <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

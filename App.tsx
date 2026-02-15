@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { LogOut, FileText, Loader2, ArrowLeft, Phone, Settings, ShieldAlert, Lock } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -15,6 +14,7 @@ import MasterSettingsModal from './components/MasterSettingsModal';
 import TripStats from './components/TripStats';
 import { Booking, AppSettings, UserRole } from './types';
 import { DEFAULT_SETTINGS } from './constants';
+import { parseISO, isWithinInterval } from 'date-fns';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAM6-aTpbyk7RIOUviQJAIcAJiH2Dp9eTY",
@@ -225,10 +225,27 @@ const App: React.FC = () => {
     }
   };
 
-  const handleWipeData = async () => {
+  const handleWipeData = async (range?: { start: string, end: string }) => {
     if (!db) return;
     try {
-      await remove(ref(db, 'bookings'));
+      if (range) {
+        const start = parseISO(range.start);
+        const end = parseISO(range.end);
+        
+        const updates: any = {};
+        bookings.forEach(b => {
+          const bDate = parseISO(b.startDate);
+          if (isWithinInterval(bDate, { start, end })) {
+            updates[`bookings/${b.id}`] = null;
+          }
+        });
+        
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      } else {
+        await remove(ref(db, 'bookings'));
+      }
       setShowSettingsModal(false);
     } catch (e) {
       alert("ডেটা মুছতে সমস্যা হয়েছে।");
