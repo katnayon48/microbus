@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Info } from 'lucide-react';
 import { Booking, AppSettings } from '../types';
@@ -71,37 +70,44 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
       className="flex flex-col w-full h-[85vh] overflow-hidden animate-stats-reveal relative px-2 md:px-8 py-4"
       style={{ backgroundColor: bgColor }}
     >
-      {/* Header Bar */}
-      <div className="w-full flex items-center justify-between gap-4 mb-8 shrink-0 relative z-10">
-         <div className="flex items-center gap-4">
+      {/* Header Grid: Title (Left) - Year (Center) - Empty (Right) */}
+      <div className="w-full grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-8 shrink-0 relative z-10">
+         {/* Title (Left) */}
+         <div className="flex items-center gap-3">
             <div 
-              className="w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center border shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center border shadow-inner"
               style={{ backgroundColor: `${themeColor}22`, borderColor: `${themeColor}44`, color: themeColor }}
             >
-               <BarChart3 size={24} md:size={32} />
+               <BarChart3 size={16} md:size={18} />
             </div>
             <div className="min-w-0">
-               <h3 className="text-xl md:text-4xl font-black text-white uppercase tracking-tighter leading-none">TRIP STATISTICS</h3>
+               <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-tighter leading-none">TRIP STATISTICS</h3>
             </div>
          </div>
          
-         <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10 shadow-2xl shrink-0">
-            <button 
-              onClick={() => setSelectedYear(y => y - 1)} 
-              className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
-            >
-              <ChevronLeft size={20} md:size={24} />
-            </button>
-            <div className="px-4 md:px-8 flex flex-col items-center">
-              <span className="text-[14px] md:text-2xl font-black text-white tabular-nums tracking-widest">{selectedYear}</span>
-            </div>
-            <button 
-              onClick={() => setSelectedYear(y => y + 1)} 
-              className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
-            >
-              <ChevronRight size={20} md:size={24} />
-            </button>
+         {/* Year Picker (Center) */}
+         <div className="flex justify-center">
+           <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 shadow-2xl shrink-0">
+              <button 
+                onClick={() => setSelectedYear(y => y - 1)} 
+                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-all active:scale-90"
+              >
+                <ChevronLeft size={14} md:size={16} />
+              </button>
+              <div className="px-3 md:px-5 flex flex-col items-center">
+                <span className="text-[11px] md:text-sm font-black text-white tabular-nums tracking-[0.2em]">{selectedYear}</span>
+              </div>
+              <button 
+                onClick={() => setSelectedYear(y => y + 1)} 
+                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-all active:scale-90"
+              >
+                <ChevronRight size={14} md:size={16} />
+              </button>
+           </div>
          </div>
+
+         {/* Right Spacer (for balance on desktop) */}
+         <div className="hidden md:block"></div>
       </div>
 
       {/* Main Chart Card */}
@@ -120,7 +126,7 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
           <div className="flex flex-col justify-between h-full text-right pr-2 md:pr-6 select-none border-r border-white/5 pb-10">
              {scaleValues.map(val => (
                <div key={`l-${val}`} className="flex items-center justify-end gap-2 md:gap-4 relative group">
-                 <span className="text-[9px] md:text-sm font-black text-slate-500/80 group-hover:text-slate-300 transition-colors">{val}</span>
+                 <span className="text-[9px] md:text-[10px] font-black text-slate-500/80 group-hover:text-slate-300 transition-colors">{val}</span>
                  <div className="w-2 md:w-3 h-[1px] bg-slate-700"></div>
                </div>
              ))}
@@ -146,10 +152,10 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
                         className="absolute opacity-0 group-hover/bar:opacity-100 transition-all duration-300 transform translate-y-2 group-hover/bar:translate-y-0 z-40"
                         style={{ bottom: `calc(${finalHeight}% + 12px)` }}
                       >
-                        <div className="bg-white text-[#062c1e] px-3 py-1.5 rounded-xl font-black text-xs md:text-sm shadow-2xl whitespace-nowrap border border-white/20">
+                        <div className="bg-white text-[#062c1e] px-2 py-1 rounded-lg font-black text-[9px] md:text-[11px] shadow-2xl whitespace-nowrap border border-white/20">
                           {stat.count} Trips
                         </div>
-                        <div className="w-2 h-2 bg-white rotate-45 mx-auto -mt-1 border-r border-b border-white/20"></div>
+                        <div className="w-1.5 h-1.5 bg-white rotate-45 mx-auto -mt-1 border-r border-b border-white/20"></div>
                       </div>
                     )}
 
@@ -169,7 +175,7 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
 
                     {/* X-Axis Label */}
                     <span 
-                      className="absolute -bottom-8 md:-bottom-10 text-[8px] md:text-[13px] font-black text-slate-500 uppercase tracking-tight group-hover/bar:text-emerald-400 transition-colors"
+                      className="absolute -bottom-7 md:-bottom-9 text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-tight group-hover/bar:text-emerald-400 transition-colors"
                       style={{ color: stat.count > 0 ? '' : '#475569' }}
                     >
                       {stat.month}
@@ -180,24 +186,16 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
           </div>
         </div>
         
-        {/* Footer Statistics Bar */}
-        <div className="mt-12 pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-6 z-10">
-           <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 px-5 py-3 bg-white/5 rounded-2xl border border-white/5">
-                <Info size={16} style={{ color: themeColor }} />
-                <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest leading-none">Monthly Usage Summary</span>
-              </div>
-           </div>
-           
-           <div className="flex items-center gap-4">
-             <div 
-                className="px-6 md:px-10 py-3.5 md:py-4 rounded-[1.2rem] md:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border"
-                style={{ backgroundColor: themeColor, borderColor: `${themeColor}44` }}
-             >
-                <span className="text-xs md:text-lg font-black text-white uppercase tracking-widest flex items-center gap-3">
-                  <TrendingUp size={16} md:size={24} /> Annual Total: {monthlyStats.reduce((a, b) => a + b.count, 0)} Days
-                </span>
-             </div>
+        {/* Footer Statistics Bar - Simplified and Centered */}
+        <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-center z-10">
+           <div 
+              className="px-5 py-2.5 md:px-7 md:py-3 rounded-xl md:rounded-2xl shadow-lg border transition-all hover:scale-105 duration-300"
+              style={{ backgroundColor: `${themeColor}CC`, borderColor: `${themeColor}44` }}
+           >
+              <span className="text-[10px] md:text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2.5">
+                <TrendingUp size={14} md:size={18} /> 
+                Annual Total: <span className="text-white drop-shadow-md">{monthlyStats.reduce((a, b) => a + b.count, 0)} Days</span>
+              </span>
            </div>
         </div>
       </div>
