@@ -17,7 +17,7 @@ import { DEFAULT_SETTINGS } from './constants';
 import { parseISO, isWithinInterval } from 'date-fns';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAM6-aTpbyk7RIOUviQJAIcAJiH2Dp9eTY",
+  apiKey: process.env.API_KEY || "AIzaSyAM6-aTpbyk7RIOUviQJAIcAJiH2Dp9eTY",
   authDomain: "projectby56-791ca.firebaseapp.com",
   databaseURL: "https://projectby56-791ca-default-rtdb.firebaseio.com",
   projectId: "projectby56-791ca",
@@ -50,7 +50,6 @@ const deepMerge = (target: any, source: any) => {
   return output;
 };
 
-// Initialize settings from Cache if available, otherwise use Defaults
 const getInitialSettings = (): AppSettings => {
   try {
     const cached = localStorage.getItem(SETTINGS_CACHE_KEY);
@@ -111,8 +110,6 @@ const App: React.FC = () => {
   const [view, setView] = useState<'calendar' | 'reports' | 'attendance'>('calendar');
   const [reportInitialStep, setReportInitialStep] = useState<any>('dashboard');
   const [userRole, setUserRole] = useState<UserRole>('viewer');
-  
-  // Use cached settings for immediate render
   const [settings, setSettings] = useState<AppSettings>(getInitialSettings());
   
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -138,7 +135,6 @@ const App: React.FC = () => {
       return;
     }
 
-    // Set body background immediately from cache
     document.body.style.backgroundColor = settings.ui.bgColor;
 
     const unsubscribeSettings = onValue(ref(db, 'settings'), (snapshot) => {
@@ -146,46 +142,39 @@ const App: React.FC = () => {
       if (data) {
         const mergedSettings = deepMerge(DEFAULT_SETTINGS, data);
         setSettings(mergedSettings);
-        // Cache the latest settings to avoid future flashes
         localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(mergedSettings));
         document.body.style.backgroundColor = mergedSettings.ui.bgColor;
-      } else {
-        set(ref(db, 'settings'), DEFAULT_SETTINGS);
       }
     });
 
-    try {
-      const bookingsRef = ref(db, 'bookings');
-      const unsubscribeBookings = onValue(bookingsRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const list = Object.keys(data).map(key => ({ ...data[key], id: key }));
-          setBookings(list);
-        } else {
-          setBookings([]);
-        }
-        
-        const elapsedTime = Date.now() - startTime;
-        const minDuration = 3000;
-        const remainingTime = Math.max(0, minDuration - elapsedTime);
-        
-        setTimeout(() => {
-          setIsLoading(false);
-        }, remainingTime);
-
-      }, (error) => {
-        console.error("Firebase load error:", error);
+    const bookingsRef = ref(db, 'bookings');
+    const unsubscribeBookings = onValue(bookingsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.keys(data)
+          .map(key => ({ ...data[key], id: key }))
+          .filter(b => b.startDate); // Filter invalid bookings
+        setBookings(list);
+      } else {
+        setBookings([]);
+      }
+      
+      const elapsedTime = Date.now() - startTime;
+      const minDuration = 2500;
+      const remainingTime = Math.max(0, minDuration - elapsedTime);
+      
+      setTimeout(() => {
         setIsLoading(false);
-      });
-
-      return () => {
-        unsubscribeSettings();
-        unsubscribeBookings();
-      };
-    } catch (e) {
-      console.error("Database operation error:", e);
+      }, remainingTime);
+    }, (error) => {
+      console.error("Firebase fetch error:", error);
       setIsLoading(false);
-    }
+    });
+
+    return () => {
+      unsubscribeSettings();
+      unsubscribeBookings();
+    };
   }, []);
 
   const footerLines = settings.branding.footerLines || [settings.branding.footerText, settings.branding.footerPhone];
@@ -234,9 +223,11 @@ const App: React.FC = () => {
         
         const updates: any = {};
         bookings.forEach(b => {
-          const bDate = parseISO(b.startDate);
-          if (isWithinInterval(bDate, { start, end })) {
-            updates[`bookings/${b.id}`] = null;
+          if (b.startDate) {
+            const bDate = parseISO(b.startDate);
+            if (isWithinInterval(bDate, { start, end })) {
+              updates[`bookings/${b.id}`] = null;
+            }
           }
         });
         
@@ -315,7 +306,6 @@ const App: React.FC = () => {
   const handleUpdateSettings = async (newSettings: AppSettings) => {
     if (!db) return;
     await set(ref(db, 'settings'), newSettings);
-    // Local update for immediate UI feedback
     setSettings(newSettings);
     localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(newSettings));
     setShowSettingsModal(false); 

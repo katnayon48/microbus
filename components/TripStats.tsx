@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Info } from 'lucide-react';
 import { Booking, AppSettings } from '../types';
 import { format, parseISO, getYear, startOfMonth, endOfMonth, differenceInDays, max, min } from 'date-fns';
 
+// Define the missing TripStatsProps interface
 interface TripStatsProps {
   bookings: Booking[];
   appSettings: AppSettings;
@@ -70,9 +72,7 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
       className="flex flex-col w-full h-[85vh] overflow-hidden animate-stats-reveal relative px-2 md:px-8 py-4"
       style={{ backgroundColor: bgColor }}
     >
-      {/* Header Grid: Title (Left) - Year (Center) - Empty (Right) */}
       <div className="w-full grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-8 shrink-0 relative z-10">
-         {/* Title (Left) */}
          <div className="flex items-center gap-3">
             <div 
               className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center border shadow-inner"
@@ -85,7 +85,6 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
             </div>
          </div>
          
-         {/* Year Picker (Center) */}
          <div className="flex justify-center">
            <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 shadow-2xl shrink-0">
               <button 
@@ -106,13 +105,10 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
            </div>
          </div>
 
-         {/* Right Spacer (for balance on desktop) */}
          <div className="hidden md:block"></div>
       </div>
 
-      {/* Main Chart Card */}
       <div className="w-full flex-1 bg-black/20 rounded-[2rem] md:rounded-[3rem] border border-white/5 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)] relative flex flex-col overflow-hidden p-6 md:p-12">
-        {/* Background Watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.03]">
           <img 
             src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
@@ -122,7 +118,6 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
         </div>
 
         <div className="flex items-end gap-2 md:gap-8 relative flex-1 min-h-0 h-full z-10">
-          {/* Y-Axis Scale */}
           <div className="flex flex-col justify-between h-full text-right pr-2 md:pr-6 select-none border-r border-white/5 pb-10">
              {scaleValues.map(val => (
                <div key={`l-${val}`} className="flex items-center justify-end gap-2 md:gap-4 relative group">
@@ -132,9 +127,7 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
              ))}
           </div>
 
-          {/* Visualization Area */}
           <div className="flex-1 relative h-full flex items-end justify-between gap-1.5 md:gap-6 px-1 md:px-6 border-b-2 border-white/10 pb-10">
-             {/* Grid Lines */}
              <div className="absolute inset-0 flex flex-col pointer-events-none opacity-[0.03] px-6 pb-10">
                 {scaleValues.slice(0, -1).map((_, i) => (
                   <div key={i} className="flex-1 border-t border-white"></div>
@@ -146,20 +139,16 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
                const finalHeight = Math.max(heightPercent, stat.count > 0 ? 4 : 0);
                return (
                  <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative z-10 h-full justify-end">
-                    {/* Tooltip on top */}
-                    {stat.count > 0 && (
-                      <div 
-                        className="absolute opacity-0 group-hover/bar:opacity-100 transition-all duration-300 transform translate-y-2 group-hover/bar:translate-y-0 z-40"
-                        style={{ bottom: `calc(${finalHeight}% + 12px)` }}
-                      >
-                        <div className="bg-white text-[#062c1e] px-2 py-1 rounded-lg font-black text-[9px] md:text-[11px] shadow-2xl whitespace-nowrap border border-white/20">
-                          {stat.count} Trips
-                        </div>
-                        <div className="w-1.5 h-1.5 bg-white rotate-45 mx-auto -mt-1 border-r border-b border-white/20"></div>
-                      </div>
-                    )}
+                    {/* Numerical Label on Top - Always Visible */}
+                    <div 
+                      className="absolute z-40 mb-1"
+                      style={{ bottom: `${finalHeight}%` }}
+                    >
+                      <span className="text-[8px] md:text-[12px] font-black text-emerald-400 tabular-nums drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
+                        {stat.count > 0 ? stat.count : ''}
+                      </span>
+                    </div>
 
-                    {/* The Bar */}
                     <div 
                       className="w-full max-w-[24px] md:max-w-[70px] rounded-t-lg md:rounded-t-2xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] animate-bar-grow transition-all cursor-default border-x border-t border-white/10 group-hover/bar:brightness-125 group-hover/bar:scale-x-105 z-10"
                       style={{ 
@@ -169,11 +158,9 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
                         backgroundColor: stat.style.color
                       }}
                     >
-                      {/* Glossy overlay on bar */}
                       <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50 rounded-t-lg md:rounded-t-2xl"></div>
                     </div>
 
-                    {/* X-Axis Label */}
                     <span 
                       className="absolute -bottom-7 md:-bottom-9 text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-tight group-hover/bar:text-emerald-400 transition-colors"
                       style={{ color: stat.count > 0 ? '' : '#475569' }}
@@ -186,7 +173,6 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
           </div>
         </div>
         
-        {/* Footer Statistics Bar - Simplified and Centered */}
         <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-center z-10">
            <div 
               className="px-5 py-2.5 md:px-7 md:py-3 rounded-xl md:rounded-2xl shadow-lg border transition-all hover:scale-105 duration-300"

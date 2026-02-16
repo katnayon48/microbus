@@ -10,7 +10,7 @@ const PAID_SEAL_URL = "https://i.ibb.co.com/Qv2Y07rG/IMG-0753.webp";
 const UNPAID_SEAL_URL = "https://i.ibb.co.com/QjTgvXHt/IMG-0754.jpg";
 
 const formatCurrency = (amount: number): string => {
-  return amount.toLocaleString(undefined, { 
+  return (amount || 0).toLocaleString(undefined, { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
@@ -598,7 +598,11 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
         const dateObj = parseISO(r.date);
         const baseData = [format(dateObj, 'dd MMM yy').toUpperCase(), format(dateObj, 'EEEE').toUpperCase()];
         let dynamicColumns = r.isHoliday && !r.isDutyDay ? [{ content: 'HOLIDAY', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 250] } }, r.lastDayCompletionTime || '-'] : [r.inTime || '-', r.outTime || '-', r.lastDayCompletionTime || '-'];
-        return [...baseData, ...dynamicColumns, r.isDutyDay ? 'DUTY' : (r.remarks || '')];
+        
+        // Fix: Use record's actual remarks if present, fallback to 'DUTY' if isDutyDay, otherwise empty
+        const remarkDisplay = (r.remarks && r.remarks.trim() !== '') ? r.remarks : (r.isDutyDay ? 'DUTY' : '');
+        
+        return [...baseData, ...dynamicColumns, remarkDisplay];
       }),
       theme: 'grid',
       headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 6.5, fontStyle: 'bold', halign: 'center', lineColor: [0, 0, 0], lineWidth: 0.1, valign: 'middle' },

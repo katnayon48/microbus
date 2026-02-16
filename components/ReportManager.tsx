@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   FileText, Table, ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
@@ -699,6 +698,16 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                       const finalHeight = Math.max(heightPercent, stat.count > 0 ? 3 : 0);
                       return (
                         <div key={`${selectedYear}-${stat.month}`} className="flex-1 flex flex-col items-center group/bar relative h-full justify-end">
+                           {/* Numerical Label on Top */}
+                           <div 
+                              className="absolute z-40 mb-1"
+                              style={{ bottom: `${finalHeight}%` }}
+                           >
+                             <span className="text-[6.5px] md:text-[11px] font-black text-emerald-400 tabular-nums drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
+                               {stat.count > 0 ? stat.count : ''}
+                             </span>
+                           </div>
+
                            <div className="w-full max-w-[16px] md:max-w-[40px] rounded-t-sm md:rounded-t-lg shadow-2xl animate-bar-grow transition-all border-x border-t border-white/10"
                              style={{ height: `${finalHeight}%`, animationDelay: `${i * 80}ms`, background: stat.style.gradient, backgroundColor: stat.style.color }}></div>
                            <span className="absolute -bottom-5 text-[6.5px] md:text-[9px] font-black text-slate-400 uppercase tracking-tighter">{stat.month}</span>
