@@ -222,12 +222,12 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
   }
 };
 
-export const generatePaymentSlip = async (bookings: Booking[], startDate: string, endDate: string, handoff?: HandoffInfo) => {
+export const generatePaymentSlip = async (bookings: Booking[], startDate: string, endDate: string, handoff?: HandoffInfo, customHeader?: string) => {
   try {
     const doc = new jsPDF();
     doc.setFont('helvetica');
     const filtered = filterByRange(bookings, startDate, endDate);
-    const mainHeading = "MONTHLY PAYMENT SLIP - CIVIL MICROBUS";
+    const mainHeading = (customHeader && customHeader.trim() !== '') ? customHeader.toUpperCase() : "MONTHLY PAYMENT SLIP - CIVIL MICROBUS";
     let monthYearText = "";
     if (startDate) monthYearText = format(parseISO(startDate), 'MMMM yyyy').toUpperCase();
 
@@ -472,7 +472,7 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
   }
 };
 
-export const generateTripSummaryReport = async (bookings: Booking[], start: string, end: string, withGraph: boolean) => {
+export const generateTripSummaryReport = async (bookings: Booking[], start: string, end: string, withGraph: boolean, customHeader?: string) => {
   try {
     const doc = new jsPDF();
     doc.setFont('helvetica');
@@ -501,7 +501,7 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.setDrawColor(0, 0, 0); 
-    const title1 = 'TRIP SUMMARY REPORT';
+    const title1 = (customHeader && customHeader.trim() !== '') ? customHeader.toUpperCase() : 'TRIP SUMMARY REPORT';
     doc.text(title1, 105, 15, { align: 'center' });
     const title1Width = doc.getTextWidth(title1);
     doc.setLineWidth(0.5);
@@ -577,14 +577,14 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
   }
 };
 
-export const generateAttendanceSheet = async (records: DriverAttendance[], start: string, end: string, withSignature: boolean = true, label1: string = "Driver", label2: string = "JCO/NCO") => {
+export const generateAttendanceSheet = async (records: DriverAttendance[], start: string, end: string, withSignature: boolean = true, label1: string = "Driver", label2: string = "JCO/NCO", customHeader?: string) => {
   try {
     const doc = new jsPDF({ orientation: 'p' });
     doc.setFont('helvetica');
     const startDate = parseISO(start);
     const endDate = parseISO(end);
     const filtered = records.filter(r => { const rd = parseISO(r.date); return rd >= startDate && rd <= endDate; }).sort((a, b) => a.date.localeCompare(b.date));
-    const mainHeading = "ATTENDANCE SHEET (CIVIL MICROBUS DRIVER)";
+    const mainHeading = (customHeader && customHeader.trim() !== '') ? customHeader.toUpperCase() : "ATTENDANCE SHEET (CIVIL MICROBUS DRIVER)";
     const rangeText = `${format(startDate, 'dd MMMM yyyy')} TO ${format(endDate, 'dd MMMM yyyy')}`.toUpperCase();
     doc.setTextColor(0, 0, 0); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
     doc.text(mainHeading, 105, 12, { align: 'center' });
@@ -599,7 +599,7 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
         const baseData = [format(dateObj, 'dd MMM yy').toUpperCase(), format(dateObj, 'EEEE').toUpperCase()];
         let dynamicColumns = r.isHoliday && !r.isDutyDay ? [{ content: 'HOLIDAY', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 250] } }, r.lastDayCompletionTime || '-'] : [r.inTime || '-', r.outTime || '-', r.lastDayCompletionTime || '-'];
         
-        // Fix: Use record's actual remarks if present, fallback to 'DUTY' if isDutyDay, otherwise empty
+        // Final logic for remarks: prioritizes user input, then DUTY for duty days
         const remarkDisplay = (r.remarks && r.remarks.trim() !== '') ? r.remarks : (r.isDutyDay ? 'DUTY' : '');
         
         return [...baseData, ...dynamicColumns, remarkDisplay];
@@ -626,7 +626,7 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
   } catch (error) { console.error("Attendance PDF generation failed:", error); alert("Error generating attendance PDF."); }
 };
 
-export const generateFuelReport = async (bookings: Booking[], startDate: string, endDate: string, withSignature: boolean = true, label1: string = "Driver", label2: string = "JCO/NCO") => {
+export const generateFuelReport = async (bookings: Booking[], startDate: string, endDate: string, withSignature: boolean = true, label1: string = "Driver", label2: string = "JCO/NCO", customHeader?: string) => {
   try {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFont('helvetica');
@@ -634,7 +634,7 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
     const eDate = parseISO(endDate);
     const filtered = filterByRange(bookings, startDate, endDate);
 
-    const mainHeading = "FUEL PURCHASE REPORT - CIVIL MICROBUS";
+    const mainHeading = (customHeader && customHeader.trim() !== '') ? customHeader.toUpperCase() : "FUEL PURCHASE REPORT - CIVIL MICROBUS";
     const rangeText = `${format(sDate, 'dd MMMM yyyy')} TO ${format(eDate, 'dd MMMM yyyy')}`.toUpperCase();
 
     doc.setTextColor(0, 0, 0);

@@ -85,6 +85,13 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
     };
   });
 
+  // Reset custom header ONLY when returning to the dashboard or finishing a sequence
+  useEffect(() => {
+    if (activeStep === 'dashboard') {
+      setCustomHeader('');
+    }
+  }, [activeStep]);
+
   const [attendanceForm, setAttendanceForm] = useState<DriverAttendance>({
     date: format(new Date(), 'yyyy-MM-dd'),
     driverName: 'NAZRUL',
@@ -222,23 +229,26 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
 
   const handleAttendanceSheetDownload = async () => {
     setIsGenerating(true);
-    await generateAttendanceSheet(attendanceRecords, range.start, range.end, withSignature, sigLabel1, sigLabel2);
+    await generateAttendanceSheet(attendanceRecords, range.start, range.end, withSignature, sigLabel1, sigLabel2, customHeader);
     setIsGenerating(false);
-    setActiveStep('driver-attendance');
+    setCustomHeader('');
+    setActiveStep('dashboard'); // Go back to dashboard to clear state
   };
 
   const handleFuelReportDownload = async () => {
     setIsGenerating(true);
-    await generateFuelReport(bookings, range.start, range.end, fuelWithSignature, sigLabel1, sigLabel2);
+    await generateFuelReport(bookings, range.start, range.end, fuelWithSignature, sigLabel1, sigLabel2, customHeader);
     setIsGenerating(false);
+    setCustomHeader('');
     setActiveStep('dashboard');
   };
 
   const handleDetailedReportDownload = async () => {
     setIsGenerating(true);
     const allFields: BookingField[] = BOOKING_FIELDS.map(f => f.value as BookingField);
-    await generateOverallReport(bookings, range.start, range.end, allFields, "DETAILED MASTER DATA REPORT", masterDataWithSignature, sigLabel1, sigLabel2);
+    await generateOverallReport(bookings, range.start, range.end, allFields, customHeader || "DETAILED MASTER DATA REPORT", masterDataWithSignature, sigLabel1, sigLabel2);
     setIsGenerating(false);
+    setCustomHeader('');
     setActiveStep('dashboard');
   };
 
@@ -246,6 +256,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
     setIsGenerating(true);
     await generateOverallReport(bookings, range.start, range.end, selectedFields, customHeader, masterDataWithSignature, sigLabel1, sigLabel2);
     setIsGenerating(false);
+    setCustomHeader('');
     setActiveStep('dashboard');
   };
 
@@ -257,15 +268,17 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
 
   const handleTripSummaryDownload = async (withGraph: boolean) => {
     setIsGenerating(true);
-    await generateTripSummaryReport(bookings, range.start, range.end, withGraph);
+    await generateTripSummaryReport(bookings, range.start, range.end, withGraph, customHeader);
     setIsGenerating(false);
-    setActiveStep('trip-summary');
+    setCustomHeader('');
+    setActiveStep('dashboard');
   };
 
   const handlePaymentSlipGenerate = async () => {
     setIsGenerating(true);
-    await generatePaymentSlip(bookings, range.start, range.end, activeStep === 'handoff-form' ? handoffData : undefined);
+    await generatePaymentSlip(bookings, range.start, range.end, activeStep === 'handoff-form' ? handoffData : undefined, customHeader);
     setIsGenerating(false);
+    setCustomHeader('');
     setActiveStep('dashboard');
   };
 
@@ -579,8 +592,8 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                   onBackStep={() => setActiveStep(activeStep === 'attendance-download-range' ? 'driver-attendance' : (activeStep === 'summary-download-range' ? 'trip-summary' : 'dashboard'))} 
                 />
                 
-                <div className="flex flex-col items-center gap-4 w-full box-border">
-                  <div className={`grid grid-cols-2 ${activeStep === 'detailed-setup' ? 'md:grid-cols-3' : 'grid-cols-2'} gap-6 w-full max-w-[340px] md:max-w-none box-border`}>
+                <div className="flex flex-col gap-4 w-full box-border">
+                  <div className={`grid grid-cols-2 gap-4 w-full box-border`}>
                     <div className="space-y-1.5 w-full box-border">
                       <label className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center block">Start Date</label>
                       <input type="date" value={range.start} onChange={e => setRange({...range, start: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-1 py-1.5 text-[10px] sm:text-sm font-black text-white outline-none focus:border-emerald-500 transition-all box-border text-center" />
@@ -589,12 +602,12 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                       <label className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center block">End Date</label>
                       <input type="date" value={range.end} onChange={e => setRange({...range, end: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-1 py-1.5 text-[10px] sm:text-sm font-black text-white outline-none focus:border-emerald-500 transition-all box-border text-center" />
                     </div>
-                    {activeStep === 'detailed-setup' && (
-                      <div className="space-y-1.5 w-full col-span-2 md:col-span-1 box-border">
-                        <label className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2 truncate justify-center">Header (Optional)</label>
-                        <input type="text" value={customHeader} onChange={e => setCustomHeader(e.target.value)} placeholder="Title" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-1.5 text-[10px] sm:text-sm font-black text-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
-                      </div>
-                    )}
+                  </div>
+                  
+                  {/* FULL WIDTH CUSTOM HEADER OPTION */}
+                  <div className="space-y-1.5 w-full box-border mt-1">
+                    <label className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2 truncate justify-center">CUSTOM HEADER (OPTIONAL)</label>
+                    <input type="text" value={customHeader} onChange={e => setCustomHeader(e.target.value)} placeholder="Title" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] sm:text-sm font-black text-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
                   </div>
                 </div>
 
