@@ -88,13 +88,11 @@ const LoadingScreen: React.FC<{ bgColor: string }> = ({ bgColor }) => {
               alt="Logo Back" 
               className="logo-3d-back" 
             />
-            <div className="logo-3d-shine-back"></div>
             <img 
               src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
               alt="Logo Front" 
               className="logo-3d-face" 
             />
-            <div className="logo-3d-shine"></div>
           </div>
         </div>
         

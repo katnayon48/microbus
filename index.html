@@ -157,11 +157,6 @@
             100% { transform: perspective(1000px) rotateY(360deg); }
         }
         
-        @keyframes shine-sweep {
-            0% { transform: translateX(-200%) translateY(-200%) rotate(45deg); }
-            20%, 100% { transform: translateX(200%) translateY(200%) rotate(45deg); }
-        }
-
         @keyframes rotate-y-3d-watermark {
             0% { transform: perspective(1200px) rotateY(0deg); }
             62.5% { transform: perspective(1200px) rotateY(360deg); }
@@ -187,6 +182,12 @@
             transform-style: preserve-3d;
             animation: rotate-y-3d 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
+        @media (min-width: 768px) {
+            .logo-3d-card.xl {
+                width: 450px;
+                height: 450px;
+            }
+        }
         .logo-3d-face {
             position: absolute;
             width: 100%;
@@ -200,6 +201,14 @@
                 inset 0 0 25px rgba(184, 134, 11, 0.4);
             border: 1.5px solid #FFD700;
             z-index: 2;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+        }
+        @media (min-width: 768px) {
+            .logo-3d-card.xl .logo-3d-face {
+                transform: translateZ(35px);
+                border-width: 3px;
+            }
         }
         /* Adding depth by stacking more layers for a thicker look */
         .logo-3d-depth {
@@ -247,62 +256,14 @@
                 0 0 40px rgba(0,0,0,0.8),
                 inset 0 0 25px rgba(184, 134, 11, 0.4);
             border: 1.5px solid #FFD700;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
         }
-        .logo-3d-shine {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            overflow: hidden;
-            transform: translateZ(15.1px);
-            pointer-events: none;
-            backface-visibility: hidden;
-            z-index: 3;
-        }
-        .logo-3d-shine::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                to right,
-                transparent 0%,
-                rgba(255, 255, 255, 0) 40%,
-                rgba(255, 255, 255, 0.8) 50%,
-                rgba(255, 255, 255, 0) 60%,
-                transparent 100%
-            );
-            animation: shine-sweep 5s infinite;
-        }
-        .logo-3d-shine-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            overflow: hidden;
-            transform: translateZ(-15.1px) rotateY(180deg);
-            pointer-events: none;
-            backface-visibility: hidden;
-            z-index: 3;
-        }
-        .logo-3d-shine-back::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                to right,
-                transparent 0%,
-                rgba(255, 255, 255, 0) 40%,
-                rgba(255, 255, 255, 0.8) 50%,
-                rgba(255, 255, 255, 0) 60%,
-                transparent 100%
-            );
-            animation: shine-sweep 5s infinite;
+        @media (min-width: 768px) {
+            .logo-3d-card.xl .logo-3d-back {
+                transform: translateZ(-35px) rotateY(180deg) scaleX(-1);
+                border-width: 3px;
+            }
         }
     </style>
     <script type="importmap">

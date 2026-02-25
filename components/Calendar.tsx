@@ -258,11 +258,18 @@ const Calendar: React.FC<CalendarProps> = ({
           className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
           style={{ opacity: appSettings?.ui?.watermarkOpacity ?? 0.12 }}
         >
-          <div className="logo-3d-container scale-[1.2] md:scale-[2]">
-            <div className="logo-3d-card" style={{ animation: 'rotate-y-3d-watermark 8s cubic-bezier(0.4, 0, 0.2, 1) infinite' }}>
-              {[...Array(31)].map((_, i) => {
-                const z = i - 15;
-                const isRim = i === 0 || i === 30;
+          <div className="logo-3d-container scale-[1.2] md:scale-[0.8]">
+            <div className="logo-3d-card xl" style={{ animation: 'rotate-y-3d-watermark 8s cubic-bezier(0.4, 0, 0.2, 1) infinite' }}>
+              {[...Array(71)].map((_, i) => {
+                const isPC = typeof window !== 'undefined' && window.innerWidth >= 768;
+                const layerCount = isPC ? 71 : 31;
+                const mid = (layerCount - 1) / 2;
+                const z = i - mid;
+                const isRim = i === 0 || i === layerCount - 1;
+                
+                // Only render layers up to the count for the current device
+                if (i >= layerCount) return null;
+
                 return (
                   <div 
                     key={i} 
