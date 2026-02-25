@@ -254,13 +254,35 @@ const Calendar: React.FC<CalendarProps> = ({
       </div>
 
       <div className="flex-1 relative overflow-hidden min-h-0" style={{ backgroundColor: bgColor }}>
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-          <img 
-            src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
-            alt="Watermark" 
-            className="w-[220px] md:w-[380px] h-[220px] md:h-[380px] object-cover rounded-full transition-opacity duration-700"
-            style={{ opacity: appSettings?.ui?.watermarkOpacity ?? 0.12 }} 
-          />
+        <div 
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+          style={{ opacity: appSettings?.ui?.watermarkOpacity ?? 0.12 }}
+        >
+          <div className="logo-3d-container scale-[1.2] md:scale-[2]">
+            <div className="logo-3d-card" style={{ animation: 'rotate-y-3d-watermark 8s cubic-bezier(0.4, 0, 0.2, 1) infinite' }}>
+              {[...Array(31)].map((_, i) => {
+                const z = i - 15;
+                const isRim = i === 0 || i === 30;
+                return (
+                  <div 
+                    key={i} 
+                    className={isRim ? "logo-3d-rim" : "logo-3d-depth"} 
+                    style={{ transform: `translateZ(${z}px)` }}
+                  />
+                );
+              })}
+              <img 
+                src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
+                alt="Logo Back" 
+                className="logo-3d-back" 
+              />
+              <img 
+                src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
+                alt="Logo Front" 
+                className="logo-3d-face" 
+              />
+            </div>
+          </div>
         </div>
         <div className="absolute inset-0 grid grid-cols-7 auto-rows-fr border-t border-l border-white/5 shadow-[inset_0_0_120px_rgba(0,0,0,0.9)]">
           {days.map((day, idx) => {

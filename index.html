@@ -150,6 +150,160 @@
         .animate-footer-wipe {
             animation: footer-wipe 5s ease-in-out infinite;
         }
+
+        @keyframes rotate-y-3d {
+            0% { transform: perspective(1000px) rotateY(0deg); }
+            80% { transform: perspective(1000px) rotateY(360deg); }
+            100% { transform: perspective(1000px) rotateY(360deg); }
+        }
+        
+        @keyframes shine-sweep {
+            0% { transform: translateX(-200%) translateY(-200%) rotate(45deg); }
+            20%, 100% { transform: translateX(200%) translateY(200%) rotate(45deg); }
+        }
+
+        @keyframes rotate-y-3d-watermark {
+            0% { transform: perspective(1200px) rotateY(0deg); }
+            62.5% { transform: perspective(1200px) rotateY(360deg); }
+            100% { transform: perspective(1200px) rotateY(360deg); }
+        }
+
+        .animate-3d-rotate-watermark {
+            animation: rotate-y-3d-watermark 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            transform-style: preserve-3d;
+        }
+
+        .animate-3d-rotate {
+            animation: rotate-y-3d 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            transform-style: preserve-3d;
+        }
+        .logo-3d-container {
+            perspective: 1200px;
+        }
+        .logo-3d-card {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            transform-style: preserve-3d;
+            animation: rotate-y-3d 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .logo-3d-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 50%;
+            object-fit: cover;
+            transform: translateZ(15px);
+            box-shadow: 
+                0 0 40px rgba(0,0,0,0.8),
+                inset 0 0 25px rgba(184, 134, 11, 0.4);
+            border: 1.5px solid #FFD700;
+            z-index: 2;
+        }
+        /* Adding depth by stacking more layers for a thicker look */
+        .logo-3d-depth {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            /* 9-layer Anisotropic Metallic Gradient + Milled Edge Texture */
+            background: 
+                repeating-conic-gradient(
+                    from 0deg,
+                    rgba(0,0,0,0.3) 0deg 0.5deg,
+                    transparent 0.5deg 1deg
+                ),
+                conic-gradient(
+                    from 0deg,
+                    #4A3505 0%, #8B6508 10%, #D4AF37 20%, #FFD700 25%, #D4AF37 30%, #8B6508 40%, #4A3505 50%,
+                    #8B6508 60%, #D4AF37 70%, #FFD700 75%, #D4AF37 80%, #8B6508 90%, #4A3505 100%
+                );
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        /* Special highlight for the very edge of the coin */
+        .logo-3d-rim {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                #FFD700, #B8860B, #FFD700, #B8860B, #FFD700
+            );
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .logo-3d-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            /* Mirror fix: rotate 180 and flip X */
+            transform: translateZ(-15px) rotateY(180deg) scaleX(-1);
+            backface-visibility: hidden;
+            box-shadow: 
+                0 0 40px rgba(0,0,0,0.8),
+                inset 0 0 25px rgba(184, 134, 11, 0.4);
+            border: 1.5px solid #FFD700;
+        }
+        .logo-3d-shine {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            transform: translateZ(15.1px);
+            pointer-events: none;
+            backface-visibility: hidden;
+            z-index: 3;
+        }
+        .logo-3d-shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                transparent 0%,
+                rgba(255, 255, 255, 0) 40%,
+                rgba(255, 255, 255, 0.8) 50%,
+                rgba(255, 255, 255, 0) 60%,
+                transparent 100%
+            );
+            animation: shine-sweep 5s infinite;
+        }
+        .logo-3d-shine-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            transform: translateZ(-15.1px) rotateY(180deg);
+            pointer-events: none;
+            backface-visibility: hidden;
+            z-index: 3;
+        }
+        .logo-3d-shine-back::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                transparent 0%,
+                rgba(255, 255, 255, 0) 40%,
+                rgba(255, 255, 255, 0.8) 50%,
+                rgba(255, 255, 255, 0) 60%,
+                transparent 100%
+            );
+            animation: shine-sweep 5s infinite;
+        }
     </style>
     <script type="importmap">
 {
@@ -164,7 +318,7 @@
     "jspdf": "https://esm.sh/jspdf@2.5.1",
     "date-fns": "https://esm.sh/date-fns@4.1.0",
     "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.2",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react-dom/": "https://esm.sh/react-dom@19.0.0/",
     "firebase/": "https://esm.sh/firebase@^12.8.0/"
   }
 }

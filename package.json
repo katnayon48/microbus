@@ -1,28 +1,33 @@
 {
-  "name": "microbus-booking-manager",
+  "name": "160930-of-microbus-booking-manager",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "lucide-react": "^0.462.0",
-    "date-fns": "^4.1.0",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2",
-    "firebase": "^10.12.0"
+    "@google/genai": "^1.42.0",
+    "date-fns": "4.1.0",
+    "firebase": "^12.8.0",
+    "jspdf": "2.5.1",
+    "jspdf-autotable": "3.8.2",
+    "lucide-react": "0.460.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "typescript": "^5.5.2",
-    "vite": "^5.4.1",
-    "@types/node": "^22.14.0"
+    "@types/node": "^22.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.39.3",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }

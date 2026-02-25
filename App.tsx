@@ -69,15 +69,33 @@ const LoadingScreen: React.FC<{ bgColor: string }> = ({ bgColor }) => {
       style={{ backgroundColor: bgColor }}
     >
       <div className="flex flex-col items-center w-full max-sm">
-        <div className="relative mb-12">
-          <div className="w-36 h-36 md:w-48 md:h-48 flex items-center justify-center animate-logo-glow overflow-hidden rounded-full border-2 border-white/20 relative z-10 bg-black/20">
+        <div className="relative mb-12 logo-3d-container">
+          <div className="logo-3d-card">
+            {/* Multiple depth layers for a thick gold bevel effect */}
+            {[...Array(31)].map((_, i) => {
+              const z = i - 15;
+              const isRim = i === 0 || i === 30;
+              return (
+                <div 
+                  key={i} 
+                  className={isRim ? "logo-3d-rim" : "logo-3d-depth"} 
+                  style={{ transform: `translateZ(${z}px)` }}
+                />
+              );
+            })}
             <img 
               src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
-              alt="Logo" 
-              className="w-full h-full object-cover rounded-full scale-110" 
+              alt="Logo Back" 
+              className="logo-3d-back" 
             />
+            <div className="logo-3d-shine-back"></div>
+            <img 
+              src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
+              alt="Logo Front" 
+              className="logo-3d-face" 
+            />
+            <div className="logo-3d-shine"></div>
           </div>
-          <div className="absolute inset-0 bg-emerald-500/20 blur-[80px] rounded-full -z-10 animate-pulse scale-150"></div>
         </div>
         
         <div className="space-y-6 w-full">
@@ -131,7 +149,7 @@ const App: React.FC = () => {
     
     if (!db) {
       console.error("Database connection not available");
-      setIsLoading(false);
+      setTimeout(() => setIsLoading(false), 3000);
       return;
     }
 
@@ -160,7 +178,7 @@ const App: React.FC = () => {
       }
       
       const elapsedTime = Date.now() - startTime;
-      const minDuration = 2500;
+      const minDuration = 5500; // Show 3D animation for at least 5.5 seconds (animation is 5s)
       const remainingTime = Math.max(0, minDuration - elapsedTime);
       
       setTimeout(() => {
@@ -168,7 +186,7 @@ const App: React.FC = () => {
       }, remainingTime);
     }, (error) => {
       console.error("Firebase fetch error:", error);
-      setIsLoading(false);
+      setTimeout(() => setIsLoading(false), 3000);
     });
 
     return () => {
