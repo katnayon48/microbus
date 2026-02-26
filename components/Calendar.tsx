@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, ChevronDown, CalendarDays, LogIn, FileText, Settings, BarChart3 } from 'lucide-react';
 import { format, addMonths, subMonths, isToday, setMonth, setYear } from 'date-fns';
 import { getCalendarDays } from '../utils/dateUtils';
@@ -22,6 +22,86 @@ interface CalendarProps {
   isAppLoading?: boolean; 
   appSettings: AppSettings;
 }
+
+const BookingCycler: React.FC<{ 
+  bookings: Booking[], 
+  onBookingClick: (booking: Booking) => void,
+  renderContent: (booking: Booking) => React.ReactNode,
+  isAppLoading: boolean
+}> = ({ bookings, onBookingClick, renderContent, isAppLoading }) => {
+  const [displayIndex, setDisplayIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    if (bookings.length <= 1) {
+      setDisplayIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setDisplayIndex((prev) => (prev + 1) % bookings.length);
+        setIsAnimating(false);
+      }, 500); // Match animation duration
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [bookings.length]);
+
+  const getBgClasses = (b: Booking) => {
+    const isUnpaid = b.fareStatus === 'Unpaid';
+    const isSpecial = b.isSpecialNote;
+    return isSpecial ? "bg-gradient-to-b from-[#f59e0b] to-[#92400e]" : isUnpaid ? "bg-gradient-to-b from-[#800000] to-[#3a0000]" : "bg-gradient-to-b from-[#006400] to-[#003300]";
+  };
+
+  if (bookings.length <= 1) {
+    const booking = bookings[0];
+    if (!booking) return null;
+    return (
+      <div onClick={(e) => { e.stopPropagation(); onBookingClick(booking); }}
+        className={`relative px-0.5 py-1 md:py-2 min-h-[30px] md:min-h-[44px] flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all duration-300
+          ${!isAppLoading ? 'animate-booking-pop' : 'opacity-0'}
+          ${getBgClasses(booking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white hover:brightness-110 active:scale-95`}>
+        <div className="w-full">
+          {renderContent(booking)}
+        </div>
+      </div>
+    );
+  }
+
+  const currentBooking = bookings[displayIndex];
+  const nextIndex = (displayIndex + 1) % bookings.length;
+  const nextBooking = bookings[nextIndex];
+
+  return (
+    <div className="relative w-full h-[30px] md:h-[44px] overflow-hidden rounded-md md:rounded-lg">
+      <div 
+        key={`current-${currentBooking.id}-${displayIndex}`}
+        onClick={(e) => { e.stopPropagation(); onBookingClick(currentBooking); }}
+        className={`absolute inset-0 px-0.5 py-1 md:py-2 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all
+          ${isAnimating ? 'animate-booking-exit' : ''}
+          ${getBgClasses(currentBooking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white hover:brightness-110 active:scale-95`}
+      >
+        <div className="w-full">
+          {renderContent(currentBooking)}
+        </div>
+      </div>
+
+      {isAnimating && (
+        <div 
+          key={`next-${nextBooking.id}-${nextIndex}`}
+          className={`absolute inset-0 px-0.5 py-1 md:py-2 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-10 border animate-booking-enter
+            ${getBgClasses(nextBooking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white`}
+        >
+          <div className="w-full">
+            {renderContent(nextBooking)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Calendar: React.FC<CalendarProps> = ({ 
   currentDate, 
@@ -183,9 +263,7 @@ const Calendar: React.FC<CalendarProps> = ({
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-1 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-slate-300 uppercase tracking-tight md:tracking-wider whitespace-nowrap transition-colors"
-              onMouseEnter={(e) => e.currentTarget.style.color = themeColor}
-              onMouseLeave={(e) => e.currentTarget.style.color = ""}
+              className="px-1 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-white uppercase tracking-tight md:tracking-wider whitespace-nowrap transition-colors"
             >
               Today
             </button>
@@ -328,21 +406,14 @@ const Calendar: React.FC<CalendarProps> = ({
                   )}
                 </div>
                 <div className="flex flex-col gap-1 overflow-hidden flex-1 px-0.5 md:px-1 pb-1 justify-center relative z-20">
-                  {day.bookings.slice(0, 2).map(booking => {
-                    const isUnpaid = booking.fareStatus === 'Unpaid';
-                    const isSpecial = booking.isSpecialNote;
-                    let bgClasses = isSpecial ? "bg-gradient-to-b from-[#f59e0b] to-[#92400e]" : isUnpaid ? "bg-gradient-to-b from-[#800000] to-[#3a0000]" : "bg-gradient-to-b from-[#006400] to-[#003300]";
-                    return (
-                      <div key={booking.id} onClick={(e) => { e.stopPropagation(); onDateClick(day.date, booking); }}
-                        className={`relative px-0.5 py-1 md:py-2 min-h-[30px] md:min-h-[44px] flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all duration-300
-                          ${!isAppLoading ? 'animate-booking-pop' : 'opacity-0'}
-                          ${bgClasses} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white hover:brightness-110 active:scale-95`}>
-                        <div className="w-full">
-                          {renderBookingContent(booking)}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {day.bookings.length > 0 && (
+                    <BookingCycler 
+                      bookings={day.bookings}
+                      onBookingClick={(booking) => onDateClick(day.date, booking)}
+                      renderContent={renderBookingContent}
+                      isAppLoading={isAppLoading}
+                    />
+                  )}
                 </div>
               </div>
             );

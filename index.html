@@ -80,6 +80,21 @@
           animation: shake 0.4s ease-in-out;
         }
 
+        @keyframes booking-enter {
+            0% { transform: translateY(100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes booking-exit {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
+        .animate-booking-enter {
+            animation: booking-enter 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .animate-booking-exit {
+            animation: booking-exit 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
         @keyframes booking-fast-drop {
             0% {
                 opacity: 0;
