@@ -413,7 +413,7 @@ export const generateBookingDetailsReport = async (bookings: Booking[], startDat
       doc.line(pageWidth - 70, sigY, pageWidth - 20, sigY);
       doc.text(label2, pageWidth - 45, sigY + 5, { align: 'center' });
       
-      const countersignY = sigY + 12;
+      const countersignY = sigY + 22;
       const csText = "COUNTERSIGN";
       doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
       const csWidth = doc.getTextWidth(csText);
