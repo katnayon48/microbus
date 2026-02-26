@@ -11,7 +11,7 @@ import {
 import { Booking, BookingField, HandoffInfo, DriverAttendance, AppSettings } from '../types';
 import { 
   generatePaymentSlip, generateOverallReport, generateTripSummaryReport, 
-  generateAttendanceSheet, generateFuelReport 
+  generateAttendanceSheet, generateFuelReport, generateBookingDetailsReport 
 } from '../services/pdfService';
 import { BOOKING_FIELDS } from '../constants';
 import { 
@@ -30,7 +30,7 @@ interface ReportManagerProps {
   initialStep?: ReportStep;
 }
 
-type ReportStep = 'dashboard' | 'payment-slip-range' | 'handoff-prompt' | 'handoff-form' | 'detailed-setup' | 'trip-summary' | 'summary-download-range' | 'graph-choice' | 'driver-attendance' | 'attendance-download-range' | 'fuel-report-range';
+type ReportStep = 'dashboard' | 'payment-slip-range' | 'booking-details-range' | 'handoff-prompt' | 'handoff-form' | 'detailed-setup' | 'trip-summary' | 'summary-download-range' | 'graph-choice' | 'driver-attendance' | 'attendance-download-range' | 'fuel-report-range';
 
 const MONTH_BAR_STYLES = [
   { color: '#10b981', gradient: 'linear-gradient(to top, #064e3b, #10b981)' },
@@ -59,6 +59,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [withSignature, setWithSignature] = useState(true);
+  const [bookingDetailsWithSignature, setBookingDetailsWithSignature] = useState(true);
   const [fuelWithSignature, setFuelWithSignature] = useState(true);
   const [masterDataWithSignature, setMasterDataWithSignature] = useState(false);
   const [customHeader, setCustomHeader] = useState('');
@@ -282,6 +283,14 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
     setActiveStep('dashboard');
   };
 
+  const handleBookingDetailsGenerate = async () => {
+    setIsGenerating(true);
+    await generateBookingDetailsReport(bookings, range.start, range.end, bookingDetailsWithSignature, sigLabel1, sigLabel2, customHeader);
+    setIsGenerating(false);
+    setCustomHeader('');
+    setActiveStep('dashboard');
+  };
+
   const filteredAttendance = useMemo(() => {
     const monthStr = format(historyMonth, 'yyyy-MM');
     return attendanceRecords.filter(record => record.date.startsWith(monthStr))
@@ -334,6 +343,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
     if (activeStep === 'attendance-download-range') return withSignature;
     if (activeStep === 'fuel-report-range') return fuelWithSignature;
     if (activeStep === 'detailed-setup') return masterDataWithSignature;
+    if (activeStep === 'booking-details-range') return bookingDetailsWithSignature;
     return false;
   };
 
@@ -342,6 +352,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
     if (activeStep === 'attendance-download-range') setWithSignature(nextVal);
     else if (activeStep === 'fuel-report-range') setFuelWithSignature(nextVal);
     else if (activeStep === 'detailed-setup') setMasterDataWithSignature(nextVal);
+    else if (activeStep === 'booking-details-range') setBookingDetailsWithSignature(nextVal);
   };
 
   return (
@@ -380,14 +391,11 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 flex-1 max-h-fit content-center w-full box-border overflow-hidden">
               <ReportTile onClick={() => setActiveStep('payment-slip-range')} icon={FileText} title="Payment Slip" subtitle="MONTHLY BILLS" color="bg-emerald-600" />
+              <ReportTile onClick={() => setActiveStep('booking-details-range')} icon={FileSpreadsheet} title="Booking Details" subtitle="CIVIL MICROBUS" color="bg-rose-600" />
               <ReportTile onClick={() => setActiveStep('driver-attendance')} icon={Clock} title="Driver's Attendence" subtitle="LOG MANAGEMENT" color="bg-amber-600" />
               <ReportTile onClick={() => setActiveStep('fuel-report-range')} icon={Fuel} title="Fuel Report" subtitle="MILEAGE DATA" color="bg-cyan-600" />
               <ReportTile onClick={() => setActiveStep('detailed-setup')} icon={Database} title="Detailed Data" subtitle="FULL EXPORT" color="bg-blue-600" />
               <ReportTile onClick={() => setActiveStep('trip-summary')} icon={BarChart3} title="Trip Statistics" subtitle="ANNUAL REVIEW" color="bg-indigo-600" />
-              <div className="hidden md:flex p-6 bg-white/[0.02] border-2 border-dashed border-white/5 rounded-[2rem] flex-col items-center justify-center text-center opacity-30 group hover:opacity-50 transition-opacity">
-                <LayoutDashboard size={24} className="text-slate-400 mb-2" />
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] leading-relaxed">System Link Secure<br/>Monitoring Active</span>
-              </div>
             </div>
           </div>
         )}
@@ -583,7 +591,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
           </div>
         )}
 
-        {(['payment-slip-range', 'fuel-report-range', 'attendance-download-range', 'detailed-setup', 'summary-download-range'] as ReportStep[]).includes(activeStep) && (
+        {(['payment-slip-range', 'booking-details-range', 'fuel-report-range', 'attendance-download-range', 'detailed-setup', 'summary-download-range'] as ReportStep[]).includes(activeStep) && (
           <div className="flex-1 flex flex-col h-full md:justify-center animate-in fade-in slide-in-from-right-4 duration-500 overflow-y-auto custom-scrollbar px-3 md:px-0 w-full box-border">
              <div className={`${activeStep === 'detailed-setup' ? 'max-w-[96vw] md:max-w-[95%] xl:max-w-7xl' : 'max-w-md'} mx-auto w-full bg-black/40 backdrop-blur-2xl p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-2 border-white/5 shadow-2xl space-y-5 md:space-y-6 shrink-0 box-border overflow-hidden`}>
                 <StepHeader 
@@ -627,7 +635,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                   </div>
                 )}
 
-                {(activeStep === 'attendance-download-range' || activeStep === 'fuel-report-range' || activeStep === 'detailed-setup') && (
+                {(activeStep === 'attendance-download-range' || activeStep === 'fuel-report-range' || activeStep === 'detailed-setup' || activeStep === 'booking-details-range') && (
                   <div className="pt-2 border-t border-white/5 space-y-3 w-full box-border">
                     <button onClick={toggleSigState} className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all ${getSigState() ? 'bg-emerald-600/20 border-emerald-500' : 'bg-white/5 border-white/10 text-slate-400'}`}>
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${getSigState() ? 'bg-emerald-500 text-white' : 'bg-white/5 text-slate-600'}`}>{getSigState() ? <ShieldCheck size={20} /> : <ShieldOff size={20} />}</div>
@@ -643,6 +651,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                 <div className="w-full box-border pt-4 pb-2">
                   <button onClick={() => {
                     if(activeStep === 'payment-slip-range') setActiveStep('handoff-prompt');
+                    else if(activeStep === 'booking-details-range') handleBookingDetailsGenerate();
                     else if(activeStep === 'fuel-report-range') handleFuelReportDownload();
                     else if(activeStep === 'detailed-setup') handleDetailedReportExport();
                     else if(activeStep === 'summary-download-range') setActiveStep('graph-choice');

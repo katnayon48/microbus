@@ -336,6 +336,98 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
   }
 };
 
+export const generateBookingDetailsReport = async (bookings: Booking[], startDate: string, endDate: string, withSignature: boolean = true, label1: string = "Driver", label2: string = "JCO/NCO", customHeader?: string) => {
+  try {
+    const doc = new jsPDF();
+    doc.setFont('helvetica');
+    const filtered = filterByRange(bookings, startDate, endDate);
+    const mainHeading = (customHeader && customHeader.trim() !== '') ? customHeader.toUpperCase() : "BOOKING DETAILS - CIVIL MICROBUS";
+    let monthYearText = "";
+    if (startDate) monthYearText = format(parseISO(startDate), 'MMMM yyyy').toUpperCase();
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(mainHeading, 110, 15, { align: 'center' });
+    const headingWidth = doc.getTextWidth(mainHeading);
+    doc.setLineWidth(0.5);
+    doc.line(110 - (headingWidth / 2), 17, 110 + (headingWidth / 2), 17);
+    
+    if (monthYearText) {
+      doc.text(monthYearText, 110, 24, { align: 'center' });
+      const subHeadingWidth = doc.getTextWidth(monthYearText);
+      doc.line(110 - (subHeadingWidth / 2), 26, 110 + (subHeadingWidth / 2), 26);
+    }
+    
+    const totalFare = filtered.reduce((sum, b) => b.fareStatus === 'Paid' ? sum + (b.fare || 0) : sum, 0);
+
+    autoTable(doc, {
+      startY: monthYearText ? 32 : 25,
+      head: [
+        [
+          { content: 'SER', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'RANK AND NAME', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'UNIT', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'BOOKING DATE', colSpan: 2, styles: { halign: 'center' } },
+          { content: 'DAYS', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'DURATION', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'FARE', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'REMARKS', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } }
+        ],
+        [
+          { content: 'FROM', styles: { halign: 'center' } },
+          { content: 'TO', styles: { halign: 'center' } }
+        ]
+      ],
+      body: filtered.map((b, i) => {
+        const totalDays = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
+        const fareVal = b.isExempt ? 'EXEMPTED' : formatCurrency(b.fare);
+        return [
+          i + 1, (b.rankName || '').toUpperCase(), (b.unit || '').toUpperCase(),
+          format(parseISO(b.startDate), DATE_FORMAT), format(parseISO(b.endDate), DATE_FORMAT), 
+          totalDays, b.duration, fareVal, (b.remarks || '-')
+        ];
+      }),
+      foot: [[
+        { content: 'TOTAL FARE', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
+        { content: formatCurrency(totalFare), styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
+        { content: '', styles: { fillColor: [220, 220, 220], lineWidth: 0.1 } }
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 9, halign: 'center', fontStyle: 'bold', font: 'helvetica' },
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.1, halign: 'center', textColor: [0, 0, 0], overflow: 'visible' },
+      columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 45, halign: 'left' }, 2: { cellWidth: 32, halign: 'left' }, 3: { cellWidth: 20 }, 4: { cellWidth: 20 }, 5: { cellWidth: 12 }, 6: { cellWidth: 18 }, 7: { cellWidth: 20 }, 8: { cellWidth: 'auto' } },
+      margin: { left: 8, right: 8 }
+    });
+
+    if (withSignature) {
+      const finalY = (doc as any).lastAutoTable?.finalY || 150;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const sigY = Math.min(finalY + 20, 275);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      
+      doc.line(20, sigY, 70, sigY);
+      doc.text(label1, 45, sigY + 5, { align: 'center' });
+      
+      doc.line(pageWidth - 70, sigY, pageWidth - 20, sigY);
+      doc.text(label2, pageWidth - 45, sigY + 5, { align: 'center' });
+      
+      const countersignY = sigY + 12;
+      const csText = "COUNTERSIGN";
+      doc.text(csText, pageWidth / 2, countersignY, { align: 'center' });
+      const csWidth = doc.getTextWidth(csText);
+      doc.line(pageWidth / 2 - csWidth / 2, countersignY + 1, pageWidth / 2 + csWidth / 2, countersignY + 1);
+    }
+
+    drawDeveloperFooter(doc, 288);
+    doc.save(`Booking_Details_${monthYearText.replace(/\s+/g, '_') || 'Report'}.pdf`);
+  } catch (error) {
+    console.error("PDF generation failed:", error);
+    alert("Error generating report.");
+  }
+};
+
 export const generateOverallReport = async (bookings: Booking[], startDate: string, endDate: string, fields: BookingField[], customHeader?: string, withSignature: boolean = false, label1: string = "Driver", label2: string = "JCO/NCO") => {
   try {
     const doc = new jsPDF({ orientation: 'landscape' });
