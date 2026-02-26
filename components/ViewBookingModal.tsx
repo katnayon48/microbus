@@ -39,8 +39,8 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking, appSetting
 
       <div className="relative z-10 space-y-6">
         <div 
-          className="flex items-center gap-3 p-4 backdrop-blur-sm border rounded-2xl"
-          style={{ backgroundColor: `${themeColor}22`, borderColor: `${themeColor}44` }}
+          className="flex items-center gap-3 p-4 backdrop-blur-sm rounded-2xl"
+          style={{ backgroundColor: `${themeColor}22`, borderColor: `${themeColor}44`, borderWidth: '1px', borderStyle: 'solid' }}
         >
           <div 
             className="w-10 h-10 text-white rounded-xl flex items-center justify-center shadow-md shrink-0"

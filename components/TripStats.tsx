@@ -75,8 +75,8 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
       <div className="w-full grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-8 shrink-0 relative z-10">
          <div className="flex items-center gap-3">
             <div 
-              className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center border shadow-inner"
-              style={{ backgroundColor: `${themeColor}22`, borderColor: `${themeColor}44`, color: themeColor }}
+              className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center shadow-inner"
+              style={{ backgroundColor: `${themeColor}22`, borderColor: `${themeColor}44`, borderWidth: '1px', borderStyle: 'solid', color: themeColor }}
             >
                <BarChart3 size={16} md:size={18} />
             </div>
@@ -175,8 +175,8 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
         
         <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-center z-10">
            <div 
-              className="px-5 py-2.5 md:px-7 md:py-3 rounded-xl md:rounded-2xl shadow-lg border transition-all hover:scale-105 duration-300"
-              style={{ backgroundColor: `${themeColor}CC`, borderColor: `${themeColor}44` }}
+              className="px-5 py-2.5 md:px-7 md:py-3 rounded-xl md:rounded-2xl shadow-lg transition-all hover:scale-105 duration-300"
+              style={{ backgroundColor: `${themeColor}CC`, borderColor: `${themeColor}44`, borderWidth: '1px', borderStyle: 'solid' }}
            >
               <span className="text-[10px] md:text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2.5">
                 <TrendingUp size={14} md:size={18} /> 

@@ -30,24 +30,28 @@ const BookingCycler: React.FC<{
   isAppLoading: boolean
 }> = ({ bookings, onBookingClick, renderContent, isAppLoading }) => {
   const [displayIndex, setDisplayIndex] = useState(0);
+  const [prevIndex, setPrevIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     if (bookings.length <= 1) {
       setDisplayIndex(0);
+      setPrevIndex(0);
       return;
     }
 
-    const interval = setInterval(() => {
+    const timer = setTimeout(() => {
+      setPrevIndex(displayIndex);
+      setDisplayIndex((prev) => (prev + 1) % bookings.length);
       setIsAnimating(true);
+      
       setTimeout(() => {
-        setDisplayIndex((prev) => (prev + 1) % bookings.length);
         setIsAnimating(false);
       }, 500); // Match animation duration
     }, 2000);
 
-    return () => clearInterval(interval);
-  }, [bookings.length]);
+    return () => clearTimeout(timer);
+  }, [displayIndex, bookings.length]);
 
   const getBgClasses = (b: Booking) => {
     const isUnpaid = b.fareStatus === 'Unpaid';
@@ -70,35 +74,49 @@ const BookingCycler: React.FC<{
     );
   }
 
-  const currentBooking = bookings[displayIndex];
-  const nextIndex = (displayIndex + 1) % bookings.length;
-  const nextBooking = bookings[nextIndex];
+  const safeDisplayIndex = bookings.length > 0 ? displayIndex % bookings.length : 0;
+  const safePrevIndex = bookings.length > 0 ? prevIndex % bookings.length : 0;
+  const enteringBooking = bookings[safeDisplayIndex];
+  const exitingBooking = bookings[safePrevIndex];
+
+  if (!enteringBooking) return null;
 
   return (
-    <div className="relative w-full h-[30px] md:h-[44px] overflow-hidden rounded-md md:rounded-lg">
-      <div 
-        key={`current-${currentBooking.id}-${displayIndex}`}
-        onClick={(e) => { e.stopPropagation(); onBookingClick(currentBooking); }}
-        className={`absolute inset-0 px-0.5 py-1 md:py-2 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all
-          ${isAnimating ? 'animate-booking-exit' : ''}
-          ${getBgClasses(currentBooking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white hover:brightness-110 active:scale-95`}
-      >
-        <div className="w-full">
-          {renderContent(currentBooking)}
-        </div>
+    <div className="flex flex-col items-center w-full gap-1 animate-in fade-in duration-500">
+      {/* Separate Attractive Counter Box */}
+      <div className="bg-white px-2 md:px-3 py-0.5 rounded-full border border-slate-200 shadow-[0_2px_8px_rgba(0,0,0,0.2)] z-30 flex items-center justify-center">
+        <span className="text-[9px] md:text-[11px] font-black text-black tracking-widest tabular-nums">
+          {safeDisplayIndex + 1} / {bookings.length}
+        </span>
       </div>
 
-      {isAnimating && (
+      <div className="relative w-full h-[30px] md:h-[44px] overflow-hidden rounded-md md:rounded-lg">
+        {/* Exiting Booking */}
+        {isAnimating && exitingBooking && (
+          <div 
+            key={`exit-${exitingBooking.id}-${safePrevIndex}`}
+            className={`absolute inset-0 px-0.5 py-1 md:py-2 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-10 border animate-booking-exit
+              ${getBgClasses(exitingBooking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white`}
+          >
+            <div className="w-full">
+              {renderContent(exitingBooking)}
+            </div>
+          </div>
+        )}
+
+        {/* Entering / Current Booking */}
         <div 
-          key={`next-${nextBooking.id}-${nextIndex}`}
-          className={`absolute inset-0 px-0.5 py-1 md:py-2 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-10 border animate-booking-enter
-            ${getBgClasses(nextBooking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white`}
+          key={`current-${enteringBooking.id}-${safeDisplayIndex}`}
+          onClick={(e) => { e.stopPropagation(); onBookingClick(enteringBooking); }}
+          className={`absolute inset-0 px-0.5 py-1 md:py-2 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all
+            ${isAnimating ? 'animate-booking-enter' : ''}
+            ${getBgClasses(enteringBooking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white hover:brightness-110 active:scale-95`}
         >
           <div className="w-full">
-            {renderContent(nextBooking)}
+            {renderContent(enteringBooking)}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -377,14 +395,18 @@ const Calendar: React.FC<CalendarProps> = ({
                 key={idx}
                 onClick={() => onDateClick(day.date)}
                 onDoubleClick={() => onDateDoubleClick?.(day.date)}
-                className={`flex flex-col transition-all relative group z-10 border-r border-b border-white/5 min-h-0
+                className={`flex flex-col transition-all relative group z-10 min-h-0
                   ${day.isCurrentMonth ? 'bg-transparent' : 'bg-black/60 opacity-20'}
                   ${isAdmin ? 'cursor-pointer hover:bg-white/5' : day.bookings.length > 0 ? 'cursor-pointer hover:bg-white/[0.04]' : 'cursor-default'}
                 `}
                 style={{ 
-                  borderColor: `rgba(255,255,255,${appSettings?.ui?.gridOpacity ?? 0.05})`,
+                  borderRightWidth: '1px',
+                  borderBottomWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: isTodayDate ? `${themeColor}33` : `rgba(255,255,255,${appSettings?.ui?.gridOpacity ?? 0.05})`,
                   ...(isTodayDate ? {
-                    border: `2px solid ${themeColor}33`,
+                    borderWidth: '2px',
+                    borderStyle: 'solid',
                     boxShadow: `inset 0 0 12px ${themeColor}55`,
                   } : {})
                 }}

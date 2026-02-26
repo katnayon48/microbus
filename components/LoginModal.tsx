@@ -54,14 +54,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, currentSettin
 
       <div className="relative group">
         <div 
-          className="w-16 h-16 bg-white/[0.03] rounded-2xl flex items-center justify-center shadow-[inset_0_0_15px_rgba(255,255,255,0.05)] border group-hover:scale-105 transition-transform duration-500"
-          style={{ borderColor: `${themeColor}44` }}
+          className="w-16 h-16 bg-white/[0.03] rounded-2xl flex items-center justify-center shadow-[inset_0_0_15px_rgba(255,255,255,0.05)] group-hover:scale-105 transition-transform duration-500"
+          style={{ borderColor: `${themeColor}44`, borderWidth: '1px', borderStyle: 'solid' }}
         >
           <ShieldCheck size={32} strokeWidth={1.5} style={{ color: themeColor }} />
         </div>
         <div 
-          className="absolute -bottom-1 -right-1 w-7 h-7 border-2 rounded-lg flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform duration-500"
-          style={{ backgroundColor: bgColor, borderColor: `${themeColor}66`, color: themeColor }}
+          className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform duration-500"
+          style={{ backgroundColor: bgColor, borderColor: `${themeColor}66`, borderWidth: '2px', borderStyle: 'solid', color: themeColor }}
         >
           <Lock size={12} />
         </div>
@@ -96,7 +96,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, currentSettin
                 ${error ? 'border-rose-500/50 focus:border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.1)]' : 'border-white/10'} 
                 rounded-xl outline-none transition-all font-mono shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)]
               `}
-              style={!error ? { borderFocusColor: themeColor } : {}}
               placeholder="••••"
             />
             

@@ -197,7 +197,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFooterIndex(prev => (prev + 1) % footerLines.length);
+      if (footerLines.length > 0) {
+        setFooterIndex(prev => (prev + 1) % footerLines.length);
+      }
     }, 5000);
     return () => clearInterval(interval);
   }, [footerLines.length]);
