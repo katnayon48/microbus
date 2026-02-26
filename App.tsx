@@ -217,6 +217,7 @@ const App: React.FC = () => {
       }
       await set(ref(db, `bookings/${id}`), { ...booking, id });
       closeBookingModal();
+      setView('calendar');
     } catch (e) {
       alert("সেভ করা সম্ভব হয়নি।");
     }
@@ -227,6 +228,7 @@ const App: React.FC = () => {
     try {
       await remove(ref(db, `bookings/${id}`));
       closeBookingModal();
+      setView('calendar');
     } catch (e) {
       alert("মুছে ফেলা সম্ভব হয়নি।");
     }

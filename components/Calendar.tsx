@@ -64,7 +64,7 @@ const BookingCycler: React.FC<{
     if (!booking) return null;
     return (
       <div onClick={(e) => { e.stopPropagation(); onBookingClick(booking); }}
-        className={`relative px-0.5 py-1 md:py-2 min-h-[30px] md:min-h-[44px] flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all duration-300
+        className={`relative px-0.5 py-1 md:py-1 min-h-[30px] md:min-h-[38px] flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all duration-300
           ${!isAppLoading ? 'animate-booking-pop' : 'opacity-0'}
           ${getBgClasses(booking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white hover:brightness-110 active:scale-95`}>
         <div className="w-full">
@@ -82,20 +82,20 @@ const BookingCycler: React.FC<{
   if (!enteringBooking) return null;
 
   return (
-    <div className="flex flex-col items-center w-full gap-1 animate-in fade-in duration-500">
-      {/* Separate Attractive Counter Box */}
-      <div className="bg-white px-2 md:px-3 py-0.5 rounded-full border border-slate-200 shadow-[0_2px_8px_rgba(0,0,0,0.2)] z-30 flex items-center justify-center">
-        <span className="text-[9px] md:text-[11px] font-black text-black tracking-widest tabular-nums">
-          {safeDisplayIndex + 1} / {bookings.length}
+    <div className="relative w-full h-[30px] md:h-[40px] animate-in fade-in duration-500">
+      {/* Counter Box - Positioned exactly above the booking bar with a small gap */}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-white px-3 py-0.5 rounded-full border border-slate-200 shadow-md z-40 flex items-center justify-center">
+        <span className="text-[11px] md:text-[13px] font-black text-black tabular-nums whitespace-nowrap">
+          {safeDisplayIndex + 1}/{bookings.length}
         </span>
       </div>
 
-      <div className="relative w-full h-[30px] md:h-[44px] overflow-hidden rounded-md md:rounded-lg">
+      <div className="relative w-full h-full overflow-hidden rounded-md md:rounded-lg">
         {/* Exiting Booking */}
         {isAnimating && exitingBooking && (
           <div 
             key={`exit-${exitingBooking.id}-${safePrevIndex}`}
-            className={`absolute inset-0 px-0.5 py-1 md:py-2 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-10 border animate-booking-exit
+            className={`absolute inset-0 px-0.5 py-1 md:py-1 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-10 border animate-booking-exit
               ${getBgClasses(exitingBooking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white`}
           >
             <div className="w-full">
@@ -108,7 +108,7 @@ const BookingCycler: React.FC<{
         <div 
           key={`current-${enteringBooking.id}-${safeDisplayIndex}`}
           onClick={(e) => { e.stopPropagation(); onBookingClick(enteringBooking); }}
-          className={`absolute inset-0 px-0.5 py-1 md:py-2 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all
+          className={`absolute inset-0 px-0.5 py-1 md:py-1 flex items-center justify-center select-none rounded-md md:rounded-lg overflow-hidden cursor-pointer z-20 border transition-all
             ${isAnimating ? 'animate-booking-enter' : ''}
             ${getBgClasses(enteringBooking)} shadow-[inset_0_1.5px_0_rgba(255,255,255,0.4),_inset_0_-1.5px_0_rgba(0,0,0,0.4),_0_4px_8px_rgba(0,0,0,0.4)] border-t-white/30 border-b-black/50 border-x-white/10 text-white hover:brightness-110 active:scale-95`}
         >
@@ -411,8 +411,8 @@ const Calendar: React.FC<CalendarProps> = ({
                   } : {})
                 }}
               >
-                <div className="flex justify-between items-start p-0.5 md:p-1.5 mb-0 shrink-0 relative z-20">
-                  <span className={`text-[9px] md:text-sm font-black w-4 h-4 md:w-8 md:h-8 flex items-center justify-center rounded md:rounded-xl transition-all
+                <div className="flex justify-between items-start p-0.5 md:p-1 mb-0 shrink-0 relative z-20">
+                  <span className={`text-[9px] md:text-sm font-black w-4 h-4 md:w-7 md:h-7 flex items-center justify-center rounded md:rounded-xl transition-all
                     ${isTodayDate ? 'text-white shadow-lg shadow-black/50 ring-2 ring-white/20' : day.isCurrentMonth ? 'text-slate-100' : 'text-slate-500'}`}
                     style={isTodayDate ? { backgroundColor: themeColor } : {}}>
                     {format(day.date, 'd')}
@@ -427,7 +427,7 @@ const Calendar: React.FC<CalendarProps> = ({
                     </button>
                   )}
                 </div>
-                <div className="flex flex-col gap-1 overflow-hidden flex-1 px-0.5 md:px-1 pb-1 justify-center relative z-20">
+                <div className="flex flex-col gap-0.5 md:gap-1 flex-1 px-0.5 md:px-1 pb-1 justify-center relative z-20">
                   {day.bookings.length > 0 && (
                     <BookingCycler 
                       bookings={day.bookings}
