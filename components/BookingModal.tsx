@@ -603,20 +603,20 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/5">
-          {existingBooking && onDelete && (
-            <button type="button" onClick={() => setIsConfirmingDelete(true)} className="flex-1 flex items-center justify-center gap-2 py-4 px-4 bg-rose-600/10 text-rose-500 border border-rose-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-600 hover:text-white transition-all">
-              <Trash2 size={16} /> Delete Record
-            </button>
-          )}
+          <button type="submit" className="flex-[2] flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-500 transition-all active:scale-95">
+            <Check size={16} /> {existingBooking ? 'Update Reservation' : 'Confirm Reservation'}
+          </button>
           {!formData.isSpecialNote && (
             <button type="button" onClick={handleDownloadSlip} disabled={isDownloading} className="flex-1 flex items-center justify-center gap-2 py-4 px-4 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50">
               {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
               Download Slip
             </button>
           )}
-          <button type="submit" className="flex-[2] flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-500 transition-all active:scale-95">
-            <Check size={16} /> {existingBooking ? 'Update Reservation' : 'Confirm Reservation'}
-          </button>
+          {existingBooking && onDelete && (
+            <button type="button" onClick={() => setIsConfirmingDelete(true)} className="flex-1 flex items-center justify-center gap-2 py-4 px-4 bg-rose-600/10 text-rose-500 border border-rose-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-600 hover:text-white transition-all">
+              <Trash2 size={16} /> Delete Record
+            </button>
+          )}
         </div>
       </form>
 

@@ -65,7 +65,7 @@ const getInitialSettings = (): AppSettings => {
 const LoadingScreen: React.FC<{ bgColor: string }> = ({ bgColor }) => {
   return (
     <div 
-      className="fixed inset-0 z-[200] shadow-[inset_0_0_150px_rgba(0,0,0,0.6)] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300"
+      className="fixed inset-0 z-[200] shadow-[inset_0_0_150px_rgba(0,0,0,0.05)] sm:shadow-none flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300"
       style={{ backgroundColor: bgColor }}
     >
       <div className="flex flex-col items-center w-full max-sm">
@@ -336,7 +336,7 @@ const App: React.FC = () => {
   if (!isLoading && settings?.security?.maintenanceMode && userRole === 'viewer') {
     return (
       <div 
-        className="fixed inset-0 z-[300] flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500 shadow-[inset_0_0_200px_rgba(0,0,0,0.8)]"
+        className="fixed inset-0 z-[300] flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500 shadow-[inset_0_0_200px_rgba(0,0,0,0.1)]"
         style={{ backgroundColor: settings.ui.bgColor }}
       >
         <div className="relative mb-10">
@@ -391,7 +391,7 @@ const App: React.FC = () => {
       {isLoading && <LoadingScreen bgColor={settings.ui.bgColor} />}
       
       <div 
-        className={`flex flex-col text-white font-inter h-[100dvh] overflow-hidden transition-all duration-300 shadow-[inset_0_0_150px_rgba(0,0,0,0.8)] ${isLoading ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}
+        className={`flex flex-col text-white font-inter h-[100dvh] overflow-hidden transition-all duration-300 shadow-[inset_0_0_150px_rgba(0,0,0,0.1)] sm:shadow-none ${isLoading ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}
         style={{ backgroundColor: settings.ui.bgColor }}
       >
         <header 
@@ -414,10 +414,10 @@ const App: React.FC = () => {
           </section>
 
           <div className="text-center px-2 flex flex-col justify-center">
-            <h1 className="text-[14px] sm:text-lg md:text-[24px] font-black text-white tracking-tight uppercase leading-tight whitespace-nowrap drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+            <h1 className="text-[14px] sm:text-lg md:text-[24px] font-black text-white tracking-tight uppercase leading-tight whitespace-nowrap drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] sm:drop-shadow-none">
               {view === 'reports' ? 'Report Center' : view === 'attendance' ? "Driver's Attendance Log" : (settings?.branding?.title || "MICROBUS SCHEDULE")}
             </h1>
-            <p className="text-[9px] sm:text-[10px] md:text-[12px] font-bold text-white tracking-[0.1em] md:tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap leading-none opacity-90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+            <p className="text-[9px] sm:text-[10px] md:text-[12px] font-bold text-white tracking-[0.1em] md:tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap leading-none opacity-90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] sm:drop-shadow-none">
               {view === 'reports' ? 'Data Analytics & PDF' : view === 'attendance' ? 'Driver Timing History' : (settings?.branding?.subtitle || "AREA HQ BARISHAL")}
             </p>
           </div>
@@ -442,7 +442,7 @@ const App: React.FC = () => {
         <main className="p-1 md:p-2 flex flex-col gap-1 md:gap-2 flex-1 overflow-hidden min-h-0 relative z-10">
           <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-0">
             <div 
-              className="rounded-2xl md:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden flex flex-col flex-1 min-h-0"
+              className="rounded-2xl md:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] sm:shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-white/10 overflow-hidden flex flex-col flex-1 min-h-0"
               style={{ backgroundColor: settings.ui.bgColor }}
             >
               {view === 'calendar' ? (

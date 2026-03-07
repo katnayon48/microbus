@@ -79,16 +79,25 @@ const BookingCycler: React.FC<{
   const enteringBooking = bookings[safeDisplayIndex];
   const exitingBooking = bookings[safePrevIndex];
 
+  const regularBookings = bookings.filter(b => !b.isSpecialNote);
+  const totalRegular = regularBookings.length;
+  const isCurrentSpecial = enteringBooking?.isSpecialNote;
+  const currentRegularIndex = !isCurrentSpecial 
+    ? regularBookings.findIndex(b => b.id === enteringBooking?.id) + 1 
+    : 0;
+
   if (!enteringBooking) return null;
 
   return (
     <div className="relative w-full h-[30px] md:h-[40px] animate-in fade-in duration-500">
-      {/* Counter Box - Positioned exactly above the booking bar with a small gap */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-white px-3 py-0.5 rounded-full border border-slate-200 shadow-md z-40 flex items-center justify-center">
-        <span className="text-[11px] md:text-[13px] font-black text-black tabular-nums whitespace-nowrap">
-          {safeDisplayIndex + 1}/{bookings.length}
-        </span>
-      </div>
+      {/* Counter Box - Only shown for regular bookings if there are multiple regular bookings */}
+      {!isCurrentSpecial && totalRegular > 1 && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-white px-3 py-0.5 rounded-full border border-slate-200 shadow-md z-40 flex items-center justify-center">
+          <span className="text-[11px] md:text-[13px] font-black text-black tabular-nums whitespace-nowrap">
+            {currentRegularIndex}/{totalRegular}
+          </span>
+        </div>
+      )}
 
       <div className="relative w-full h-full overflow-hidden rounded-md md:rounded-lg">
         {/* Exiting Booking */}
@@ -242,7 +251,7 @@ const Calendar: React.FC<CalendarProps> = ({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <div className="grid grid-cols-3 items-center px-1 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/40 shrink-0 gap-1 overflow-hidden">
+      <div className="grid grid-cols-3 items-center px-1 md:px-6 py-1.5 md:py-2 border-b border-white/10 bg-black/2 sm:bg-transparent shrink-0 gap-1 overflow-hidden">
         <div className="flex items-center gap-1 md:gap-4 min-w-0">
           <div className="hidden sm:flex w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl items-center justify-center text-white shadow-lg shrink-0" style={{ backgroundColor: themeColor }}>
             <CalendarIcon size={14} className="md:w-5 md:h-5" />
@@ -341,7 +350,7 @@ const Calendar: React.FC<CalendarProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-7 border-b border-white/5 bg-black/40 shrink-0">
+      <div className="grid grid-cols-7 border-b border-white/5 bg-black/2 sm:bg-transparent shrink-0">
         {weekDays.map(day => (
           <div key={day} className="py-1 md:py-2 text-center text-[8px] md:text-[10px] font-black text-white uppercase tracking-[0.1em] md:tracking-[0.2em] border-r border-white/5 last:border-r-0">
             {day}
@@ -349,7 +358,18 @@ const Calendar: React.FC<CalendarProps> = ({
         ))}
       </div>
 
-      <div className="flex-1 relative overflow-hidden min-h-0" style={{ backgroundColor: bgColor }}>
+      <div className="flex-1 relative overflow-hidden min-h-0" style={{ backgroundColor: 'transparent' }}>
+        <div 
+          className="absolute inset-0 pointer-events-none z-0 brightness-[0.8] sm:brightness-[1.15]"
+          style={{ 
+            backgroundImage: 'url("https://i.ibb.co.com/B2gbtk00/IMG-1111.jpg")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            opacity: 0.05
+          }}
+        />
+
         <div 
           className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
           style={{ opacity: appSettings?.ui?.watermarkOpacity ?? 0.12 }}
@@ -396,17 +416,17 @@ const Calendar: React.FC<CalendarProps> = ({
                 onClick={() => onDateClick(day.date)}
                 onDoubleClick={() => onDateDoubleClick?.(day.date)}
                 className={`flex flex-col transition-all relative group z-10 min-h-0
-                  ${day.isCurrentMonth ? 'bg-transparent' : 'bg-black/60 opacity-20'}
+                  ${day.isCurrentMonth ? 'bg-transparent' : 'bg-black/5 sm:bg-black/[0.02] opacity-40'}
                   ${isAdmin ? 'cursor-pointer hover:bg-white/5' : day.bookings.length > 0 ? 'cursor-pointer hover:bg-white/[0.04]' : 'cursor-default'}
                 `}
                 style={{ 
-                  borderRightWidth: '1px',
-                  borderBottomWidth: '1px',
+                  borderRightWidth: isTodayDate ? '2px' : '1px',
+                  borderBottomWidth: isTodayDate ? '2px' : '1px',
+                  borderTopWidth: isTodayDate ? '2px' : '0px',
+                  borderLeftWidth: isTodayDate ? '2px' : '0px',
                   borderStyle: 'solid',
                   borderColor: isTodayDate ? `${themeColor}33` : `rgba(255,255,255,${appSettings?.ui?.gridOpacity ?? 0.05})`,
                   ...(isTodayDate ? {
-                    borderWidth: '2px',
-                    borderStyle: 'solid',
                     boxShadow: `inset 0 0 12px ${themeColor}55`,
                   } : {})
                 }}

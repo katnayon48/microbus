@@ -37,7 +37,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     watermarkOpacity: 0.12,
     gridOpacity: 0.05,
     themeColor: "#10b981", 
-    bgColor: "#062c1e",
+    bgColor: "#ffffff",
     glassIntensity: 0.3,
     borderRadius: 16,
   },
