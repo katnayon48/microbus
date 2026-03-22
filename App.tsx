@@ -136,6 +136,7 @@ const App: React.FC = () => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [pendingDateAfterLogin, setPendingDateAfterLogin] = useState<Date | undefined>();
@@ -460,7 +461,7 @@ const App: React.FC = () => {
                   onAttendanceViewerClick={() => setView('attendance')}
                   onReportClick={() => { setView('reports'); setReportInitialStep('dashboard'); }}
                   onSettingsClick={() => setShowSettingsModal(true)}
-                  onPrintClick={() => window.print()}
+                  onPrintClick={() => setShowPdfModal(true)}
                   isAppLoading={isLoading}
                   appSettings={settings}
                 />
@@ -521,6 +522,16 @@ const App: React.FC = () => {
         
         <Modal isOpen={showViewModal} onClose={() => setShowViewModal(false)} title="Booking Information" variant="dark" customBgColor={settings.ui.bgColor}>
           {editingBooking && <ViewBookingModal booking={editingBooking} appSettings={settings} />}
+        </Modal>
+
+        <Modal isOpen={showPdfModal} onClose={() => setShowPdfModal(false)} title="Download Bookings PDF" variant="dark" customBgColor={settings.ui.bgColor}>
+          <PrintPdfModal 
+            isOpen={showPdfModal} 
+            onClose={() => setShowPdfModal(false)} 
+            bookings={bookings} 
+            appSettings={settings} 
+            currentDate={currentDate}
+          />
         </Modal>
       </div>
     </>

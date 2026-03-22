@@ -456,23 +456,15 @@ const BookingModal: React.FC<BookingModalProps> = ({
             </div>
 
             <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-5">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <label className={labelClasses}>Duration</label>
-                  <div className="flex gap-4">
-                    {(['Full Day', 'Half Day'] as DurationType[]).map((d) => (
-                      <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-sm' : 'bg-transparent border-white/10 text-slate-500 hover:border-emerald-500/50'}`}>
-                        <input type="radio" name="duration" checked={formData.duration === d} onChange={() => handleToggle('duration', d)} className="hidden" />
-                        <span className="text-xs font-bold">{d}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="ml-6 flex items-end pb-1">
-                  <label className="flex items-center gap-2 cursor-pointer bg-emerald-950/20 border border-emerald-500/20 px-4 py-2.5 rounded-xl hover:bg-emerald-600/10 transition-all">
-                    <input type="checkbox" checked={formData.isExempt} onChange={e => handleToggle('isExempt', e.target.checked)} className="w-4 h-4 rounded border-white/10 accent-emerald-500" />
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Exempt Fare</span>
-                  </label>
+              <div>
+                <label className={labelClasses}>Duration</label>
+                <div className="flex gap-4">
+                  {(['Full Day', 'Half Day'] as DurationType[]).map((d) => (
+                    <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-sm' : 'bg-transparent border-white/10 text-slate-500 hover:border-emerald-500/50'}`}>
+                      <input type="radio" name="duration" checked={formData.duration === d} onChange={() => handleToggle('duration', d)} className="hidden" />
+                      <span className="text-xs font-bold">{d}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
               
@@ -507,6 +499,13 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   <option value="Unpaid" className="bg-[#062c1e]">Unpaid</option>
                 </select>
               </div>
+            </div>
+
+            <div className="flex justify-start">
+              <label className="flex items-center gap-2 cursor-pointer bg-emerald-950/20 border border-emerald-500/20 px-4 py-2.5 rounded-xl hover:bg-emerald-600/10 transition-all">
+                <input type="checkbox" checked={formData.isExempt} onChange={e => handleToggle('isExempt', e.target.checked)} className="w-4 h-4 rounded border-white/10 accent-emerald-500" />
+                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Exempt Fare</span>
+              </label>
             </div>
 
             {/* Fuel consumption button - ONLY for reservation */}

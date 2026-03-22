@@ -57,7 +57,21 @@ const BookingCycler: React.FC<{
   const getBgClasses = (b: Booking) => {
     const isUnpaid = b.fareStatus === 'Unpaid';
     const isSpecial = b.isSpecialNote;
-    return isSpecial ? "bg-gradient-to-b from-[#f59e0b] to-[#92400e] print-bg-transparent print-text-black print-border-black" : isUnpaid ? "bg-gradient-to-b from-[#800000] to-[#3a0000] print-bg-transparent print-text-black print-border-black" : "bg-gradient-to-b from-[#006400] to-[#003300] print-bg-transparent print-text-black print-border-black";
+    const isExempt = b.isExempt;
+    
+    if (isSpecial) {
+      return "bg-gradient-to-b from-[#f59e0b] to-[#92400e] print-bg-transparent print-text-black print-border-black";
+    }
+    
+    if (isExempt) {
+      return "bg-gradient-to-b from-[#000080] to-[#000040] print-bg-transparent print-text-black print-border-black";
+    }
+    
+    if (isUnpaid) {
+      return "bg-gradient-to-b from-[#800000] to-[#3a0000] print-bg-transparent print-text-black print-border-black";
+    }
+    
+    return "bg-gradient-to-b from-[#006400] to-[#003300] print-bg-transparent print-text-black print-border-black";
   };
 
   if (bookings.length <= 1) {
@@ -198,7 +212,7 @@ const Calendar: React.FC<CalendarProps> = ({
     if (booking.isSpecialNote) {
       return (
         <div className="flex items-center justify-center w-full px-1">
-          <span className={`block text-center break-words leading-[1.1] ${fontSizeClasses} print-no-shadow print-text-black`}>
+          <span className={`block text-center break-words leading-[1.1] ${fontSizeClasses} print-no-shadow`}>
             {booking.remarks || 'SPECIAL NOTE'}
           </span>
         </div>
@@ -230,13 +244,13 @@ const Calendar: React.FC<CalendarProps> = ({
     return (
       <div className="flex flex-col items-center justify-center w-full overflow-hidden px-0.5">
         {rank && (
-          <span className={`block leading-none mb-0.5 w-full text-center whitespace-nowrap ${fontSizeClasses} drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] print-no-shadow print-text-black`}>
+          <span className={`block leading-none mb-0.5 w-full text-center whitespace-nowrap ${fontSizeClasses} drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] print-no-shadow`}>
             {rank}
           </span>
         )}
         <div className="flex flex-col items-center w-full">
           {nameWords.map((word, idx) => (
-            <span key={idx} className={`block leading-tight text-center w-full whitespace-nowrap ${fontSizeClasses} drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] print-no-shadow print-text-black`}>
+            <span key={idx} className={`block leading-tight text-center w-full whitespace-nowrap ${fontSizeClasses} drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] print-no-shadow`}>
               {word}
             </span>
           ))}
@@ -269,22 +283,22 @@ const Calendar: React.FC<CalendarProps> = ({
               <h2 className="text-[10px] md:text-2xl font-black text-white tracking-tight uppercase whitespace-nowrap print-text-black">
                 {format(currentDate, 'MMM yy')}
               </h2>
-              <ChevronDown size={8} className="transition-colors md:w-4 md:h-4 shrink-0 print-text-black" style={{ color: themeColor }} />
+              <ChevronDown size={8} className="transition-colors md:w-4 md:h-4 shrink-0 print-hide" style={{ color: themeColor }} />
             </button>
             <button 
               onClick={onAttendanceViewerClick}
-              className="flex items-center justify-center px-1 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[6.5px] md:text-[10px] font-black uppercase tracking-tight md:tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10 print-border-black"
+              className="flex items-center justify-center px-1 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[6.5px] md:text-[10px] font-black uppercase tracking-tight md:tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10 print-hide"
             >
               <span>Attendance</span>
             </button>
           </div>
         </div>
         
-        <div className="flex justify-center min-w-0">
-          <div className="flex items-center gap-0 md:gap-2 bg-white/5 p-0.5 rounded-lg md:rounded-xl border border-white/10 shadow-sm shrink-0 print-border-black print-bg-transparent">
+        <div className="flex justify-center min-w-0 print-hide">
+          <div className="flex items-center gap-0 md:gap-2 bg-white/5 p-0.5 rounded-lg md:rounded-xl border border-white/10 shadow-sm shrink-0">
             <button 
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              className="p-1 md:p-2 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90 print-text-black"
+              className="p-1 md:p-2 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90"
               onMouseEnter={(e) => e.currentTarget.style.color = themeColor}
               onMouseLeave={(e) => e.currentTarget.style.color = ""}
             >
@@ -292,13 +306,13 @@ const Calendar: React.FC<CalendarProps> = ({
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-1 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-white uppercase tracking-tight md:tracking-wider whitespace-nowrap transition-colors print-text-black"
+              className="px-1 md:px-12 py-1 md:py-2 text-[8px] md:text-xs font-black text-white uppercase tracking-tight md:tracking-wider whitespace-nowrap transition-colors"
             >
               Today
             </button>
             <button 
               onClick={() => addMonths && setCurrentDate(addMonths(currentDate, 1))}
-              className="p-1 md:p-2 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90 print-text-black"
+              className="p-1 md:p-2 hover:bg-white/10 rounded-lg text-slate-400 active:scale-90"
               onMouseEnter={(e) => e.currentTarget.style.color = themeColor}
               onMouseLeave={(e) => e.currentTarget.style.color = ""}
             >
@@ -307,19 +321,19 @@ const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end items-center gap-1.5 md:gap-3 shrink-0">
+        <div className="flex justify-end items-center gap-1.5 md:gap-3 shrink-0 print-hide">
           {!isAdmin && (
             <>
               <button 
                 onClick={onStatsClick}
-                className="flex items-center justify-center px-1.5 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10 print-border-black"
+                className="flex items-center justify-center px-1.5 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10 print-hide"
               >
                 <BarChart3 size={10} className="md:w-4 md:h-4 shrink-0 mr-1" />
                 <span>Stats</span>
               </button>
               <button 
                 onClick={onPrintClick || (() => window.print())}
-                className="hidden md:flex items-center justify-center px-1.5 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10 print-border-black"
+                className="hidden md:flex items-center justify-center px-1.5 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10 print-hide"
               >
                 <Printer size={10} className="md:w-4 md:h-4 shrink-0 mr-1" />
                 <span>Print</span>
@@ -327,7 +341,7 @@ const Calendar: React.FC<CalendarProps> = ({
               {onLoginClick && (
                 <button 
                   onClick={onLoginClick}
-                  className="flex items-center justify-center px-1.5 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10 print-border-black"
+                  className="flex items-center justify-center px-1.5 md:px-5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 border border-white/10 h-7 md:h-10"
                 >
                   <LogIn size={9} className="md:w-4 md:h-4 shrink-0 mr-1" />
                   <span className="inline">Login</span>
@@ -339,17 +353,26 @@ const Calendar: React.FC<CalendarProps> = ({
             <div className="flex items-center gap-1.5 md:gap-3">
               <button 
                 onClick={onReportClick}
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-5 py-1.5 md:py-2.5 bg-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 h-7 md:h-10 print-border-black print-text-black"
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-5 py-1.5 md:py-2.5 bg-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 h-7 md:h-10"
                 style={{ color: themeColor }}
               >
                 <FileText size={10} className="md:w-4 md:h-4 shrink-0" />
                 <span className="md:hidden">REPORT</span>
                 <span className="hidden md:inline">GENERATE REPORT</span>
               </button>
+              <button 
+                onClick={onPrintClick}
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-5 py-1.5 md:py-2.5 bg-white rounded-lg md:rounded-xl text-[7px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 shadow-md active:scale-95 transition-all whitespace-nowrap shrink-0 h-7 md:h-10"
+                style={{ color: themeColor }}
+              >
+                <Printer size={10} className="md:w-4 md:h-4 shrink-0" />
+                <span className="md:hidden">PRINT</span>
+                <span className="hidden md:inline">PRINT</span>
+              </button>
               {isMaster && (
                 <button 
                   onClick={onSettingsClick}
-                  className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center bg-amber-600 text-white rounded-lg md:rounded-xl hover:bg-amber-500 shadow-lg active:scale-90 transition-all border border-amber-400/20 print-border-black print-bg-white print-text-black"
+                  className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center bg-amber-600 text-white rounded-lg md:rounded-xl hover:bg-amber-500 shadow-lg active:scale-90 transition-all border border-amber-400/20"
                 >
                   <Settings size={14} className="md:w-5 md:h-5" />
                 </button>
@@ -416,7 +439,7 @@ const Calendar: React.FC<CalendarProps> = ({
             </div>
           </div>
         </div>
-        <div className="absolute inset-0 grid grid-cols-7 auto-rows-fr border-t border-l border-white/5 shadow-[inset_0_0_120px_rgba(0,0,0,0.9)] print-no-shadow print-border-t print-border-l print-border-black">
+        <div className="absolute inset-0 grid grid-cols-7 auto-rows-fr border-t border-l border-white/5 shadow-[inset_0_0_120px_rgba(0,0,0,0.9)] print-no-shadow print-border-t print-border-l">
           {days.map((day, idx) => {
             const isTodayDate = isToday(day.date);
             return (

@@ -82,7 +82,7 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
   
-  doc.setTextColor(100, 100, 100); 
+  doc.setTextColor(0, 0, 0); 
   doc.setFontSize(6);
   doc.setFont('helvetica', 'normal');
   
@@ -90,13 +90,11 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
     doc.text('AUTO GENERATED SLIP', centerX, startY, { align: 'center' });
     doc.text('NO SIGNATURE REQUIRED', centerX, startY + 3, { align: 'center' });
   } else {
-    doc.text('AUTO GENERATED REPORT', centerX, startY, { align: 'center' });
+    doc.text('System Generated Report', centerX, startY, { align: 'center' });
   }
   
   doc.setFontSize(5);
-  doc.text('Software Developed By', centerX, isSlip ? startY + 7 : startY + 4, { align: 'center' });
-  doc.setFontSize(5); 
-  doc.text('1815124 CPL (CLK) BILLAL, ASC', centerX, isSlip ? startY + 10 : startY + 7, { align: 'center' });
+  doc.text('Developed By Cpl (Clk) Billal', centerX, isSlip ? startY + 7 : startY + 4, { align: 'center' });
 };
 
 const filterByRange = (bookings: Booking[], start: string, end: string) => {
@@ -847,11 +845,12 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
   }
 };
 
-export const generateCalendarPDF = async (bookings: Booking[], startDateStr: string, endDateStr: string, customHeader?: string, customSubtitle?: string) => {
+export const generateCalendarPDF = async (bookings: Booking[], startDateStr: string, endDateStr: string, customHeader?: string) => {
   try {
     const doc = new jsPDF({ orientation: 'landscape', format: 'a4' });
     const startDate = parseISO(startDateStr);
     const endDate = parseISO(endDateStr);
+    const filteredBookings = bookings.filter(b => !b.isSpecialNote);
 
     const months = eachMonthOfInterval({ start: startDate, end: endDate });
 
@@ -860,59 +859,48 @@ export const generateCalendarPDF = async (bookings: Booking[], startDateStr: str
         doc.addPage();
       }
 
-      // Header Title
+      // Header
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(18);
       doc.setTextColor(0, 0, 0);
-      doc.text(customHeader || 'MICROBUS SCHEDULE', 10, 15);
-
-      // Header Subtitle
-      if (customSubtitle) {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(customSubtitle, 10, 22);
-      }
-
-      // Month Year
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      const monthYear = format(monthDate, 'MMM yyyy').toUpperCase();
-      doc.text(monthYear, 10, 35);
-
-      // Buttons
-      const buttons = ['LOGIN', 'PRINT', 'STATS', 'TODAY', 'ATTENDANCE'];
-      let btnX = 287; // start from right margin
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
+      doc.text("MICROBUS SCHEDULE", 148.5, 10, { align: 'center' });
       
-      for (let i = 0; i < buttons.length; i++) {
-        const text = buttons[i];
-        const textW = doc.getTextWidth(text);
-        const btnW = textW + 10;
-        btnX -= btnW;
-        
-        doc.setDrawColor(0, 0, 0);
-        doc.setLineWidth(0.3);
-        doc.setFillColor(255, 255, 255);
-        doc.roundedRect(btnX, 28, btnW, 9, 1.5, 1.5, 'FD');
-        
-        doc.text(text, btnX + 5, 34.5);
-        
-        btnX -= 5; // gap between buttons
+      // Underline MICROBUS SCHEDULE
+      const titleWidth = doc.getTextWidth("MICROBUS SCHEDULE");
+      doc.setLineWidth(0.5);
+      doc.line(148.5 - titleWidth/2, 11.5, 148.5 + titleWidth/2, 11.5);
+
+      doc.setFontSize(16);
+      const monthYear = format(monthDate, 'MMMM yyyy').toUpperCase();
+      doc.text(monthYear, 148.5, 18, { align: 'center' });
+      
+      // Underline monthYear
+      const monthYearWidth = doc.getTextWidth(monthYear);
+      doc.setLineWidth(0.5);
+      doc.line(148.5 - monthYearWidth/2, 19.5, 148.5 + monthYearWidth/2, 19.5);
+
+      if (customHeader && customHeader !== "MICROBUS SCHEDULE") {
+        doc.setFontSize(10);
+        doc.text(customHeader, 148.5, 25, { align: 'center' });
       }
 
       // Grid parameters
       const startX = 10;
-      const startY = 45;
+      const startY = 35;
       const cellW = 277 / 7;
-      const cellH = 155 / 6; // max 6 rows
+      const cellH = 165 / 6; // Adjusted for new startY
 
       // Days of week
       const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       daysOfWeek.forEach((day, i) => {
-        doc.text(day, startX + (i * cellW) + (cellW / 2), startY - 3, { align: 'center' });
+        const x = startX + i * cellW;
+        const y = startY - 8;
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.2);
+        doc.rect(x, y, cellW, 8); // Border for day name
+        doc.text(day, x + (cellW / 2), y + 5.5, { align: 'center' });
       });
 
       // Draw grid
@@ -945,35 +933,32 @@ export const generateCalendarPDF = async (bookings: Booking[], startDateStr: str
 
             // Find bookings for this day
             const currentDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), currentDay);
-            const dayBookings = bookings.filter(b => {
+            const dayBookings = filteredBookings.filter(b => {
               const bStart = startOfDay(parseISO(b.startDate));
               const bEnd = endOfDay(parseISO(b.endDate));
               return currentDate >= bStart && currentDate <= bEnd;
             });
 
             // Print bookings
-            let bookingY = y + 10;
             const maxBookings = Math.floor((cellH - 10) / 7);
+            const bookingsToShow = dayBookings.slice(0, maxBookings);
+            const totalHeight = bookingsToShow.length * 7;
+            
+            // Center bookings vertically in the cell (below the date number)
+            let bookingY = y + 10 + (cellH - 10 - totalHeight) / 2 + 4;
 
-            dayBookings.slice(0, maxBookings).forEach((b, idx) => {
-              doc.setFontSize(7);
+            bookingsToShow.forEach((b) => {
+              doc.setDrawColor(0, 0, 0);
+              doc.setLineWidth(0.1);
+              // Small box for each booking
+              doc.rect(x + 1, bookingY - 5, cellW - 2, 6);
+              
+              doc.setFontSize(7.5);
               doc.setFont('helvetica', 'bold');
               const rankName = doc.splitTextToSize(b.rankName || 'Unknown', cellW - 4)[0];
-              doc.text(rankName, x + 2, bookingY);
-              
-              doc.setFont('helvetica', 'normal');
-              const dest = doc.splitTextToSize(b.destination || '-', cellW - 4)[0];
-              doc.text(dest, x + 2, bookingY + 3);
+              doc.text(rankName, x + cellW/2, bookingY - 0.5, { align: 'center' });
               
               bookingY += 7;
-              
-              // Add a tiny line separator between bookings if not the last one
-              if (idx < Math.min(dayBookings.length, maxBookings) - 1) {
-                doc.setDrawColor(200, 200, 200);
-                doc.setLineWidth(0.1);
-                doc.line(x + 2, bookingY - 2.5, x + cellW - 2, bookingY - 2.5);
-                doc.setDrawColor(0, 0, 0); // reset
-              }
             });
 
             if (dayBookings.length > maxBookings) {
@@ -987,6 +972,8 @@ export const generateCalendarPDF = async (bookings: Booking[], startDateStr: str
         }
         if (currentDay > daysInMonth) break;
       }
+      
+      drawDeveloperFooter(doc, 204);
     });
 
     doc.save(`Calendar_View_${startDateStr}_to_${endDateStr}.pdf`);

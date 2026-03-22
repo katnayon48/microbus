@@ -1,92 +1,88 @@
+
 import React, { useState } from 'react';
-import { X, Calendar, Download, Loader2 } from 'lucide-react';
+import { CalendarDays, Download, Loader2, X } from 'lucide-react';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Booking, AppSettings } from '../types';
 import { generateCalendarPDF } from '../services/pdfService';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 interface PrintPdfModalProps {
   isOpen: boolean;
   onClose: () => void;
   bookings: Booking[];
   appSettings: AppSettings;
+  currentDate: Date;
 }
 
-const PrintPdfModal: React.FC<PrintPdfModalProps> = ({ isOpen, onClose, bookings, appSettings }) => {
-  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+const PrintPdfModal: React.FC<PrintPdfModalProps> = ({ isOpen, onClose, bookings, appSettings, currentDate }) => {
   const [isGenerating, setIsGenerating] = useState(false);
-
-  if (!isOpen) return null;
+  const [customHeader, setCustomHeader] = useState('');
+  const [range, setRange] = useState({
+    start: format(startOfMonth(currentDate), 'yyyy-MM-dd'),
+    end: format(endOfMonth(currentDate), 'yyyy-MM-dd')
+  });
 
   const handleDownload = async () => {
-    if (!startDate || !endDate) return;
     setIsGenerating(true);
     try {
-      await generateCalendarPDF(bookings, startDate, endDate, appSettings.ui.headerTitle, appSettings.ui.headerSubtitle);
+      await generateCalendarPDF(bookings, range.start, range.end, customHeader || appSettings.branding.title);
       onClose();
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error("Failed to generate PDF:", error);
     } finally {
       setIsGenerating(false);
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-center w-16 h-16 bg-white/10 rounded-full mx-auto mb-6">
-        <Calendar size={32} className="text-white" />
+    <div className="flex flex-col gap-6 p-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <div className="w-16 h-16 bg-emerald-600/10 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/20 shadow-inner">
+        <CalendarDays size={32} />
       </div>
       
-      <h3 className="text-xl font-bold text-white text-center mb-2">Download Bookings PDF</h3>
-      <p className="text-slate-400 text-center mb-8 text-sm">
-        Select a date range to generate a PDF report of bookings.
-      </p>
-
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Start Date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
+            <input 
+              type="date" 
+              value={range.start} 
+              onChange={e => setRange({...range, start: e.target.value})} 
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all box-border" 
             />
           </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">End Date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">End Date</label>
+            <input 
+              type="date" 
+              value={range.end} 
+              onChange={e => setRange({...range, end: e.target.value})} 
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all box-border" 
             />
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDownload}
-            disabled={isGenerating || !startDate || !endDate}
-            className="flex-1 flex items-center justify-center px-4 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGenerating ? (
-              <Loader2 size={20} className="animate-spin" />
-            ) : (
-              <>
-                <Download size={20} className="mr-2" />
-                Download PDF
-              </>
-            )}
-          </button>
+        <div className="flex flex-col gap-2">
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Custom Header (Optional)</label>
+          <input 
+            type="text" 
+            value={customHeader} 
+            onChange={e => setCustomHeader(e.target.value)} 
+            placeholder="MICROBUS SCHEDULE" 
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all box-border" 
+          />
         </div>
       </div>
+
+      <button 
+        onClick={handleDownload} 
+        disabled={isGenerating} 
+        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-xs shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2.5 border border-emerald-400/20 disabled:opacity-50"
+      >
+        {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+        <span>{isGenerating ? 'Generating...' : 'Download Calendar PDF'}</span>
+      </button>
     </div>
   );
 };
