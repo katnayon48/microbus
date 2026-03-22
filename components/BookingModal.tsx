@@ -389,7 +389,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-6 pb-2" noValidate>
         {/* Date Section - Always visible and in 2-column grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in duration-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end animate-in fade-in duration-300">
           <div className="relative">
             <label className={labelClasses}><Calendar size={12} className="text-emerald-500" /> Start Date</label>
             <div className="relative group">
@@ -409,7 +409,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         {/* Conditional Reservation Fields */}
         {!formData.isSpecialNote && (
           <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
               <div className="relative">
                 <label className={labelClasses}><User size={12} className="text-emerald-500" /> Rank and Name</label>
                 <div className="relative group">
@@ -426,7 +426,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
               <div className="relative">
                 <label className={labelClasses}><Phone size={12} className="text-emerald-500" /> Mobile Number</label>
                 <div className="relative group">
@@ -476,7 +476,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                 <div>
                   <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> Out Time</label>
                   <input type="time" name="outTime" value={formData.outTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-white" />
@@ -488,7 +488,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
               <div className="relative">
                 <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Fare Amount</label>
                 <div className="relative group">
@@ -523,7 +523,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
               {formData.isFuelEntry && (
                 <div className="bg-emerald-950/20 p-5 rounded-2xl border border-emerald-500/10 space-y-5 animate-in slide-in-from-top-2 duration-300">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <div className="relative">
                       <label className={labelClasses}><Gauge size={12} className="text-emerald-500" /> Kilometer Start</label>
                       <div className="relative group">
@@ -560,26 +560,26 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
                     {formData.fuelPurchases?.map((purchase, index) => (
                       <div key={purchase.id} className="relative bg-black/40 p-4 rounded-xl border border-white/5 space-y-4 group/purchase animate-in slide-in-from-left-2">
-                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="relative">
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                          <div className="relative flex flex-col justify-end h-full">
                             <label className={labelClasses}><Droplets size={12} className="text-emerald-500" /> Purchased Fuel</label>
-                            <div className="relative group">
+                            <div className="relative group mt-auto">
                               <Droplets className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                               <input type="number" step="0.01" value={purchase.purchasedFuel === undefined ? '' : purchase.purchasedFuel} onChange={(e) => handleFuelPurchaseChange(index, 'purchasedFuel', e.target.value)} className={inputClasses} placeholder="Liters" />
                             </div>
                           </div>
-                          <div className="relative">
+                          <div className="relative flex flex-col justify-end h-full">
                             <label className={labelClasses}><CircleDollarSign size={12} className="text-emerald-500" /> Rate</label>
-                            <div className="relative group">
+                            <div className="relative group mt-auto">
                               <CircleDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                               <input type="number" step="0.01" value={purchase.fuelRate === undefined ? '' : purchase.fuelRate} onChange={(e) => handleFuelPurchaseChange(index, 'fuelRate', e.target.value)} className={inputClasses} placeholder="Rate" />
                             </div>
                           </div>
-                          <div className="relative">
+                          <div className="relative flex flex-col justify-end h-full">
                             <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Total Taka</label>
-                            <div className="relative group">
-                              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-sm pointer-events-none">৳</span>
-                              <input type="number" step="0.01" value={purchase.totalFuelPrice === undefined ? '' : purchase.totalFuelPrice} onChange={(e) => handleFuelPurchaseChange(index, 'totalFuelPrice', e.target.value)} className={`${inputClasses} pl-8 bg-emerald-900/10 font-black text-emerald-400`} placeholder="0.00" />
+                            <div className="relative group mt-auto">
+                              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-base pointer-events-none">৳</span>
+                              <input type="number" step="0.01" value={purchase.totalFuelPrice === undefined ? '' : purchase.totalFuelPrice} onChange={(e) => handleFuelPurchaseChange(index, 'totalFuelPrice', e.target.value)} className={`${inputClasses} pl-10 bg-emerald-900/10 font-black text-emerald-400`} placeholder="0.00" />
                             </div>
                           </div>
                           <button type="button" onClick={() => removeFuelPurchase(index)} className="absolute -right-2 -top-2 w-6 h-6 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/purchase:opacity-100 transition-all active:scale-90 z-20">

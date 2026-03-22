@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
-import { format, parseISO, differenceInDays, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval, max, min } from 'date-fns';
+import { format, parseISO, differenceInDays, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval, max, min, getDay, getDaysInMonth, startOfDay, endOfDay } from 'date-fns';
 import { BOOKING_FIELDS } from '../constants';
 
 const DATE_FORMAT = 'dd-MM-yyyy';
@@ -844,5 +844,154 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
   } catch (error) {
     console.error("Fuel report generation failed:", error);
     alert("Error generating fuel report.");
+  }
+};
+
+export const generateCalendarPDF = async (bookings: Booking[], startDateStr: string, endDateStr: string, customHeader?: string, customSubtitle?: string) => {
+  try {
+    const doc = new jsPDF({ orientation: 'landscape', format: 'a4' });
+    const startDate = parseISO(startDateStr);
+    const endDate = parseISO(endDateStr);
+
+    const months = eachMonthOfInterval({ start: startDate, end: endDate });
+
+    months.forEach((monthDate, monthIndex) => {
+      if (monthIndex > 0) {
+        doc.addPage();
+      }
+
+      // Header Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(0, 0, 0);
+      doc.text(customHeader || 'MICROBUS SCHEDULE', 10, 15);
+
+      // Header Subtitle
+      if (customSubtitle) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(customSubtitle, 10, 22);
+      }
+
+      // Month Year
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      const monthYear = format(monthDate, 'MMM yyyy').toUpperCase();
+      doc.text(monthYear, 10, 35);
+
+      // Buttons
+      const buttons = ['LOGIN', 'PRINT', 'STATS', 'TODAY', 'ATTENDANCE'];
+      let btnX = 287; // start from right margin
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      
+      for (let i = 0; i < buttons.length; i++) {
+        const text = buttons[i];
+        const textW = doc.getTextWidth(text);
+        const btnW = textW + 10;
+        btnX -= btnW;
+        
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.3);
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(btnX, 28, btnW, 9, 1.5, 1.5, 'FD');
+        
+        doc.text(text, btnX + 5, 34.5);
+        
+        btnX -= 5; // gap between buttons
+      }
+
+      // Grid parameters
+      const startX = 10;
+      const startY = 45;
+      const cellW = 277 / 7;
+      const cellH = 155 / 6; // max 6 rows
+
+      // Days of week
+      const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      daysOfWeek.forEach((day, i) => {
+        doc.text(day, startX + (i * cellW) + (cellW / 2), startY - 3, { align: 'center' });
+      });
+
+      // Draw grid
+      const daysInMonth = getDaysInMonth(monthDate);
+      const firstDayOfMonth = getDay(startOfMonth(monthDate));
+
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.2);
+
+      let currentDay = 1;
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 7; col++) {
+          const x = startX + col * cellW;
+          const y = startY + row * cellH;
+
+          if ((row === 0 && col < firstDayOfMonth) || currentDay > daysInMonth) {
+            // Empty cell
+            doc.setFillColor(245, 245, 245);
+            doc.rect(x, y, cellW, cellH, 'FD');
+          } else {
+            // Draw cell border
+            doc.setFillColor(255, 255, 255);
+            doc.rect(x, y, cellW, cellH, 'FD');
+
+            // Date number
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text(currentDay.toString(), x + 2, y + 5);
+
+            // Find bookings for this day
+            const currentDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), currentDay);
+            const dayBookings = bookings.filter(b => {
+              const bStart = startOfDay(parseISO(b.startDate));
+              const bEnd = endOfDay(parseISO(b.endDate));
+              return currentDate >= bStart && currentDate <= bEnd;
+            });
+
+            // Print bookings
+            let bookingY = y + 10;
+            const maxBookings = Math.floor((cellH - 10) / 7);
+
+            dayBookings.slice(0, maxBookings).forEach((b, idx) => {
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'bold');
+              const rankName = doc.splitTextToSize(b.rankName || 'Unknown', cellW - 4)[0];
+              doc.text(rankName, x + 2, bookingY);
+              
+              doc.setFont('helvetica', 'normal');
+              const dest = doc.splitTextToSize(b.destination || '-', cellW - 4)[0];
+              doc.text(dest, x + 2, bookingY + 3);
+              
+              bookingY += 7;
+              
+              // Add a tiny line separator between bookings if not the last one
+              if (idx < Math.min(dayBookings.length, maxBookings) - 1) {
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.1);
+                doc.line(x + 2, bookingY - 2.5, x + cellW - 2, bookingY - 2.5);
+                doc.setDrawColor(0, 0, 0); // reset
+              }
+            });
+
+            if (dayBookings.length > maxBookings) {
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'italic');
+              doc.text(`+${dayBookings.length - maxBookings} more bookings`, x + 2, bookingY);
+            }
+
+            currentDay++;
+          }
+        }
+        if (currentDay > daysInMonth) break;
+      }
+    });
+
+    doc.save(`Calendar_View_${startDateStr}_to_${endDateStr}.pdf`);
+  } catch (error) {
+    console.error("Calendar PDF generation failed:", error);
+    alert("Error generating calendar PDF.");
   }
 };

@@ -281,6 +281,46 @@
                 border-width: 3px;
             }
         }
+        
+        @media print {
+            html, body, #root {
+                background-color: white !important;
+                color: black !important;
+            }
+            .print-hide {
+                display: none !important;
+            }
+            .print-bg-white {
+                background-color: white !important;
+            }
+            .print-bg-transparent {
+                background: transparent !important;
+            }
+            .print-text-black {
+                color: black !important;
+            }
+            .print-border-black {
+                border-color: black !important;
+            }
+            .print-no-shadow {
+                box-shadow: none !important;
+            }
+            .print-border {
+                border: 1px solid black !important;
+            }
+            .print-border-b {
+                border-bottom: 1px solid black !important;
+            }
+            .print-border-r {
+                border-right: 1px solid black !important;
+            }
+            .print-border-t {
+                border-top: 1px solid black !important;
+            }
+            .print-border-l {
+                border-left: 1px solid black !important;
+            }
+        }
     </style>
     <script type="importmap">
 {
