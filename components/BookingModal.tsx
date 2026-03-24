@@ -303,7 +303,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     } as Booking;
     setIsDownloading(true);
     setShowReceivedByModal(false);
-    await generateIndividualPaymentSlip(currentBooking, receivedByName);
+    await generateIndividualPaymentSlip(currentBooking, appSettings, receivedByName);
     setIsDownloading(false);
   };
 
@@ -638,9 +638,11 @@ const BookingModal: React.FC<BookingModalProps> = ({
           </div>
           <button 
             onClick={confirmDownload}
-            className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all"
+            disabled={isDownloading}
+            className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Generate PDF Slip
+            {isDownloading ? <Loader2 size={18} className="animate-spin" /> : null}
+            {isDownloading ? 'Generating...' : 'Generate PDF Slip'}
           </button>
         </div>
       </Modal>

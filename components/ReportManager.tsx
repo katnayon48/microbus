@@ -277,7 +277,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
 
   const handlePaymentSlipGenerate = async () => {
     setIsGenerating(true);
-    await generatePaymentSlip(bookings, range.start, range.end, activeStep === 'handoff-form' ? handoffData : undefined, customHeader);
+    await generatePaymentSlip(bookings, range.start, range.end, appSettings, activeStep === 'handoff-form' ? handoffData : undefined, customHeader);
     setIsGenerating(false);
     setCustomHeader('');
     setActiveStep('dashboard');

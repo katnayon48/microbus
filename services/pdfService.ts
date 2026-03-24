@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Booking, BookingField, HandoffInfo, DriverAttendance } from '../types';
+import { Booking, BookingField, HandoffInfo, DriverAttendance, AppSettings } from '../types';
 import { format, parseISO, differenceInDays, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval, max, min, getDay, getDaysInMonth, startOfDay, endOfDay } from 'date-fns';
 import { BOOKING_FIELDS } from '../constants';
 
@@ -8,6 +8,7 @@ const DATE_FORMAT = 'dd-MM-yyyy';
 const LOGO_URL = "https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg";
 const PAID_SEAL_URL = "https://i.ibb.co.com/Qv2Y07rG/IMG-0753.webp";
 const UNPAID_SEAL_URL = "https://i.ibb.co.com/QjTgvXHt/IMG-0754.jpg";
+const BARCODE_URL = "https://i.ibb.co.com/Y7YHJ600/65355a07-752b-43e1-92f7-461b81637923.jpg";
 
 const formatCurrency = (amount: number): string => {
   return (amount || 0).toLocaleString(undefined, { 
@@ -94,7 +95,7 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
   }
   
   doc.setFontSize(5);
-  doc.text('Developed By Cpl (Clk) Billal', centerX, isSlip ? startY + 7 : startY + 4, { align: 'center' });
+  // doc.text('Developed By Cpl (Clk) Billal', centerX, isSlip ? startY + 7 : startY + 4, { align: 'center' });
 };
 
 const filterByRange = (bookings: Booking[], start: string, end: string) => {
@@ -109,100 +110,321 @@ const filterByRange = (bookings: Booking[], start: string, end: string) => {
   }).sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
 };
 
-export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy?: string) => {
+export const generateIndividualPaymentSlip = async (booking: Booking, appSettings: AppSettings, receivedBy?: string) => {
   if (booking.isSpecialNote) return;
 
   try {
     const doc = new jsPDF();
-    doc.setFont('helvetica');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
 
     const sealUrl = booking.isExempt ? null : (booking.fareStatus === 'Paid' ? PAID_SEAL_URL : UNPAID_SEAL_URL);
 
-    const [logoData, sealInfo] = await Promise.all([
+    const [logoData, sealInfo, barcodeInfo] = await Promise.all([
       loadCircularLogo(),
-      sealUrl ? loadOriginalImage(sealUrl) : Promise.resolve(null)
+      sealUrl ? loadOriginalImage(sealUrl) : Promise.resolve(null),
+      loadOriginalImage(BARCODE_URL)
     ]);
 
-    const margin = 20;
-    doc.setFillColor(15, 23, 42); 
-    doc.setDrawColor(15, 23, 42);
-    doc.rect(-2, -2, 214, 42, 'F'); 
+    // --- DRAW SHAPES ---
+    // Top Header Shapes
+    doc.setFillColor(229, 231, 235); // Light Ash
+    doc.moveTo(0, 0);
+    doc.lineTo(pageWidth * 0.8, 0);
+    doc.curveTo(pageWidth * 0.65, 10, pageWidth * 0.5, 55, 0, 65);
+    doc.close();
+    doc.fill();
 
+    doc.setFillColor(15, 52, 96); // Dark Blue
+    doc.moveTo(0, 0);
+    doc.lineTo(pageWidth * 0.7, 0);
+    doc.curveTo(pageWidth * 0.55, 5, pageWidth * 0.4, 45, 0, 55);
+    doc.close();
+    doc.fill();
+
+    // Top Right Accent
+    doc.setFillColor(15, 52, 96);
+    doc.moveTo(pageWidth, 0);
+    doc.lineTo(pageWidth * 0.85, 0);
+    doc.curveTo(pageWidth * 0.9, 10, pageWidth * 0.95, 15, pageWidth, 18);
+    doc.close();
+    doc.fill();
+
+    // Bottom Footer Shapes
+    doc.setFillColor(229, 231, 235); // Light Ash
+    doc.moveTo(pageWidth, pageHeight);
+    doc.lineTo(pageWidth * 0.2, pageHeight);
+    doc.curveTo(pageWidth * 0.4, pageHeight - 10, pageWidth * 0.6, pageHeight - 25, pageWidth, pageHeight - 35);
+    doc.close();
+    doc.fill();
+
+    doc.setFillColor(15, 52, 96); // Dark Blue
+    doc.moveTo(pageWidth, pageHeight);
+    doc.lineTo(pageWidth * 0.3, pageHeight);
+    doc.curveTo(pageWidth * 0.5, pageHeight - 5, pageWidth * 0.7, pageHeight - 15, pageWidth, pageHeight - 25);
+    doc.close();
+    doc.fill();
+
+    // --- HEADER CONTENT ---
     if (logoData) {
-      doc.addImage(logoData, 'PNG', 10, 5, 30, 30);
+      doc.addImage(logoData, 'PNG', 15, 10, 25, 25);
     }
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('E-PAYMENT SLIP', 115, 20, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('MICROBUS TRANSPORT SERVICE - AREA HQ BARISHAL', 115, 30, { align: 'center' });
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(14);
+    doc.text('MICROBUS SERVICE', 45, 20);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('Passenger Details:', margin, 55);
-    doc.setDrawColor(200, 200, 200);
-    doc.line(margin, 58, 190, 58);
+    doc.text('AREA HQ BARISHAL', 45, 26);
 
-    let dateRangeValue = 'N/A';
-    if (booking.startDate && booking.endDate) {
-      const start = parseISO(booking.startDate);
-      const end = parseISO(booking.endDate);
-      const daysDiff = differenceInDays(end, start) + 1;
-      dateRangeValue = `${format(start, DATE_FORMAT)} to ${format(end, DATE_FORMAT)} (${daysDiff} ${daysDiff === 1 ? 'Day' : 'Days'})`;
+    doc.setTextColor(15, 52, 96);
+    doc.setFontSize(32);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVOICE', pageWidth - 15, 30, { align: 'right' });
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    const invoiceNo = `INV-4856-${format(new Date(), 'ddMMyyyy')}`;
+    const invoiceDate = format(new Date(), DATE_FORMAT);
+    
+    const infoX = pageWidth - 60;
+    doc.text('Invoice No', infoX, 38);
+    doc.text(`:  ${invoiceNo}`, infoX + 22, 38);
+    doc.text('Invoice Date', infoX, 43);
+    doc.text(`:  ${invoiceDate}`, infoX + 22, 43);
+
+    // --- PASSENGER DETAILS ---
+    doc.setTextColor(15, 52, 96);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    const passengerTitle = 'PASSENGER DETAILS';
+    doc.text(passengerTitle, margin, 75);
+    const passengerTitleWidth = doc.getTextWidth(passengerTitle);
+    doc.setDrawColor(15, 52, 96);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 77, margin + passengerTitleWidth, 77);
+
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    
+    const detailsLeft = [
+      { label: 'Rank and Name', value: (booking.rankName || 'N/A').toUpperCase() },
+      { label: 'Unit', value: (booking.unit || 'N/A').toUpperCase() },
+      { label: 'From Date', value: format(parseISO(booking.startDate), DATE_FORMAT) },
+      { label: 'Garrison Status', value: (booking.garrisonStatus || 'N/A') },
+      { label: 'Out Time', value: booking.outTime ? `${booking.outTime} hrs` : 'N/A' },
+    ];
+
+    const detailsRight = [
+      { label: 'Destination', value: (booking.destination || 'N/A') },
+      { label: 'Mobile Number', value: (booking.mobileNumber || 'N/A') },
+      { label: 'To Date', value: format(parseISO(booking.endDate), DATE_FORMAT) },
+      { label: 'Duration', value: (booking.duration || 'N/A') },
+      { label: 'In Time', value: booking.inTime ? `${booking.inTime} hrs` : 'N/A' },
+    ];
+
+    let detailsY = 83;
+    detailsLeft.forEach((item, i) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(item.label, margin, detailsY + (i * 6));
+      doc.setFont('helvetica', 'normal');
+      doc.text(`: ${item.value}`, margin + 35, detailsY + (i * 6));
+    });
+
+    detailsRight.forEach((item, i) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(item.label, pageWidth / 2 + 10, detailsY + (i * 6));
+      doc.setFont('helvetica', 'normal');
+      doc.text(`: ${item.value}`, pageWidth / 2 + 45, detailsY + (i * 6));
+    });
+
+    // --- KILOMETRES & FUEL PURCHASE DETAILS ---
+    doc.setTextColor(15, 52, 96);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    const fuelTitle = 'KILOMETRES & FUEL PURCHASE DETAILS';
+    doc.text(fuelTitle, margin, 115);
+    const fuelTitleWidth = doc.getTextWidth(fuelTitle);
+    doc.setDrawColor(15, 52, 96);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 117, margin + fuelTitleWidth, 117);
+
+    const fuelBody: any[] = [];
+    const fuelPurchases = booking.fuelPurchases || [];
+    
+    if (fuelPurchases.length > 0) {
+      fuelPurchases.forEach((p, i) => {
+        const row: any[] = [];
+        if (i === 0) {
+          row.push({
+            content: booking.totalKm !== undefined ? `${booking.totalKm} KM` : 'N/A',
+            rowSpan: fuelPurchases.length,
+            styles: { valign: 'middle', halign: 'center' }
+          });
+        }
+        row.push(p.purchasedFuel !== undefined ? `${p.purchasedFuel} L` : '-');
+        row.push(p.fuelRate !== undefined ? formatCurrency(p.fuelRate) : '-');
+        row.push(p.totalFuelPrice !== undefined ? `BDT ${formatCurrency(p.totalFuelPrice)}` : '-');
+        fuelBody.push(row);
+      });
+    } else {
+      fuelBody.push([
+        booking.totalKm !== undefined ? `${booking.totalKm} KM` : 'N/A',
+        '-',
+        '-',
+        '-'
+      ]);
     }
 
     autoTable(doc, {
-      startY: 65,
-      margin: { left: margin },
-      body: [
-        ['Rank and Name', ':', (booking.rankName || 'N/A').toUpperCase()],
-        ['Unit', ':', (booking.unit || 'N/A').toUpperCase()],
-        ['Mobile Number', ':', (booking.mobileNumber || 'N/A')],
-        ['Garrison Status', ':', (booking.garrisonStatus || 'N/A')],
-        ['Destination', ':', (booking.destination || 'N/A')],
-        ['Duration', ':', (booking.duration || 'N/A')],
-        ['Date Range', ':', dateRangeValue],
-        ['Out Time', ':', booking.outTime ? `${booking.outTime} hrs` : 'N/A'],
-        ['In Time', ':', booking.inTime ? `${booking.inTime} hrs` : 'N/A'],
-        ['Payment Received By', ':', (receivedBy || 'N/A').toUpperCase()],
-        ['Remarks', ':', (booking.remarks || 'None')],
+      startY: 120,
+      margin: { left: margin, right: margin },
+      head: [
+        [
+          { content: 'TOTAL KILOMETRES', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+          { content: 'FUEL PURCHASE DETAILS', colSpan: 3, styles: { halign: 'center' } }
+        ],
+        ['PURCHASED FUEL', 'RATE', 'TOTAL TAKA']
       ],
-      theme: 'plain',
-      styles: { 
-        font: 'helvetica',
-        fontSize: 12, 
-        cellPadding: { top: 3, bottom: 3, left: 1, right: 1 }, 
-        textColor: [0, 0, 0],
-        valign: 'middle',
-        overflow: 'linebreak'
+      body: fuelBody,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [15, 52, 96],
+        textColor: [255, 255, 255],
+        fontSize: 9,
+        fontStyle: 'bold',
+        halign: 'center',
+        lineWidth: 0.1,
+        lineColor: [255, 255, 255]
       },
-      columnStyles: { 
-        0: { fontStyle: 'bold', cellWidth: 50 },
-        1: { fontStyle: 'bold', cellWidth: 8, halign: 'center' },
-        2: { cellWidth: 110 }
+      styles: {
+        fontSize: 8,
+        cellPadding: 3,
+        valign: 'middle',
+        halign: 'center',
+        textColor: [0, 0, 0]
+      },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 40 },
+        3: { cellWidth: 'auto' }
+      }
+    });
+
+    const fuelTableY = (doc as any).lastAutoTable?.finalY || 145;
+
+    // --- FARE DETAILS ---
+    doc.setTextColor(15, 52, 96);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    const fareTitle = 'FARE DETAILS';
+    doc.text(fareTitle, margin, fuelTableY + 6);
+    const fareTitleWidth = doc.getTextWidth(fareTitle);
+    doc.setDrawColor(15, 52, 96);
+    doc.setLineWidth(0.5);
+    doc.line(margin, fuelTableY + 8, margin + fareTitleWidth, fuelTableY + 8);
+
+    // --- MAIN TABLE ---
+    const start = parseISO(booking.startDate);
+    const end = parseISO(booking.endDate);
+    const daysDiff = differenceInDays(end, start) + 1;
+    const dailyRate = booking.fare / daysDiff;
+
+    autoTable(doc, {
+      startY: fuelTableY + 10,
+      margin: { left: margin, right: margin },
+      head: [['SL', 'DESCRIPTION', 'TOTAL DAYS', 'DURATION', 'RATE/FARE', 'TOTAL']],
+      body: [
+        [
+          '1',
+          `${format(start, DATE_FORMAT)} to ${format(end, DATE_FORMAT)}`,
+          `${daysDiff} ${daysDiff === 1 ? 'Day' : 'Days'}`,
+          booking.duration || 'N/A',
+          `BDT ${formatCurrency(dailyRate)}`,
+          `BDT ${formatCurrency(booking.fare)}`
+        ]
+      ],
+      theme: 'grid',
+      headStyles: {
+        fillColor: [15, 52, 96],
+        textColor: [255, 255, 255],
+        fontSize: 8,
+        fontStyle: 'bold',
+        halign: 'center',
+        lineWidth: 0.1,
+        lineColor: [255, 255, 255]
+      },
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        valign: 'middle',
+        textColor: [0, 0, 0]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 8 },
+        1: { halign: 'left' },
+        2: { halign: 'center', cellWidth: 28 },
+        3: { halign: 'center', cellWidth: 28 },
+        4: { halign: 'right', cellWidth: 32 },
+        5: { halign: 'right', cellWidth: 32 }
       }
     });
 
     const finalY = (doc as any).lastAutoTable?.finalY || 150;
-    doc.setFillColor(248, 250, 252);
-    doc.rect(margin, finalY + 10, 170, 20, 'F');
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.5);
-    doc.rect(margin, finalY + 10, 170, 20, 'S');
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('TOTAL FARE:', 140, finalY + 23, { align: 'right' });
-    const fareDisplayText = booking.isExempt ? 'EXEMPTED' : `BDT ${formatCurrency(booking.fare || 0)}`;
-    doc.text(fareDisplayText, 190 - 5, finalY + 23, { align: 'right' });
 
+    // --- TOTALS SECTION ---
+    // Left side: Payment Info
+    doc.setFillColor(15, 52, 96);
+    doc.rect(margin, finalY + 5, 60, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Payment Receiver Info:', margin + 3, finalY + 10.5);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Received By', margin, finalY + 20);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`: ${receivedBy || 'N/A'}`, margin + 25, finalY + 20);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Remarks', margin, finalY + 25);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`: ${booking.remarks || 'None'}`, margin + 25, finalY + 25);
+
+    // Right side: Totals
+    const totalsX = pageWidth - margin;
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Subtotal', totalsX - 55, finalY + 10);
+    doc.text(`BDT ${formatCurrency(booking.fare)}`, totalsX, finalY + 10, { align: 'right' });
+
+    const taxRate = appSettings.fares.taxRate || 0;
+    const taxAmount = (booking.fare * taxRate) / 100;
+    const totalWithTax = booking.fare + taxAmount;
+
+    doc.text('Other', totalsX - 55, finalY + 17);
+    doc.text(`BDT ${formatCurrency(taxAmount)}`, totalsX, finalY + 17, { align: 'right' });
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(totalsX - 55, finalY + 20, totalsX, finalY + 20);
+
+    doc.setFontSize(14);
+    doc.setTextColor(15, 52, 96);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL', totalsX - 55, finalY + 28);
+    const fareDisplayText = booking.isExempt ? 'EXEMPTED' : `BDT ${formatCurrency(totalWithTax)}`;
+    doc.text(fareDisplayText, totalsX, finalY + 28, { align: 'right' });
+
+    // --- SEAL ---
     if (sealInfo) {
-      const maxWidth = 50;
-      const maxHeight = 50;
+      const maxWidth = 40;
+      const maxHeight = 40;
       const ratio = sealInfo.width / sealInfo.height;
       let drawWidth = maxWidth;
       let drawHeight = maxWidth / ratio;
@@ -210,17 +432,71 @@ export const generateIndividualPaymentSlip = async (booking: Booking, receivedBy
         drawHeight = maxHeight;
         drawWidth = maxHeight * ratio;
       }
-      doc.addImage(sealInfo.data, 'PNG', 190 - drawWidth, finalY + 40, drawWidth, drawHeight);
+      doc.addImage(sealInfo.data, 'PNG', pageWidth - margin - drawWidth, finalY + 32, drawWidth, drawHeight);
     }
-    drawDeveloperFooter(doc, 278, true);
-    doc.save(`Slip_${(booking.rankName || 'User').replace(/\s+/g, '_')}.pdf`);
-  } catch (error) { 
-    console.error("PDF generation failed:", error); 
+
+    // --- SOFTWARE GENERATED SLIP SECTION ---
+    const slipTextY = pageHeight - 45;
+    const boxWidth = 55; 
+    const boxHeight = 11;
+    const boxX = (pageWidth - boxWidth) / 2;
+    
+    doc.setDrawColor(255, 0, 0); // Red
+    doc.setLineWidth(0.4);
+    doc.roundedRect(boxX, slipTextY - 5.5, boxWidth, boxHeight, 1.5, 1.5);
+    
+    doc.setTextColor(255, 0, 0); // Red
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SOFTWARE GENERATED SLIP', pageWidth / 2, slipTextY - 1.5, { align: 'center' });
+    doc.text('NO SIGNATURE IS REQUIRED', pageWidth / 2, slipTextY + 2.5, { align: 'center' });
+
+    // --- FOOTER ---
+    const footerY = pageHeight - 25;
+    
+    if (barcodeInfo) {
+      const barcodeWidth = 20;
+      const barcodeHeight = 20;
+      doc.addImage(barcodeInfo.data, 'PNG', margin, footerY - 5, barcodeWidth, barcodeHeight);
+      
+      // Vertical line
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(1.2);
+      doc.line(margin + barcodeWidth + 5, footerY - 5, margin + barcodeWidth + 5, footerY + 15);
+      
+      // Contact Info
+      const contactX = margin + barcodeWidth + 10;
+      doc.setTextColor(15, 52, 96); // Dark Blue
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('SOFTWARE DEVELOPED BY', contactX, footerY - 2);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+      doc.text('CPL (Clk) Billal Hossain, ASC', contactX, footerY + 3);
+      doc.text('Mobile: 01783413333', contactX, footerY + 7);
+      doc.text('Email: nayon@asia.com', contactX, footerY + 11);
+    } else {
+      doc.setTextColor(15, 52, 96); // Dark Blue
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('SOFTWARE DEVELOPED BY', margin, footerY - 2);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+      doc.text('CPL (Clk) Billal Hossain, ASC', margin, footerY + 3);
+      doc.text('Mobile: 01783413333', margin, footerY + 7);
+      doc.text('Email: nayon@asia.com', margin, footerY + 11);
+    }
+
+    // Signature section removed as requested
+    
+    doc.save(`Invoice_${(booking.rankName || 'User').replace(/\s+/g, '_')}_${invoiceNo}.pdf`);
+  } catch (error) {
+    console.error("PDF generation failed:", error);
     alert("Error generating PDF.");
   }
 };
 
-export const generatePaymentSlip = async (bookings: Booking[], startDate: string, endDate: string, handoff?: HandoffInfo, customHeader?: string) => {
+export const generatePaymentSlip = async (bookings: Booking[], startDate: string, endDate: string, appSettings: AppSettings, handoff?: HandoffInfo, customHeader?: string) => {
   try {
     const doc = new jsPDF();
     doc.setFont('helvetica');
@@ -243,7 +519,10 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       doc.line(110 - (subHeadingWidth / 2), 26, 110 + (subHeadingWidth / 2), 26);
     }
     
-    const totalFare = filtered.reduce((sum, b) => b.fareStatus === 'Paid' ? sum + (b.fare || 0) : sum, 0);
+    const subtotal = filtered.reduce((sum, b) => b.fareStatus === 'Paid' ? sum + (b.fare || 0) : sum, 0);
+    const taxRate = appSettings.fares.taxRate || 0;
+    const taxAmount = (subtotal * taxRate) / 100;
+    const totalFare = subtotal + taxAmount;
 
     autoTable(doc, {
       startY: monthYearText ? 32 : 25,
@@ -272,11 +551,23 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
           totalDays, b.duration, fareVal, (b.remarks || '-')
         ];
       }),
-      foot: [[
-        { content: 'TOTAL FARE', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
-        { content: formatCurrency(totalFare), styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
-        { content: '', styles: { fillColor: [220, 220, 220], lineWidth: 0.1 } }
-      ]],
+      foot: [
+        [
+          { content: 'SUBTOTAL', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fontSize: 9 } },
+          { content: formatCurrency(subtotal), styles: { halign: 'center', fontStyle: 'bold', fontSize: 9 } },
+          { content: '', styles: {} }
+        ],
+        [
+          { content: `TAX (${taxRate}%)`, colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fontSize: 9 } },
+          { content: formatCurrency(taxAmount), styles: { halign: 'center', fontStyle: 'bold', fontSize: 9 } },
+          { content: '', styles: {} }
+        ],
+        [
+          { content: 'TOTAL FARE (WITH TAX)', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
+          { content: formatCurrency(totalFare), styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
+          { content: '', styles: { fillColor: [220, 220, 220], lineWidth: 0.1 } }
+        ]
+      ],
       theme: 'grid',
       headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 9, halign: 'center', fontStyle: 'bold', font: 'helvetica' },
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.1, halign: 'center', textColor: [0, 0, 0], overflow: 'visible' },
@@ -298,9 +589,9 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       const pBaseY = handoffY + 25; 
       doc.line(10, pBaseY - 1, 60, pBaseY - 1); 
       doc.setFont('helvetica', 'normal');
-      doc.text(`Army No: ${handoff.providerArmyNo}`, 10, pBaseY + 5);
-      doc.text(`Rank: ${handoff.providerRank.toUpperCase()}`, 10, pBaseY + 10);
-      doc.text(`Name: ${handoff.providerName.toUpperCase()}`, 10, pBaseY + 15);
+      doc.text(`Army No: ${handoff.providerArmyNo || 'N/A'}`, 10, pBaseY + 5);
+      doc.text(`Rank: ${(handoff.providerRank || 'N/A').toUpperCase()}`, 10, pBaseY + 10);
+      doc.text(`Name: ${(handoff.providerName || 'N/A').toUpperCase()}`, 10, pBaseY + 15);
       doc.text(`Date: ${currentDateStr}`, 10, pBaseY + 20);
 
       const rTitle = 'RECEIVER INFORMATION';
@@ -310,9 +601,9 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       const rBaseY = handoffY + 25;
       doc.line(145, rBaseY - 1, 195, rBaseY - 1);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Army No: ${handoff.receiverArmyNo}`, 145, rBaseY + 5);
-      doc.text(`Rank: ${handoff.receiverRank.toUpperCase()}`, 145, rBaseY + 10);
-      doc.text(`Name: ${handoff.receiverName.toUpperCase()}`, 145, rBaseY + 15);
+      doc.text(`Army No: ${handoff.receiverArmyNo || 'N/A'}`, 145, rBaseY + 5);
+      doc.text(`Rank: ${(handoff.receiverRank || 'N/A').toUpperCase()}`, 145, rBaseY + 10);
+      doc.text(`Name: ${(handoff.receiverName || 'N/A').toUpperCase()}`, 145, rBaseY + 15);
       doc.text(`Date: ${currentDateStr}`, 145, rBaseY + 20);
 
       const countersignY = handoffY + 65;
@@ -620,7 +911,7 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
       doc.setDrawColor(180, 180, 180); 
       doc.setLineWidth(0.2); 
       doc.setFontSize(8);
-      doc.setTextColor(60, 60, 60); 
+      doc.setTextColor(0, 0, 0); 
       [0, 10, 20, 25].forEach(val => {
         const yPos = baseY - (val / maxScale) * chartHeight;
         doc.line(marginX, yPos, marginX + chartWidth, yPos);
@@ -635,7 +926,7 @@ export const generateTripSummaryReport = async (bookings: Booking[], start: stri
         doc.setFillColor(16, 185, 129); 
         if (h > 0) doc.rect(x, baseY - h, barWidth, h, 'F');
         doc.setFontSize(6);
-        doc.setTextColor(60, 60, 60);
+        doc.setTextColor(0, 0, 0);
         doc.text(s.label.split(' ')[0], x + barWidth/2, baseY + 5, { align: 'center' });
         if (s.count > 0) {
           doc.setTextColor(0, 0, 0); 
