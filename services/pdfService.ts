@@ -593,7 +593,7 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       doc.line(110 - (subHeadingWidth / 2), 26, 110 + (subHeadingWidth / 2), 26);
     }
     
-    const subtotal = filtered.reduce((sum, b) => b.fareStatus === 'Paid' ? sum + (b.fare || 0) : sum, 0);
+    const subtotal = filtered.reduce((sum, b) => b.isExempt ? sum : sum + (b.fare || 0), 0);
     const taxRate = appSettings.fares.taxRate || 0;
     const taxAmount = (subtotal * taxRate) / 100;
     const totalFare = subtotal + taxAmount;
@@ -627,7 +627,7 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       }),
       foot: [
         [
-          { content: 'SUBTOTAL', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
+          { content: 'TOTAL FARE', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
           { content: formatCurrency(totalFare), styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
           { content: '', styles: { fillColor: [220, 220, 220], lineWidth: 0.1 } }
         ]
@@ -712,7 +712,7 @@ export const generateBookingDetailsReport = async (bookings: Booking[], startDat
       doc.line(110 - (subHeadingWidth / 2), 26, 110 + (subHeadingWidth / 2), 26);
     }
     
-    const totalFare = filtered.reduce((sum, b) => b.fareStatus === 'Paid' ? sum + (b.fare || 0) : sum, 0);
+    const totalFare = filtered.reduce((sum, b) => b.isExempt ? sum : sum + (b.fare || 0), 0);
 
     autoTable(doc, {
       startY: monthYearText ? 32 : 25,
