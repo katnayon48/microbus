@@ -449,23 +449,23 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
     // --- TOTALS SECTION ---
     // Left side: Payment Info
     doc.setFillColor(15, 52, 96);
-    doc.rect(margin, finalY + 2, 60, 8, 'F');
+    doc.rect(margin, finalY + 4.5, 60, 8, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text(type === 'info' ? 'Booked By:' : 'Payment Receiver Info:', margin + 3, finalY + 7.5);
+    doc.text(type === 'info' ? 'BOOKED BY' : 'Payment Receiver Info:', margin + 3, finalY + 10);
 
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('Received By', margin, finalY + 20);
+    doc.text(type === 'info' ? 'Rank and Name' : 'Received By', margin, finalY + 22.5);
     doc.setFont('helvetica', 'normal');
-    doc.text(`: ${receivedBy || 'N/A'}`, margin + 25, finalY + 20);
+    doc.text(`: ${receivedBy || 'N/A'}`, margin + 25, finalY + 22.5);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Remarks', margin, finalY + 25);
+    doc.text('Remarks', margin, finalY + 27.5);
     doc.setFont('helvetica', 'normal');
-    doc.text(`: ${booking.remarks || 'None'}`, margin + 25, finalY + 25);
+    doc.text(`: ${booking.remarks || 'None'}`, margin + 25, finalY + 27.5);
 
     // Right side: Totals
     if (type !== 'info') {
