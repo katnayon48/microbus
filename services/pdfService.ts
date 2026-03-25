@@ -84,18 +84,14 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
   const centerX = pageWidth / 2;
   
   doc.setTextColor(0, 0, 0); 
-  doc.setFontSize(6);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   
-  if (isSlip) {
-    doc.text('AUTO GENERATED SLIP', centerX, startY, { align: 'center' });
-    doc.text('NO SIGNATURE REQUIRED', centerX, startY + 3, { align: 'center' });
-  } else {
-    doc.text('System Generated Report', centerX, startY, { align: 'center' });
-  }
+  doc.text('SYSTEM GENERATED REPORT', centerX, startY, { align: 'center' });
   
-  doc.setFontSize(5);
-  // doc.text('Developed By Cpl (Clk) Billal', centerX, isSlip ? startY + 7 : startY + 4, { align: 'center' });
+  doc.setFontSize(6);
+  doc.text('SOFTWARE DEVELOPED BY', centerX, startY + 4, { align: 'center' });
+  doc.text('1815124 Cpl (Clk) Billal, ASC', centerX, startY + 7, { align: 'center' });
 };
 
 const filterByRange = (bookings: Booking[], start: string, end: string) => {
@@ -110,7 +106,7 @@ const filterByRange = (bookings: Booking[], start: string, end: string) => {
   }).sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
 };
 
-export const generateIndividualPaymentSlip = async (booking: Booking, appSettings: AppSettings, receivedBy?: string) => {
+export const generateIndividualPaymentSlip = async (booking: Booking, appSettings: AppSettings, receivedBy?: string, type: 'slip' | 'info' = 'slip', status?: string) => {
   if (booking.isSpecialNote) return;
 
   try {
@@ -119,7 +115,7 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 20;
 
-    const sealUrl = booking.isExempt ? null : (booking.fareStatus === 'Paid' ? PAID_SEAL_URL : UNPAID_SEAL_URL);
+    const sealUrl = (type === 'info' || booking.isExempt) ? null : (booking.fareStatus === 'Paid' ? PAID_SEAL_URL : UNPAID_SEAL_URL);
 
     const [logoData, sealInfo, barcodeInfo] = await Promise.all([
       loadCircularLogo(),
@@ -180,9 +176,15 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
     doc.text('AREA HQ BARISHAL', 45, 26);
 
     doc.setTextColor(15, 52, 96);
-    doc.setFontSize(32);
+    doc.setFontSize(type === 'info' ? 16 : 28);
     doc.setFont('helvetica', 'bold');
-    doc.text('INVOICE', pageWidth - 15, 30, { align: 'right' });
+    const title = type === 'info' ? 'BOOKING INFO' : 'INVOICE';
+    const infoX = pageWidth - 60;
+    if (type === 'info') {
+      doc.text(title, infoX, 30);
+    } else {
+      doc.text(title, pageWidth - 15, 30, { align: 'right' });
+    }
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
@@ -190,200 +192,268 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
     const invoiceNo = `INV-4856-${format(new Date(), 'ddMMyyyy')}`;
     const invoiceDate = format(new Date(), DATE_FORMAT);
     
-    const infoX = pageWidth - 60;
-    doc.text('Invoice No', infoX, 38);
-    doc.text(`:  ${invoiceNo}`, infoX + 22, 38);
-    doc.text('Invoice Date', infoX, 43);
-    doc.text(`:  ${invoiceDate}`, infoX + 22, 43);
+    const infoYStart = type === 'info' ? 45 : 38;
+    doc.text(type === 'info' ? 'Ref No' : 'Invoice No', infoX, infoYStart);
+    doc.text(`:  ${invoiceNo}`, infoX + 22, infoYStart);
+    doc.text(type === 'info' ? 'Date' : 'Invoice Date', infoX, infoYStart + 5);
+    doc.text(`:  ${invoiceDate}`, infoX + 22, infoYStart + 5);
 
     // --- PASSENGER DETAILS ---
     doc.setTextColor(15, 52, 96);
-    doc.setFontSize(12);
+    doc.setFontSize(type === 'info' ? 16 : 12);
     doc.setFont('helvetica', 'bold');
     const passengerTitle = 'PASSENGER DETAILS';
-    doc.text(passengerTitle, margin, 75);
-    const passengerTitleWidth = doc.getTextWidth(passengerTitle);
-    doc.setDrawColor(15, 52, 96);
-    doc.setLineWidth(0.5);
-    doc.line(margin, 77, margin + passengerTitleWidth, 77);
-
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    
-    const detailsLeft = [
-      { label: 'Rank and Name', value: (booking.rankName || 'N/A').toUpperCase() },
-      { label: 'Unit', value: (booking.unit || 'N/A').toUpperCase() },
-      { label: 'From Date', value: format(parseISO(booking.startDate), DATE_FORMAT) },
-      { label: 'Garrison Status', value: (booking.garrisonStatus || 'N/A') },
-      { label: 'Out Time', value: booking.outTime ? `${booking.outTime} hrs` : 'N/A' },
-    ];
-
-    const detailsRight = [
-      { label: 'Destination', value: (booking.destination || 'N/A') },
-      { label: 'Mobile Number', value: (booking.mobileNumber || 'N/A') },
-      { label: 'To Date', value: format(parseISO(booking.endDate), DATE_FORMAT) },
-      { label: 'Duration', value: (booking.duration || 'N/A') },
-      { label: 'In Time', value: booking.inTime ? `${booking.inTime} hrs` : 'N/A' },
-    ];
-
-    let detailsY = 83;
-    detailsLeft.forEach((item, i) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(item.label, margin, detailsY + (i * 6));
-      doc.setFont('helvetica', 'normal');
-      doc.text(`: ${item.value}`, margin + 35, detailsY + (i * 6));
-    });
-
-    detailsRight.forEach((item, i) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(item.label, pageWidth / 2 + 10, detailsY + (i * 6));
-      doc.setFont('helvetica', 'normal');
-      doc.text(`: ${item.value}`, pageWidth / 2 + 45, detailsY + (i * 6));
-    });
-
-    // --- KILOMETRES & FUEL PURCHASE DETAILS ---
-    doc.setTextColor(15, 52, 96);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    const fuelTitle = 'KILOMETRES & FUEL PURCHASE DETAILS';
-    doc.text(fuelTitle, margin, 115);
-    const fuelTitleWidth = doc.getTextWidth(fuelTitle);
-    doc.setDrawColor(15, 52, 96);
-    doc.setLineWidth(0.5);
-    doc.line(margin, 117, margin + fuelTitleWidth, 117);
-
-    const fuelBody: any[] = [];
-    const fuelPurchases = booking.fuelPurchases || [];
-    
-    if (fuelPurchases.length > 0) {
-      fuelPurchases.forEach((p, i) => {
-        const row: any[] = [];
-        if (i === 0) {
-          row.push({
-            content: booking.totalKm !== undefined ? `${booking.totalKm} KM` : 'N/A',
-            rowSpan: fuelPurchases.length,
-            styles: { valign: 'middle', halign: 'center' }
-          });
-        }
-        row.push(p.purchasedFuel !== undefined ? `${p.purchasedFuel} L` : '-');
-        row.push(p.fuelRate !== undefined ? formatCurrency(p.fuelRate) : '-');
-        row.push(p.totalFuelPrice !== undefined ? `BDT ${formatCurrency(p.totalFuelPrice)}` : '-');
-        fuelBody.push(row);
-      });
+    if (type === 'info') {
+      doc.text(passengerTitle, pageWidth / 2, 75, { align: 'center' });
+      const passengerTitleWidth = doc.getTextWidth(passengerTitle);
+      doc.setDrawColor(15, 52, 96);
+      doc.setLineWidth(0.5);
+      doc.line(pageWidth / 2 - (passengerTitleWidth / 2), 77.5, pageWidth / 2 + (passengerTitleWidth / 2), 77.5);
     } else {
-      fuelBody.push([
-        booking.totalKm !== undefined ? `${booking.totalKm} KM` : 'N/A',
-        '-',
-        '-',
-        '-'
-      ]);
+      doc.text(passengerTitle, margin, 75);
+      const passengerTitleWidth = doc.getTextWidth(passengerTitle);
+      doc.setDrawColor(15, 52, 96);
+      doc.setLineWidth(0.5);
+      doc.line(margin, 77, margin + passengerTitleWidth, 77);
     }
 
-    autoTable(doc, {
-      startY: 120,
-      margin: { left: margin, right: margin },
-      head: [
-        [
-          { content: 'TOTAL KILOMETRES', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-          { content: 'FUEL PURCHASE DETAILS', colSpan: 3, styles: { halign: 'center' } }
+    doc.setFontSize(type === 'info' ? 11 : 10);
+    doc.setTextColor(0, 0, 0);
+    
+    let detailsY = type === 'info' ? 88 : 83;
+    
+    if (type === 'info') {
+      const start = parseISO(booking.startDate);
+      const end = parseISO(booking.endDate);
+      const daysDiff = differenceInDays(end, start) + 1;
+
+      const infoDetails = [
+        { label: 'Rank and Name', value: (booking.rankName || 'N/A').toUpperCase() },
+        { label: 'Unit', value: (booking.unit || 'N/A').toUpperCase() },
+        { label: 'Destination', value: (booking.destination || 'N/A') },
+        { label: 'Mobile Number', value: (booking.mobileNumber || 'N/A') },
+        { label: 'From Date', value: format(start, DATE_FORMAT) },
+        { label: 'To Date', value: format(end, DATE_FORMAT) },
+        { label: 'Total Days', value: `${daysDiff} ${daysDiff === 1 ? 'Day' : 'Days'}` },
+        { label: 'Duration', value: (booking.duration || 'N/A') },
+        { label: 'Garrison Status', value: (booking.garrisonStatus || 'N/A') },
+        { label: 'BOOKING STATUS', value: (status || 'N/A').toUpperCase() },
+      ];
+
+      infoDetails.forEach((item, i) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(item.label, margin, detailsY + (i * 7));
+        doc.setFont('helvetica', 'normal');
+        if (item.label === 'BOOKING STATUS') {
+          let statusColor: [number, number, number] = [0, 0, 0];
+          if (item.value === 'CONFIRM') statusColor = [16, 185, 129];
+          if (item.value === 'PENDING') statusColor = [245, 158, 11];
+          if (item.value === 'REJECT' || item.value === 'CANCEL') statusColor = [239, 68, 68];
+          doc.setTextColor(...statusColor);
+          doc.setFont('helvetica', 'bold');
+        }
+        doc.text(`: ${item.value}`, margin + 50, detailsY + (i * 7));
+        doc.setTextColor(0, 0, 0);
+      });
+      
+      // Add Note Box below Booking Status
+      const noteY = detailsY + (infoDetails.length * 7) + 10;
+      const noteText = 'NOTE: AREA HQ BARISHAL RESERVES THE RIGHT TO CANCEL THE BOOKING AT ANY TIME';
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 0, 0); // Red
+      
+      const textWidth = doc.getTextWidth(noteText);
+      const boxWidth = textWidth + 10;
+      const boxHeight = 10;
+      const boxX = (pageWidth - boxWidth) / 2;
+      
+      doc.setDrawColor(255, 0, 0);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(boxX, noteY - 7, boxWidth, boxHeight, 1.5, 1.5);
+      doc.text(noteText, pageWidth / 2, noteY, { align: 'center' });
+      
+      doc.setTextColor(0, 0, 0);
+      detailsY = noteY + 10;
+    } else {
+      const detailsLeft = [
+        { label: 'Rank and Name', value: (booking.rankName || 'N/A').toUpperCase() },
+        { label: 'Unit', value: (booking.unit || 'N/A').toUpperCase() },
+        { label: 'From Date', value: format(parseISO(booking.startDate), DATE_FORMAT) },
+        { label: 'Garrison Status', value: (booking.garrisonStatus || 'N/A') },
+        { label: 'Out Time', value: booking.outTime ? `${booking.outTime} hrs` : 'N/A' },
+      ];
+
+      const detailsRight = [
+        { label: 'Destination', value: (booking.destination || 'N/A') },
+        { label: 'Mobile Number', value: (booking.mobileNumber || 'N/A') },
+        { label: 'To Date', value: format(parseISO(booking.endDate), DATE_FORMAT) },
+        { label: 'Duration', value: (booking.duration || 'N/A') },
+        { label: 'In Time', value: booking.inTime ? `${booking.inTime} hrs` : 'N/A' },
+      ];
+
+      detailsLeft.forEach((item, i) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(item.label, margin, detailsY + (i * 6));
+        doc.setFont('helvetica', 'normal');
+        doc.text(`: ${item.value}`, margin + 35, detailsY + (i * 6));
+      });
+
+      detailsRight.forEach((item, i) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(item.label, pageWidth / 2 + 10, detailsY + (i * 6));
+        doc.setFont('helvetica', 'normal');
+        doc.text(`: ${item.value}`, pageWidth / 2 + 45, detailsY + (i * 6));
+      });
+    }
+
+    let finalY = type === 'info' ? detailsY + 5 : detailsY + 30;
+
+    if (type !== 'info') {
+      // --- KILOMETRES & FUEL PURCHASE DETAILS ---
+      doc.setTextColor(15, 52, 96);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      const fuelTitle = 'KILOMETRES & FUEL PURCHASE DETAILS';
+      doc.text(fuelTitle, margin, 115);
+      const fuelTitleWidth = doc.getTextWidth(fuelTitle);
+      doc.setDrawColor(15, 52, 96);
+      doc.setLineWidth(0.5);
+      doc.line(margin, 117, margin + fuelTitleWidth, 117);
+
+      const fuelBody: any[] = [];
+      const fuelPurchases = booking.fuelPurchases || [];
+      
+      if (fuelPurchases.length > 0) {
+        fuelPurchases.forEach((p, i) => {
+          const row: any[] = [];
+          if (i === 0) {
+            row.push({
+              content: booking.totalKm !== undefined ? `${booking.totalKm} KM` : 'N/A',
+              rowSpan: fuelPurchases.length,
+              styles: { valign: 'middle', halign: 'center' }
+            });
+          }
+          row.push(p.purchasedFuel !== undefined ? `${p.purchasedFuel} L` : '-');
+          row.push(p.fuelRate !== undefined ? formatCurrency(p.fuelRate) : '-');
+          row.push(p.totalFuelPrice !== undefined ? `BDT ${formatCurrency(p.totalFuelPrice)}` : '-');
+          fuelBody.push(row);
+        });
+      } else {
+        fuelBody.push([
+          booking.totalKm !== undefined ? `${booking.totalKm} KM` : 'N/A',
+          '-',
+          '-',
+          '-'
+        ]);
+      }
+
+      autoTable(doc, {
+        startY: 120,
+        margin: { left: margin, right: margin },
+        head: [
+          [
+            { content: 'TOTAL KILOMETRES', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+            { content: 'FUEL PURCHASE DETAILS', colSpan: 3, styles: { halign: 'center' } }
+          ],
+          ['PURCHASED FUEL', 'RATE', 'TOTAL TAKA']
         ],
-        ['PURCHASED FUEL', 'RATE', 'TOTAL TAKA']
-      ],
-      body: fuelBody,
-      theme: 'grid',
-      headStyles: {
-        fillColor: [15, 52, 96],
-        textColor: [255, 255, 255],
-        fontSize: 9,
-        fontStyle: 'bold',
-        halign: 'center',
-        lineWidth: 0.1,
-        lineColor: [255, 255, 255]
-      },
-      styles: {
-        fontSize: 8,
-        cellPadding: 3,
-        valign: 'middle',
-        halign: 'center',
-        textColor: [0, 0, 0]
-      },
-      columnStyles: {
-        0: { cellWidth: 40 },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 40 },
-        3: { cellWidth: 'auto' }
-      }
-    });
+        body: fuelBody,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [15, 52, 96],
+          textColor: [255, 255, 255],
+          fontSize: 9,
+          fontStyle: 'bold',
+          halign: 'center',
+          lineWidth: 0.1,
+          lineColor: [255, 255, 255]
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+          valign: 'middle',
+          halign: 'center',
+          textColor: [0, 0, 0]
+        },
+        columnStyles: {
+          0: { cellWidth: 40 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 'auto' }
+        }
+      });
 
-    const fuelTableY = (doc as any).lastAutoTable?.finalY || 145;
+      const fuelTableY = (doc as any).lastAutoTable?.finalY || 145;
 
-    // --- FARE DETAILS ---
-    doc.setTextColor(15, 52, 96);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    const fareTitle = 'FARE DETAILS';
-    doc.text(fareTitle, margin, fuelTableY + 6);
-    const fareTitleWidth = doc.getTextWidth(fareTitle);
-    doc.setDrawColor(15, 52, 96);
-    doc.setLineWidth(0.5);
-    doc.line(margin, fuelTableY + 8, margin + fareTitleWidth, fuelTableY + 8);
+      // --- FARE DETAILS ---
+      doc.setTextColor(15, 52, 96);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      const fareTitle = 'FARE DETAILS';
+      doc.text(fareTitle, margin, fuelTableY + 6);
+      const fareTitleWidth = doc.getTextWidth(fareTitle);
+      doc.setDrawColor(15, 52, 96);
+      doc.setLineWidth(0.5);
+      doc.line(margin, fuelTableY + 8, margin + fareTitleWidth, fuelTableY + 8);
 
-    // --- MAIN TABLE ---
-    const start = parseISO(booking.startDate);
-    const end = parseISO(booking.endDate);
-    const daysDiff = differenceInDays(end, start) + 1;
-    const dailyRate = booking.fare / daysDiff;
+      // --- MAIN TABLE ---
+      const start = parseISO(booking.startDate);
+      const end = parseISO(booking.endDate);
+      const daysDiff = differenceInDays(end, start) + 1;
+      const dailyRate = booking.fare / daysDiff;
 
-    autoTable(doc, {
-      startY: fuelTableY + 10,
-      margin: { left: margin, right: margin },
-      head: [['SL', 'DESCRIPTION', 'TOTAL DAYS', 'DURATION', 'RATE/FARE', 'TOTAL']],
-      body: [
-        [
-          '1',
-          `${format(start, DATE_FORMAT)} to ${format(end, DATE_FORMAT)}`,
-          `${daysDiff} ${daysDiff === 1 ? 'Day' : 'Days'}`,
-          booking.duration || 'N/A',
-          `BDT ${formatCurrency(dailyRate)}`,
-          `BDT ${formatCurrency(booking.fare)}`
-        ]
-      ],
-      theme: 'grid',
-      headStyles: {
-        fillColor: [15, 52, 96],
-        textColor: [255, 255, 255],
-        fontSize: 8,
-        fontStyle: 'bold',
-        halign: 'center',
-        lineWidth: 0.1,
-        lineColor: [255, 255, 255]
-      },
-      styles: {
-        fontSize: 8,
-        cellPadding: 2,
-        valign: 'middle',
-        textColor: [0, 0, 0]
-      },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 8 },
-        1: { halign: 'left' },
-        2: { halign: 'center', cellWidth: 28 },
-        3: { halign: 'center', cellWidth: 28 },
-        4: { halign: 'right', cellWidth: 32 },
-        5: { halign: 'right', cellWidth: 32 }
-      }
-    });
+      autoTable(doc, {
+        startY: fuelTableY + 10,
+        margin: { left: margin, right: margin },
+        head: [['SL', 'DESCRIPTION', 'TOTAL DAYS', 'DURATION', 'RATE/FARE', 'TOTAL']],
+        body: [
+          [
+            '1',
+            `${format(start, DATE_FORMAT)} to ${format(end, DATE_FORMAT)}`,
+            `${daysDiff} ${daysDiff === 1 ? 'Day' : 'Days'}`,
+            booking.duration || 'N/A',
+            `BDT ${formatCurrency(dailyRate)}`,
+            `BDT ${formatCurrency(booking.fare)}`
+          ]
+        ],
+        theme: 'grid',
+        headStyles: {
+          fillColor: [15, 52, 96],
+          textColor: [255, 255, 255],
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center',
+          lineWidth: 0.1,
+          lineColor: [255, 255, 255]
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 2,
+          valign: 'middle',
+          textColor: [0, 0, 0]
+        },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 8 },
+          1: { halign: 'left' },
+          2: { halign: 'center', cellWidth: 28 },
+          3: { halign: 'center', cellWidth: 28 },
+          4: { halign: 'right', cellWidth: 32 },
+          5: { halign: 'right', cellWidth: 32 }
+        }
+      });
 
-    const finalY = (doc as any).lastAutoTable?.finalY || 150;
+      finalY = (doc as any).lastAutoTable?.finalY || 150;
+    }
 
     // --- TOTALS SECTION ---
     // Left side: Payment Info
     doc.setFillColor(15, 52, 96);
-    doc.rect(margin, finalY + 5, 60, 8, 'F');
+    doc.rect(margin, finalY + 2, 60, 8, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Payment Receiver Info:', margin + 3, finalY + 10.5);
+    doc.text(type === 'info' ? 'Booked By:' : 'Payment Receiver Info:', margin + 3, finalY + 7.5);
 
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(9);
@@ -398,28 +468,30 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
     doc.text(`: ${booking.remarks || 'None'}`, margin + 25, finalY + 25);
 
     // Right side: Totals
-    const totalsX = pageWidth - margin;
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    doc.text('Subtotal', totalsX - 55, finalY + 10);
-    doc.text(`BDT ${formatCurrency(booking.fare)}`, totalsX, finalY + 10, { align: 'right' });
+    if (type !== 'info') {
+      const totalsX = pageWidth - margin;
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Subtotal', totalsX - 55, finalY + 10);
+      doc.text(`BDT ${formatCurrency(booking.fare)}`, totalsX, finalY + 10, { align: 'right' });
 
-    const taxRate = appSettings.fares.taxRate || 0;
-    const taxAmount = (booking.fare * taxRate) / 100;
-    const totalWithTax = booking.fare + taxAmount;
+      const taxRate = appSettings.fares.taxRate || 0;
+      const taxAmount = (booking.fare * taxRate) / 100;
+      const totalWithTax = booking.fare + taxAmount;
 
-    doc.text('Other', totalsX - 55, finalY + 17);
-    doc.text(`BDT ${formatCurrency(taxAmount)}`, totalsX, finalY + 17, { align: 'right' });
+      doc.text('Other', totalsX - 55, finalY + 17);
+      doc.text(`BDT ${formatCurrency(taxAmount)}`, totalsX, finalY + 17, { align: 'right' });
 
-    doc.setDrawColor(200, 200, 200);
-    doc.line(totalsX - 55, finalY + 20, totalsX, finalY + 20);
+      doc.setDrawColor(200, 200, 200);
+      doc.line(totalsX - 55, finalY + 20, totalsX, finalY + 20);
 
-    doc.setFontSize(14);
-    doc.setTextColor(15, 52, 96);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL', totalsX - 55, finalY + 28);
-    const fareDisplayText = booking.isExempt ? 'EXEMPTED' : `BDT ${formatCurrency(totalWithTax)}`;
-    doc.text(fareDisplayText, totalsX, finalY + 28, { align: 'right' });
+      doc.setFontSize(14);
+      doc.setTextColor(15, 52, 96);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TOTAL', totalsX - 55, finalY + 28);
+      const fareDisplayText = booking.isExempt ? 'EXEMPTED' : `BDT ${formatCurrency(totalWithTax)}`;
+      doc.text(fareDisplayText, totalsX, finalY + 28, { align: 'right' });
+    }
 
     // --- SEAL ---
     if (sealInfo) {
@@ -437,7 +509,7 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
 
     // --- SOFTWARE GENERATED SLIP SECTION ---
     const slipTextY = pageHeight - 45;
-    const boxWidth = 55; 
+    const boxWidth = 65; 
     const boxHeight = 11;
     const boxX = (pageWidth - boxWidth) / 2;
     
@@ -448,7 +520,8 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
     doc.setTextColor(255, 0, 0); // Red
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('SOFTWARE GENERATED SLIP', pageWidth / 2, slipTextY - 1.5, { align: 'center' });
+    const slipTitle = 'SOFTWARE GENERATED SLIP';
+    doc.text(slipTitle, pageWidth / 2, slipTextY - 1.5, { align: 'center' });
     doc.text('NO SIGNATURE IS REQUIRED', pageWidth / 2, slipTextY + 2.5, { align: 'center' });
 
     // --- FOOTER ---
@@ -471,9 +544,9 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
       doc.setFont('helvetica', 'bold');
       doc.text('SOFTWARE DEVELOPED BY', contactX, footerY - 2);
       doc.setTextColor(0, 0, 0);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('helvetica', 'bold');
       doc.text('CPL (Clk) Billal Hossain, ASC', contactX, footerY + 3);
-      doc.text('Mobile: 01783413333', contactX, footerY + 7);
+      doc.text('Mobile: +8801783413333', contactX, footerY + 7);
       doc.text('Email: nayon@asia.com', contactX, footerY + 11);
     } else {
       doc.setTextColor(15, 52, 96); // Dark Blue
@@ -481,15 +554,16 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
       doc.setFont('helvetica', 'bold');
       doc.text('SOFTWARE DEVELOPED BY', margin, footerY - 2);
       doc.setTextColor(0, 0, 0);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('helvetica', 'bold');
       doc.text('CPL (Clk) Billal Hossain, ASC', margin, footerY + 3);
-      doc.text('Mobile: 01783413333', margin, footerY + 7);
+      doc.text('Mobile: +8801783413333', margin, footerY + 7);
       doc.text('Email: nayon@asia.com', margin, footerY + 11);
     }
 
     // Signature section removed as requested
     
-    doc.save(`Invoice_${(booking.rankName || 'User').replace(/\s+/g, '_')}_${invoiceNo}.pdf`);
+    const fileName = type === 'info' ? `Booking_Info_${(booking.rankName || 'User').replace(/\s+/g, '_')}_${invoiceNo}.pdf` : `Invoice_${(booking.rankName || 'User').replace(/\s+/g, '_')}_${invoiceNo}.pdf`;
+    doc.save(fileName);
   } catch (error) {
     console.error("PDF generation failed:", error);
     alert("Error generating PDF.");
@@ -553,17 +627,7 @@ export const generatePaymentSlip = async (bookings: Booking[], startDate: string
       }),
       foot: [
         [
-          { content: 'SUBTOTAL', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fontSize: 9 } },
-          { content: formatCurrency(subtotal), styles: { halign: 'center', fontStyle: 'bold', fontSize: 9 } },
-          { content: '', styles: {} }
-        ],
-        [
-          { content: `TAX (${taxRate}%)`, colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fontSize: 9 } },
-          { content: formatCurrency(taxAmount), styles: { halign: 'center', fontStyle: 'bold', fontSize: 9 } },
-          { content: '', styles: {} }
-        ],
-        [
-          { content: 'TOTAL FARE (WITH TAX)', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
+          { content: 'SUBTOTAL', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
           { content: formatCurrency(totalFare), styles: { halign: 'center', fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10 } },
           { content: '', styles: { fillColor: [220, 220, 220], lineWidth: 0.1 } }
         ]

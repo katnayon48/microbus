@@ -23,10 +23,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
     title: "MICROBUS SCHEDULE",
     subtitle: "AREA HQ BARISHAL",
     footerText: "DEVELOPED BY CPL (CLK) BILLAL, ASC",
-    footerPhone: "01783413333",
+    footerPhone: "+8801783413333",
     footerLines: [
       "DEVELOPED BY CPL (CLK) BILLAL, ASC",
-      "SUPPORT: 01783413333",
+      "SUPPORT: +8801783413333",
       "SYSTEM VERSION: v4.2.0-PRO"
     ],
     systemVersion: "v4.2.0-PRO",

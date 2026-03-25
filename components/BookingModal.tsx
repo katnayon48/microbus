@@ -55,7 +55,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [showReceivedByModal, setShowReceivedByModal] = useState(false);
+  const [showBookingInfoModal, setShowBookingInfoModal] = useState(false);
   const [receivedByName, setReceivedByName] = useState('');
+  const [bookingInfoStatus, setBookingInfoStatus] = useState<'CONFIRM' | 'PENDING' | 'CANCEL'>('CONFIRM');
 
   const getLastKmEnd = (currentStartDateStr: string) => {
     if (!currentStartDateStr || !bookings || bookings.length === 0) return 0;
@@ -295,6 +297,15 @@ const BookingModal: React.FC<BookingModalProps> = ({
     setShowReceivedByModal(true);
   };
 
+  const handleDownloadBookingInfo = () => {
+    if (formData.isSpecialNote) return;
+    if (!formData.rankName || !formData.startDate) {
+      alert("Please fill in Rank/Name and Date before downloading.");
+      return;
+    }
+    setShowBookingInfoModal(true);
+  };
+
   const confirmDownload = async () => {
     const currentBooking: Booking = {
       ...formData,
@@ -303,7 +314,19 @@ const BookingModal: React.FC<BookingModalProps> = ({
     } as Booking;
     setIsDownloading(true);
     setShowReceivedByModal(false);
-    await generateIndividualPaymentSlip(currentBooking, appSettings, receivedByName);
+    await generateIndividualPaymentSlip(currentBooking, appSettings, receivedByName, 'slip');
+    setIsDownloading(false);
+  };
+
+  const confirmBookingInfoDownload = async () => {
+    const currentBooking: Booking = {
+      ...formData,
+      fare: formData.fare || 0,
+      id: existingBooking?.id || 'TEMP',
+    } as Booking;
+    setIsDownloading(true);
+    setShowBookingInfoModal(false);
+    await generateIndividualPaymentSlip(currentBooking, appSettings, receivedByName, 'info', bookingInfoStatus);
     setIsDownloading(false);
   };
 
@@ -601,18 +624,26 @@ const BookingModal: React.FC<BookingModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/5">
-          <button type="submit" className="flex-[2] flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-500 transition-all active:scale-95">
+        <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
+          <button type="submit" className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-500 transition-all active:scale-95">
             <Check size={16} /> {existingBooking ? 'Update Reservation' : 'Confirm Reservation'}
           </button>
+          
           {!formData.isSpecialNote && (
-            <button type="button" onClick={handleDownloadSlip} disabled={isDownloading} className="flex-1 flex items-center justify-center gap-2 py-4 px-4 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50">
-              {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
-              Download Slip
-            </button>
+            <div className="flex flex-col gap-3">
+              <button type="button" onClick={handleDownloadBookingInfo} disabled={isDownloading} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50">
+                {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                Download Booking Info
+              </button>
+              <button type="button" onClick={handleDownloadSlip} disabled={isDownloading} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50">
+                {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                Download Slip
+              </button>
+            </div>
           )}
+          
           {existingBooking && onDelete && (
-            <button type="button" onClick={() => setIsConfirmingDelete(true)} className="flex-1 flex items-center justify-center gap-2 py-4 px-4 bg-rose-600/10 text-rose-500 border border-rose-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-600 hover:text-white transition-all">
+            <button type="button" onClick={() => setIsConfirmingDelete(true)} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-rose-600/10 text-rose-500 border border-rose-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-600 hover:text-white transition-all">
               <Trash2 size={16} /> Delete Record
             </button>
           )}
@@ -643,6 +674,56 @@ const BookingModal: React.FC<BookingModalProps> = ({
           >
             {isDownloading ? <Loader2 size={18} className="animate-spin" /> : null}
             {isDownloading ? 'Generating...' : 'Generate PDF Slip'}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Booking Info Status Modal */}
+      <Modal isOpen={showBookingInfoModal} onClose={() => setShowBookingInfoModal(false)} title="Booking Info Status" variant="dark">
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <label className={labelClasses}>Select Booking Status</label>
+            <div className="grid grid-cols-3 gap-3">
+              {(['CONFIRM', 'PENDING', 'CANCEL'] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setBookingInfoStatus(status)}
+                  className={`py-3 px-2 rounded-xl border font-black uppercase text-[10px] tracking-widest transition-all ${
+                    bookingInfoStatus === status
+                      ? status === 'CONFIRM' ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' :
+                        status === 'PENDING' ? 'bg-amber-500 border-amber-400 text-white shadow-lg' :
+                        'bg-rose-600 border-rose-500 text-white shadow-lg'
+                      : 'bg-white/5 border-white/10 text-slate-500 hover:border-white/20'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClasses}>Booked By</label>
+            <div className="relative group">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+              <input 
+                type="text" 
+                value={receivedByName} 
+                onChange={(e) => setReceivedByName(e.target.value)} 
+                className={inputClasses} 
+                placeholder="e.g., CPL BILLAL"
+              />
+            </div>
+          </div>
+
+          <button 
+            onClick={confirmBookingInfoDownload}
+            disabled={isDownloading}
+            className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
+            {isDownloading ? 'Generating...' : 'Download Booking Info'}
           </button>
         </div>
       </Modal>
