@@ -227,6 +227,9 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
       const end = parseISO(booking.endDate);
       const daysDiff = differenceInDays(end, start) + 1;
 
+      const mappedStatus = (status || 'N/A').toUpperCase();
+      const displayStatus = mappedStatus === 'CONFIRM' ? 'CONFIRMED' : (mappedStatus === 'CANCEL' ? 'CANCELLED' : mappedStatus);
+
       const infoDetails = [
         { label: 'Rank and Name', value: (booking.rankName || 'N/A').toUpperCase() },
         { label: 'Unit', value: (booking.unit || 'N/A').toUpperCase() },
@@ -237,22 +240,29 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
         { label: 'Total Days', value: `${daysDiff} ${daysDiff === 1 ? 'Day' : 'Days'}` },
         { label: 'Duration', value: (booking.duration || 'N/A') },
         { label: 'Garrison Status', value: (booking.garrisonStatus || 'N/A') },
-        { label: 'BOOKING STATUS', value: (status || 'N/A').toUpperCase() },
+        { label: 'BOOKING STATUS', value: displayStatus },
       ];
 
       infoDetails.forEach((item, i) => {
         doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
         doc.text(item.label, margin, detailsY + (i * 7));
+        
         doc.setFont('helvetica', 'normal');
+        doc.text(':', margin + 50, detailsY + (i * 7));
+        
         if (item.label === 'BOOKING STATUS') {
           let statusColor: [number, number, number] = [0, 0, 0];
-          if (item.value === 'CONFIRM') statusColor = [16, 185, 129];
+          if (item.value === 'CONFIRMED') statusColor = [16, 185, 129];
           if (item.value === 'PENDING') statusColor = [245, 158, 11];
-          if (item.value === 'REJECT' || item.value === 'CANCEL') statusColor = [239, 68, 68];
+          if (item.value === 'REJECT' || item.value === 'CANCELLED') statusColor = [239, 68, 68];
           doc.setTextColor(...statusColor);
           doc.setFont('helvetica', 'bold');
+        } else {
+          doc.setTextColor(0, 0, 0);
         }
-        doc.text(`: ${item.value}`, margin + 50, detailsY + (i * 7));
+        
+        doc.text(item.value, margin + 53, detailsY + (i * 7));
         doc.setTextColor(0, 0, 0);
       });
       
@@ -334,7 +344,8 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
               styles: { valign: 'middle', halign: 'center' }
             });
           }
-          row.push(p.purchasedFuel !== undefined ? `${p.purchasedFuel} L` : '-');
+          const fuelTypeStr = p.fuelType ? ` (${p.fuelType})` : '';
+          row.push(p.purchasedFuel !== undefined ? `${p.purchasedFuel} L${fuelTypeStr}` : '-');
           row.push(p.fuelRate !== undefined ? formatCurrency(p.fuelRate) : '-');
           row.push(p.totalFuelPrice !== undefined ? `BDT ${formatCurrency(p.totalFuelPrice)}` : '-');
           fuelBody.push(row);
@@ -856,7 +867,8 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
             if (f === 'totalFuelPrice') {
               row.push(val !== undefined ? formatCurrency(val as number) : '-');
             } else if (f === 'purchasedFuel') {
-              row.push(val !== undefined ? `${val} L` : '-');
+              const fuelTypeStr = (p && p.fuelType) ? ` (${p.fuelType})` : '';
+              row.push(val !== undefined ? `${val} L${fuelTypeStr}` : '-');
             } else {
               row.push(val !== undefined ? val.toString() : '-');
             }
@@ -1052,7 +1064,7 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
       theme: 'grid',
       headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 6.5, fontStyle: 'bold', halign: 'center', lineColor: [0, 0, 0], lineWidth: 0.1, valign: 'middle' },
       styles: { font: 'helvetica', fontSize: 7, cellPadding: 0.8, lineColor: [0, 0, 0], lineWidth: 0.1, halign: 'center', textColor: [0, 0, 0], valign: 'middle', overflow: 'linebreak' },
-      columnStyles: { 0: { cellWidth: 26 }, 1: { cellWidth: 28 }, 2: { cellWidth: 20 }, 3: { cellWidth: 20 }, 4: { cellWidth: 62 }, 5: { cellWidth: 34 } },
+      columnStyles: { 0: { cellWidth: 26 }, 1: { cellWidth: 28 }, 2: { cellWidth: 20 }, 3: { cellWidth: 20 }, 4: { cellWidth: 50 }, 5: { cellWidth: 46 } },
       margin: { left: 10, right: 10 }
     });
     if (withSignature) {
@@ -1118,10 +1130,11 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
           row.push({ content: (b.destination || '-').toUpperCase(), rowSpan: purchaseCount, styles: { valign: 'top' } }); // DESTINATION
           row.push({ content: b.kmStart !== undefined ? b.kmStart : '-', rowSpan: purchaseCount, styles: { valign: 'top' } }); // START
           row.push({ content: b.kmEnd !== undefined ? b.kmEnd : '-', rowSpan: purchaseCount, styles: { valign: 'top' } }); // END
-          row.push({ content: b.totalKm !== undefined ? b.totalKm : '-', rowSpan: purchaseCount, styles: { valign: 'top' } }); // TOTAL KM
+          row.push({ content: b.totalKm !== undefined ? `${b.totalKm} KM` : '-', rowSpan: purchaseCount, styles: { valign: 'top' } }); // TOTAL KM
         }
         
-        const fuelStr = p?.purchasedFuel !== undefined ? p.purchasedFuel.toString() : (isFirst && b.purchasedFuel !== undefined ? b.purchasedFuel.toString() : '-');
+        const fuelTypeStr = p?.fuelType ? ` (${p.fuelType})` : '';
+        const fuelStr = p?.purchasedFuel !== undefined ? `${p.purchasedFuel} L${fuelTypeStr}` : (isFirst && b.purchasedFuel !== undefined ? `${b.purchasedFuel} L` : '-');
         const rateStr = p?.fuelRate !== undefined ? p.fuelRate.toString() : (isFirst && b.fuelRate !== undefined ? b.fuelRate.toString() : '-');
         const takaStr = p?.totalFuelPrice !== undefined ? formatCurrency(p.totalFuelPrice) : (isFirst && b.totalFuelPrice !== undefined ? formatCurrency(b.totalFuelPrice) : '-');
 
@@ -1167,7 +1180,8 @@ export const generateFuelReport = async (bookings: Booking[], startDate: string,
       columnStyles: { 
         1: { halign: 'left', cellWidth: 40 }, 
         5: { halign: 'left' },
-        9: { cellWidth: 20 },
+        8: { cellWidth: 25 },
+        9: { cellWidth: 35 },
         10: { cellWidth: 15 },
         11: { cellWidth: 20 }
       },
@@ -1328,7 +1342,7 @@ export const generateCalendarPDF = async (bookings: Booking[], startDateStr: str
         if (currentDay > daysInMonth) break;
       }
       
-      drawDeveloperFooter(doc, 204);
+      drawDeveloperFooter(doc, 200);
     });
 
     doc.save(`Calendar_View_${startDateStr}_to_${endDateStr}.pdf`);

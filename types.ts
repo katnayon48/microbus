@@ -62,6 +62,7 @@ export interface FuelPurchase {
   purchasedFuel?: number;
   fuelRate?: number;
   totalFuelPrice?: number;
+  fuelType?: 'LPG' | 'Octane';
 }
 
 export interface Booking {

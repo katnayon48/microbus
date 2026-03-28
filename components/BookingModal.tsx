@@ -52,7 +52,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     totalFuelPrice: undefined
   });
 
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadType, setDownloadType] = useState<'info' | 'slip' | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [showReceivedByModal, setShowReceivedByModal] = useState(false);
   const [showBookingInfoModal, setShowBookingInfoModal] = useState(false);
@@ -195,7 +195,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     
     setFormData(prev => {
       const purchases = [...(prev.fuelPurchases || [])];
-      const item = { ...purchases[index], [name]: numericVal };
+      const item = { ...purchases[index], [name]: name === 'fuelType' ? value : numericVal };
       
       if (name === 'purchasedFuel' || name === 'fuelRate') {
         const fuel = name === 'purchasedFuel' ? numericVal : item.purchasedFuel;
@@ -312,10 +312,10 @@ const BookingModal: React.FC<BookingModalProps> = ({
       fare: formData.fare || 0,
       id: existingBooking?.id || 'TEMP',
     } as Booking;
-    setIsDownloading(true);
+    setDownloadType('slip');
     setShowReceivedByModal(false);
     await generateIndividualPaymentSlip(currentBooking, appSettings, receivedByName, 'slip');
-    setIsDownloading(false);
+    setDownloadType(null);
   };
 
   const confirmBookingInfoDownload = async () => {
@@ -324,10 +324,10 @@ const BookingModal: React.FC<BookingModalProps> = ({
       fare: formData.fare || 0,
       id: existingBooking?.id || 'TEMP',
     } as Booking;
-    setIsDownloading(true);
+    setDownloadType('info');
     setShowBookingInfoModal(false);
     await generateIndividualPaymentSlip(currentBooking, appSettings, receivedByName, 'info', bookingInfoStatus);
-    setIsDownloading(false);
+    setDownloadType(null);
   };
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -377,6 +377,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             if (p.purchasedFuel !== undefined) cleaned.purchasedFuel = p.purchasedFuel;
             if (p.fuelRate !== undefined) cleaned.fuelRate = p.fuelRate;
             if (p.totalFuelPrice !== undefined) cleaned.totalFuelPrice = p.totalFuelPrice;
+            if (p.fuelType) cleaned.fuelType = p.fuelType;
             return cleaned;
           });
         
@@ -582,7 +583,22 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
                     {formData.fuelPurchases?.map((purchase, index) => (
                       <div key={purchase.id} className="relative bg-black/40 p-4 rounded-xl border border-white/5 space-y-4 group/purchase animate-in slide-in-from-left-2">
-                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                          <div className="relative flex flex-col justify-end h-full">
+                            <label className={labelClasses}><Fuel size={12} className="text-emerald-500" /> Fuel Type</label>
+                            <div className="relative group mt-auto">
+                              <Fuel className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                              <select 
+                                value={purchase.fuelType || ''} 
+                                onChange={(e) => handleFuelPurchaseChange(index, 'fuelType', e.target.value)} 
+                                className={`${inputClasses} pl-10`}
+                              >
+                                <option value="" disabled className="bg-[#062c1e]">Select Type</option>
+                                <option value="LPG" className="bg-[#062c1e]">LPG</option>
+                                <option value="Octane" className="bg-[#062c1e]">Octane</option>
+                              </select>
+                            </div>
+                          </div>
                           <div className="relative flex flex-col justify-end h-full">
                             <label className={labelClasses}><Droplets size={12} className="text-emerald-500" /> Purchased Fuel</label>
                             <div className="relative group mt-auto">
@@ -631,12 +647,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
           
           {!formData.isSpecialNote && (
             <div className="flex flex-col gap-3">
-              <button type="button" onClick={handleDownloadBookingInfo} disabled={isDownloading} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50">
-                {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+              <button type="button" onClick={handleDownloadBookingInfo} disabled={!!downloadType} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50">
+                {downloadType === 'info' ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
                 Download Booking Info
               </button>
-              <button type="button" onClick={handleDownloadSlip} disabled={isDownloading} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50">
-                {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+              <button type="button" onClick={handleDownloadSlip} disabled={!!downloadType} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50">
+                {downloadType === 'slip' ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
                 Download Slip
               </button>
             </div>
@@ -669,11 +685,11 @@ const BookingModal: React.FC<BookingModalProps> = ({
           </div>
           <button 
             onClick={confirmDownload}
-            disabled={isDownloading}
+            disabled={!!downloadType}
             className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isDownloading ? <Loader2 size={18} className="animate-spin" /> : null}
-            {isDownloading ? 'Generating...' : 'Generate PDF Slip'}
+            {downloadType === 'slip' ? <Loader2 size={18} className="animate-spin" /> : null}
+            {downloadType === 'slip' ? 'Generating...' : 'Generate PDF Slip'}
           </button>
         </div>
       </Modal>
@@ -719,11 +735,11 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
           <button 
             onClick={confirmBookingInfoDownload}
-            disabled={isDownloading}
+            disabled={!!downloadType}
             className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
-            {isDownloading ? 'Generating...' : 'Download Booking Info'}
+            {downloadType === 'info' ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
+            {downloadType === 'info' ? 'Generating...' : 'Download Booking Info'}
           </button>
         </div>
       </Modal>
