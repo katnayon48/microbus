@@ -583,47 +583,55 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
                     {formData.fuelPurchases?.map((purchase, index) => (
                       <div key={purchase.id} className="relative bg-black/40 p-4 rounded-xl border border-white/5 space-y-4 group/purchase animate-in slide-in-from-left-2">
-                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                          <div className="relative flex flex-col justify-end h-full">
-                            <label className={labelClasses}><Fuel size={12} className="text-emerald-500" /> Fuel Type</label>
-                            <div className="relative group mt-auto">
-                              <Fuel className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                              <select 
-                                value={purchase.fuelType || ''} 
-                                onChange={(e) => handleFuelPurchaseChange(index, 'fuelType', e.target.value)} 
-                                className={`${inputClasses} pl-10`}
-                              >
-                                <option value="" disabled className="bg-[#062c1e]">Select Type</option>
-                                <option value="LPG" className="bg-[#062c1e]">LPG</option>
-                                <option value="Octane" className="bg-[#062c1e]">Octane</option>
-                              </select>
+                        <div className="space-y-4">
+                          {/* Fuel Type Row */}
+                          <div className="grid grid-cols-1 gap-4 items-end">
+                            <div className="relative flex flex-col justify-end h-full">
+                              <label className={labelClasses}><Fuel size={12} className="text-emerald-500" /> Fuel Type</label>
+                              <div className="relative group mt-auto">
+                                <Fuel className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                <select 
+                                  value={purchase.fuelType || ''} 
+                                  onChange={(e) => handleFuelPurchaseChange(index, 'fuelType', e.target.value)} 
+                                  className={`${inputClasses} pl-10`}
+                                >
+                                  <option value="" disabled className="bg-[#062c1e]">Select Type</option>
+                                  <option value="LPG" className="bg-[#062c1e]">LPG</option>
+                                  <option value="Octane" className="bg-[#062c1e]">Octane</option>
+                                </select>
+                              </div>
                             </div>
                           </div>
-                          <div className="relative flex flex-col justify-end h-full">
-                            <label className={labelClasses}><Droplets size={12} className="text-emerald-500" /> Purchased Fuel</label>
-                            <div className="relative group mt-auto">
-                              <Droplets className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                              <input type="number" step="0.01" value={purchase.purchasedFuel === undefined ? '' : purchase.purchasedFuel} onChange={(e) => handleFuelPurchaseChange(index, 'purchasedFuel', e.target.value)} className={inputClasses} placeholder="Liters" />
+
+                          {/* Data Row */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div className="relative flex flex-col justify-end h-full">
+                              <label className={labelClasses}><Droplets size={12} className="text-emerald-500" /> Purchased Fuel</label>
+                              <div className="relative group mt-auto">
+                                <Droplets className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                <input type="number" step="0.01" value={purchase.purchasedFuel === undefined ? '' : purchase.purchasedFuel} onChange={(e) => handleFuelPurchaseChange(index, 'purchasedFuel', e.target.value)} className={inputClasses} placeholder="Liters" />
+                              </div>
+                            </div>
+                            <div className="relative flex flex-col justify-end h-full">
+                              <label className={labelClasses}><CircleDollarSign size={12} className="text-emerald-500" /> Rate</label>
+                              <div className="relative group mt-auto">
+                                <CircleDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                <input type="number" step="0.01" value={purchase.fuelRate === undefined ? '' : purchase.fuelRate} onChange={(e) => handleFuelPurchaseChange(index, 'fuelRate', e.target.value)} className={inputClasses} placeholder="Rate" />
+                              </div>
+                            </div>
+                            <div className="relative flex flex-col justify-end h-full">
+                              <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Total Taka</label>
+                              <div className="relative group mt-auto">
+                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-base pointer-events-none">৳</span>
+                                <input type="number" step="0.01" value={purchase.totalFuelPrice === undefined ? '' : purchase.totalFuelPrice} onChange={(e) => handleFuelPurchaseChange(index, 'totalFuelPrice', e.target.value)} className={`${inputClasses} pl-10 bg-emerald-900/10 font-black text-emerald-400`} placeholder="0.00" />
+                              </div>
                             </div>
                           </div>
-                          <div className="relative flex flex-col justify-end h-full">
-                            <label className={labelClasses}><CircleDollarSign size={12} className="text-emerald-500" /> Rate</label>
-                            <div className="relative group mt-auto">
-                              <CircleDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                              <input type="number" step="0.01" value={purchase.fuelRate === undefined ? '' : purchase.fuelRate} onChange={(e) => handleFuelPurchaseChange(index, 'fuelRate', e.target.value)} className={inputClasses} placeholder="Rate" />
-                            </div>
-                          </div>
-                          <div className="relative flex flex-col justify-end h-full">
-                            <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Total Taka</label>
-                            <div className="relative group mt-auto">
-                              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-base pointer-events-none">৳</span>
-                              <input type="number" step="0.01" value={purchase.totalFuelPrice === undefined ? '' : purchase.totalFuelPrice} onChange={(e) => handleFuelPurchaseChange(index, 'totalFuelPrice', e.target.value)} className={`${inputClasses} pl-10 bg-emerald-900/10 font-black text-emerald-400`} placeholder="0.00" />
-                            </div>
-                          </div>
-                          <button type="button" onClick={() => removeFuelPurchase(index)} className="absolute -right-2 -top-2 w-6 h-6 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/purchase:opacity-100 transition-all active:scale-90 z-20">
-                            <X size={12} />
-                          </button>
                         </div>
+
+                        <button type="button" onClick={() => removeFuelPurchase(index)} className="absolute -right-2 -top-2 w-6 h-6 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/purchase:opacity-100 transition-all active:scale-90 z-20">
+                          <X size={12} />
+                        </button>
                       </div>
                     ))}
                   </div>
