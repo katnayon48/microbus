@@ -392,17 +392,6 @@ const Calendar: React.FC<CalendarProps> = ({
 
       <div className="flex-1 relative overflow-hidden min-h-0" style={{ backgroundColor: 'transparent' }}>
         <div 
-          className="absolute inset-0 pointer-events-none z-0 brightness-[0.8] sm:brightness-[1.15] print-hide"
-          style={{ 
-            backgroundImage: 'url("https://i.ibb.co.com/B2gbtk00/IMG-1111.jpg")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            opacity: 0.05
-          }}
-        />
-
-        <div 
           className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 print-hide"
           style={{ opacity: appSettings?.ui?.watermarkOpacity ?? 0.12 }}
         >
