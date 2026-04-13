@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, FileText, Loader2, ArrowLeft, Phone, Settings, ShieldAlert, Lock } from 'lucide-react';
+import { LogOut, FileText, Loader2, ArrowLeft, Phone, Settings, ShieldAlert, Lock, FileSpreadsheet, Clock, Fuel, Database, BarChart3, Navigation } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getDatabase, ref, onValue, set, push, remove, update } from 'firebase/database';
 
@@ -122,10 +122,80 @@ const LoadingScreen: React.FC<{ bgColor: string }> = ({ bgColor }) => {
   );
 };
 
+const Sidebar: React.FC<{ 
+  onReportClick: (step: string) => void;
+  activeView: string;
+  activeReportStep: string;
+  settings: AppSettings;
+}> = ({ onReportClick, activeView, activeReportStep, settings }) => {
+  const reportItems = [
+    { id: 'payment-slip-range', title: 'Payment Slip', subtitle: 'MONTHLY BILLS', icon: FileText, color: 'bg-emerald-600' },
+    { id: 'booking-details-range', title: 'Booking Details', subtitle: 'CIVIL MICROBUS', icon: FileSpreadsheet, color: 'bg-rose-600' },
+    { id: 'driver-attendance', title: "Driver Attendance", subtitle: 'LOG MANAGEMENT', icon: Clock, color: 'bg-amber-600' },
+    { id: 'fuel-report-range', title: 'Fuel Report', subtitle: 'MILEAGE DATA', icon: Fuel, color: 'bg-cyan-600' },
+    { id: 'detailed-setup', title: 'Detailed Data', subtitle: 'FULL EXPORT', icon: Database, color: 'bg-blue-600' },
+    { id: 'trip-summary', title: 'Trip Statistics', subtitle: 'ANNUAL REVIEW', icon: BarChart3, color: 'bg-indigo-600' },
+    { id: 'track-vehicle', title: 'Track Vehicle', subtitle: 'LIVE VTS TRACKING', icon: Navigation, color: 'bg-slate-700', url: 'https://vts.m2mbd.com/dashboard/default' },
+  ];
+
+  return (
+    <aside 
+      className="hidden md:flex flex-col w-64 shrink-0 p-4 rounded-3xl border border-white/10 overflow-y-auto custom-scrollbar shadow-2xl"
+      style={{ backgroundColor: `${settings.ui.bgColor}80` }}
+    >
+      <div className="flex-1 flex flex-col">
+        <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] ml-2 mb-4 shrink-0">Report Center</h3>
+        <div className="flex-1 flex flex-col justify-between pb-4">
+          {reportItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeView === 'reports' && activeReportStep === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (item.url) {
+                    window.open(item.url, '_blank');
+                  } else {
+                    onReportClick(item.id);
+                  }
+                }}
+                className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border transition-all group text-left ${
+                  isActive 
+                    ? 'bg-emerald-600/20 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]' 
+                    : 'bg-white/5 border-white/5 hover:border-white/20 hover:bg-white/10'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${item.color} shadow-lg`}>
+                  <Icon size={18} className="text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className={`text-[11.5px] font-black uppercase tracking-tight truncate ${isActive ? 'text-emerald-400' : 'text-white'}`}>
+                    {item.title}
+                  </p>
+                  <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest truncate">
+                    {item.subtitle}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      
+      <div className="pt-4 border-t border-white/10 shrink-0">
+        <p className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.2em] text-center">
+          Quick Access Sidebar
+        </p>
+      </div>
+    </aside>
+  );
+};
+
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<'calendar' | 'reports' | 'attendance'>('calendar');
   const [reportInitialStep, setReportInitialStep] = useState<any>('dashboard');
+  const [reportKey, setReportKey] = useState(0);
   const [userRole, setUserRole] = useState<UserRole>('viewer');
   const [settings, setSettings] = useState<AppSettings>(getInitialSettings());
   
@@ -325,6 +395,17 @@ const App: React.FC = () => {
     setReportInitialStep('dashboard');
   };
 
+  const handleReportClick = (step: string) => {
+    setReportKey(prev => prev + 1);
+    if (isAdmin) {
+      setReportInitialStep(step);
+      setView('reports');
+    } else {
+      setPendingReportStep(step);
+      setShowLoginModal(true);
+    }
+  };
+
   const handleUpdateSettings = async (newSettings: AppSettings) => {
     if (!db) return;
     await set(ref(db, 'settings'), newSettings);
@@ -441,8 +522,15 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <main className="p-1 md:p-2 flex flex-col gap-1 md:gap-2 flex-1 overflow-hidden min-h-0 relative z-10">
-          <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-0">
+        <main className="p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-4 flex-1 overflow-hidden min-h-0 relative z-10">
+          <Sidebar 
+            onReportClick={handleReportClick} 
+            activeView={view} 
+            activeReportStep={reportInitialStep} 
+            settings={settings} 
+          />
+          
+          <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-0 flex-1">
             <div 
               className="rounded-2xl md:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] sm:shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-white/10 overflow-hidden flex flex-col flex-1 min-h-0 print-bg-white print-no-shadow print-border-black"
               style={{ backgroundColor: settings.ui.bgColor }}
@@ -468,7 +556,13 @@ const App: React.FC = () => {
               ) : view === 'attendance' ? (
                 <AttendanceViewer isAdmin={isAdmin} onLoginClick={handleAttendanceLoginRedirect} appSettings={settings} />
               ) : (
-                <ReportManager bookings={bookings} appSettings={settings} onBack={() => { setView('calendar'); setReportInitialStep('dashboard'); }} initialStep={reportInitialStep} />
+                <ReportManager 
+                  key={`report-${reportInitialStep}-${reportKey}`}
+                  bookings={bookings} 
+                  appSettings={settings} 
+                  onBack={() => { setView('calendar'); setReportInitialStep('dashboard'); }} 
+                  initialStep={reportInitialStep} 
+                />
               )}
             </div>
           </div>

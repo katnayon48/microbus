@@ -93,6 +93,10 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
     }
   }, [activeStep]);
 
+  useEffect(() => {
+    setActiveStep(initialStep);
+  }, [initialStep]);
+
   const [attendanceForm, setAttendanceForm] = useState<DriverAttendance>({
     date: format(new Date(), 'yyyy-MM-dd'),
     driverName: 'NAZRUL',
@@ -392,7 +396,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 flex-1 max-h-fit content-center w-full box-border overflow-hidden">
               <ReportTile onClick={() => setActiveStep('payment-slip-range')} icon={FileText} title="Payment Slip" subtitle="MONTHLY BILLS" color="bg-emerald-600" />
               <ReportTile onClick={() => setActiveStep('booking-details-range')} icon={FileSpreadsheet} title="Booking Details" subtitle="CIVIL MICROBUS" color="bg-rose-600" />
-              <ReportTile onClick={() => setActiveStep('driver-attendance')} icon={Clock} title="Driver's Attendence" subtitle="LOG MANAGEMENT" color="bg-amber-600" />
+              <ReportTile onClick={() => setActiveStep('driver-attendance')} icon={Clock} title="Driver Attendance" subtitle="LOG MANAGEMENT" color="bg-amber-600" />
               <ReportTile onClick={() => setActiveStep('fuel-report-range')} icon={Fuel} title="Fuel Report" subtitle="MILEAGE DATA" color="bg-cyan-600" />
               <ReportTile onClick={() => setActiveStep('detailed-setup')} icon={Database} title="Detailed Data" subtitle="FULL EXPORT" color="bg-blue-600" />
               <ReportTile onClick={() => setActiveStep('trip-summary')} icon={BarChart3} title="Trip Statistics" subtitle="ANNUAL REVIEW" color="bg-indigo-600" />
