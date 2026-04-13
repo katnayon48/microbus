@@ -144,7 +144,7 @@ const Sidebar: React.FC<{
       style={{ backgroundColor: `${settings.ui.bgColor}80` }}
     >
       <div className="flex-1 flex flex-col">
-        <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] ml-2 mb-4 shrink-0">Report Center</h3>
+        <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] ml-2 mb-4 shrink-0">DASHBOARD</h3>
         <div className="flex-1 flex flex-col justify-between pb-4">
           {reportItems.map((item) => {
             const Icon = item.icon;
@@ -169,7 +169,7 @@ const Sidebar: React.FC<{
                   <Icon size={18} className="text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className={`text-[11.5px] font-black uppercase tracking-tight truncate ${isActive ? 'text-emerald-400' : 'text-white'}`}>
+                  <p className={`text-[10.8px] font-black uppercase tracking-tight truncate ${isActive ? 'text-emerald-400' : 'text-white'}`}>
                     {item.title}
                   </p>
                   <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest truncate">
@@ -182,11 +182,6 @@ const Sidebar: React.FC<{
         </div>
       </div>
       
-      <div className="pt-4 border-t border-white/10 shrink-0">
-        <p className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.2em] text-center">
-          Quick Access Sidebar
-        </p>
-      </div>
     </aside>
   );
 };
