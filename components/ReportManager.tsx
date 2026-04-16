@@ -97,16 +97,19 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
     setActiveStep(initialStep);
   }, [initialStep]);
 
-  const [attendanceForm, setAttendanceForm] = useState<DriverAttendance>({
-    date: format(new Date(), 'yyyy-MM-dd'),
-    driverName: 'NAZRUL',
-    inTime: format(new Date(), 'HH:mm'),
-    outTime: format(new Date(), 'HH:mm'),
-    isHoliday: false,
-    isOfficeDay: true,
-    isDutyDay: false,
-    lastDayCompletionTime: '',
-    remarks: ''
+  const [attendanceForm, setAttendanceForm] = useState<DriverAttendance>(() => {
+    const now = format(new Date(), 'HH:mm');
+    return {
+      date: format(new Date(), 'yyyy-MM-dd'),
+      driverName: 'NAZRUL',
+      inTime: now,
+      outTime: now,
+      isHoliday: false,
+      isOfficeDay: true,
+      isDutyDay: false,
+      lastDayCompletionTime: '',
+      remarks: ''
+    };
   });
 
   const lastAutoPopDate = useRef<string | null>(null);
@@ -190,7 +193,12 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
     try {
       const db = getDatabase();
       const attendanceRef = ref(db, 'attendance');
-      const recordToSave = { ...attendanceForm };
+      const now = format(new Date(), 'HH:mm');
+      const recordToSave = { 
+        ...attendanceForm,
+        inTime: attendanceForm.inTime || now,
+        outTime: attendanceForm.outTime || now
+      };
       
       if (recordToSave.id) {
          await set(ref(db, `attendance/${recordToSave.id}`), recordToSave);
@@ -208,8 +216,8 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
         isOfficeDay: true, 
         isHoliday: false,
         lastDayCompletionTime: '',
-        inTime: format(new Date(), 'HH:mm'),
-        outTime: format(new Date(), 'HH:mm')
+        inTime: now,
+        outTime: now
       });
       lastAutoPopDate.current = null;
       setIsAddingAttendance(false);
@@ -465,12 +473,13 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                       <button onClick={() => setAttendanceForm({...attendanceForm, isOfficeDay: true, isHoliday: false, isDutyDay: false})} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isOfficeDay ? 'bg-emerald-600 border-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}>Office</button>
                       <button onClick={() => {
                         const isHoliday = !attendanceForm.isHoliday;
+                        const now = format(new Date(), 'HH:mm');
                         setAttendanceForm({
                           ...attendanceForm, 
                           isHoliday, 
                           isOfficeDay: false,
-                          inTime: isHoliday ? '' : attendanceForm.inTime,
-                          outTime: isHoliday ? '' : attendanceForm.outTime
+                          inTime: isHoliday ? '' : (attendanceForm.inTime || now),
+                          outTime: isHoliday ? '' : (attendanceForm.outTime || now)
                         });
                       }} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isHoliday ? 'bg-amber-600 border-amber-500 shadow-lg text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}>Holiday</button>
                       <button onClick={() => {
@@ -490,23 +499,23 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                         <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">In Time (24h)</label>
                           <div className="relative group w-full">
-                            <input type="text" placeholder="00:00" value={attendanceForm.inTime || ''} onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6 text-center" />
-                            {attendanceForm.inTime && (
-                              <button onClick={() => setAttendanceForm({...attendanceForm, inTime: ''})} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-rose-400 transition-colors">
-                                <X size={10} />
-                              </button>
-                            )}
+                            <input 
+                              type="time" 
+                              value={attendanceForm.inTime || format(new Date(), 'HH:mm')} 
+                              onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} 
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-1 text-center [appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" 
+                            />
                           </div>
                         </div>
                         <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">Out Time (24h)</label>
                           <div className="relative group w-full">
-                            <input type="text" placeholder="00:00" value={attendanceForm.outTime || ''} onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6 text-center" />
-                            {attendanceForm.outTime && (
-                              <button onClick={() => setAttendanceForm({...attendanceForm, outTime: ''})} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-rose-400 transition-colors">
-                                <X size={10} />
-                              </button>
-                            )}
+                            <input 
+                              type="time" 
+                              value={attendanceForm.outTime || format(new Date(), 'HH:mm')} 
+                              onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} 
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-1 text-center [appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" 
+                            />
                           </div>
                         </div>
                       </div>
@@ -515,9 +524,13 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                     <div className="flex flex-col gap-1 w-full box-border">
                       <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 leading-tight">ENTRY TIME (CANTONMENT) [24H]</label>
                       <div className="relative w-full">
-                        <input type="text" placeholder="00:00" value={attendanceForm.lastDayCompletionTime || ''} onChange={e => setAttendanceForm({...attendanceForm, lastDayCompletionTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border pr-12" />
+                        <input 
+                          type="time" 
+                          value={attendanceForm.lastDayCompletionTime || ''} 
+                          onChange={e => setAttendanceForm({...attendanceForm, lastDayCompletionTime: e.target.value})} 
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border pr-10 [appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" 
+                        />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                          {attendanceForm.lastDayCompletionTime && <button onClick={() => setAttendanceForm({...attendanceForm, lastDayCompletionTime: ''})} className="p-1 text-slate-500"><X size={10} /></button>}
                           <RotateCw size={12} className="text-emerald-500 opacity-40" />
                         </div>
                       </div>
