@@ -261,7 +261,7 @@ const Calendar: React.FC<CalendarProps> = ({
 
   return (
     <div 
-      className="flex flex-col h-full relative overflow-hidden print-bg-white print-text-black"
+      className="flex flex-col h-full relative overflow-hidden print-bg-white print-text-black select-none md:touch-none"
       style={{ backgroundColor: bgColor }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -281,7 +281,8 @@ const Calendar: React.FC<CalendarProps> = ({
               className="flex items-center gap-0.5 md:gap-1 px-0.5 py-1 rounded-lg hover:bg-white/10 transition-all active:scale-95 group shrink-0"
             >
               <h2 className="text-[10px] md:text-2xl font-black text-white tracking-tight uppercase whitespace-nowrap print-text-black">
-                {format(currentDate, 'MMM yy')}
+                <span className="md:hidden">{format(currentDate, 'MMM yy')}</span>
+                <span className="hidden md:inline">{format(currentDate, 'MMMM yyyy')}</span>
               </h2>
               <ChevronDown size={8} className="transition-colors md:w-4 md:h-4 shrink-0 print-hide" style={{ color: themeColor }} />
             </button>

@@ -100,8 +100,8 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
   const [attendanceForm, setAttendanceForm] = useState<DriverAttendance>({
     date: format(new Date(), 'yyyy-MM-dd'),
     driverName: 'NAZRUL',
-    inTime: '08:00',
-    outTime: '17:00',
+    inTime: format(new Date(), 'HH:mm'),
+    outTime: format(new Date(), 'HH:mm'),
     isHoliday: false,
     isOfficeDay: true,
     isDutyDay: false,
@@ -208,8 +208,8 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
         isOfficeDay: true, 
         isHoliday: false,
         lastDayCompletionTime: '',
-        inTime: '08:00',
-        outTime: '17:00'
+        inTime: format(new Date(), 'HH:mm'),
+        outTime: format(new Date(), 'HH:mm')
       });
       lastAutoPopDate.current = null;
       setIsAddingAttendance(false);
@@ -431,7 +431,21 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                 {!isAddingAttendance ? (
                   <div className="bg-black/30 backdrop-blur-xl p-6 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 flex flex-col gap-4 shadow-2xl box-border">
                     <button 
-                      onClick={() => setIsAddingAttendance(true)}
+                      onClick={() => {
+                        const now = format(new Date(), 'HH:mm');
+                        setAttendanceForm({
+                          date: format(new Date(), 'yyyy-MM-dd'),
+                          driverName: 'NAZRUL',
+                          inTime: now,
+                          outTime: now,
+                          isHoliday: false,
+                          isOfficeDay: true,
+                          isDutyDay: false,
+                          lastDayCompletionTime: '',
+                          remarks: ''
+                        });
+                        setIsAddingAttendance(true);
+                      }}
                       className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-xs shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2.5 border border-emerald-400/20"
                     >
                       <Plus size={14} strokeWidth={4} />
@@ -449,7 +463,16 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                     
                     <div className="grid grid-cols-3 gap-1.5 w-full box-border">
                       <button onClick={() => setAttendanceForm({...attendanceForm, isOfficeDay: true, isHoliday: false, isDutyDay: false})} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isOfficeDay ? 'bg-emerald-600 border-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}>Office</button>
-                      <button onClick={() => setAttendanceForm({...attendanceForm, isHoliday: !attendanceForm.isHoliday, isOfficeDay: false})} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isHoliday ? 'bg-amber-600 border-amber-500 shadow-lg text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}>Holiday</button>
+                      <button onClick={() => {
+                        const isHoliday = !attendanceForm.isHoliday;
+                        setAttendanceForm({
+                          ...attendanceForm, 
+                          isHoliday, 
+                          isOfficeDay: false,
+                          inTime: isHoliday ? '' : attendanceForm.inTime,
+                          outTime: isHoliday ? '' : attendanceForm.outTime
+                        });
+                      }} className={`py-2 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-tight border transition-all ${attendanceForm.isHoliday ? 'bg-amber-600 border-amber-500 shadow-lg text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}>Holiday</button>
                       <button onClick={() => {
                         const nextDuty = !attendanceForm.isDutyDay;
                         setAttendanceForm({
@@ -465,9 +488,9 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                     <div className="flex flex-col items-center gap-3 w-full box-border">
                       <div className="grid grid-cols-2 gap-4 w-full max-w-[220px] box-border">
                         <div className="flex flex-col gap-1 min-w-0">
-                          <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">In Time</label>
+                          <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">In Time (24h)</label>
                           <div className="relative group w-full">
-                            <input type="time" value={attendanceForm.inTime || ''} onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6" />
+                            <input type="text" placeholder="00:00" value={attendanceForm.inTime || ''} onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6 text-center" />
                             {attendanceForm.inTime && (
                               <button onClick={() => setAttendanceForm({...attendanceForm, inTime: ''})} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-rose-400 transition-colors">
                                 <X size={10} />
@@ -476,9 +499,9 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                           </div>
                         </div>
                         <div className="flex flex-col gap-1 min-w-0">
-                          <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">Out Time</label>
+                          <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">Out Time (24h)</label>
                           <div className="relative group w-full">
-                            <input type="time" value={attendanceForm.outTime || ''} onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6" />
+                            <input type="text" placeholder="00:00" value={attendanceForm.outTime || ''} onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6 text-center" />
                             {attendanceForm.outTime && (
                               <button onClick={() => setAttendanceForm({...attendanceForm, outTime: ''})} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-rose-400 transition-colors">
                                 <X size={10} />
@@ -490,9 +513,9 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                     </div>
 
                     <div className="flex flex-col gap-1 w-full box-border">
-                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 leading-tight">ENTRY TIME (CANTONMENT)</label>
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 leading-tight">ENTRY TIME (CANTONMENT) [24H]</label>
                       <div className="relative w-full">
-                        <input type="time" value={attendanceForm.lastDayCompletionTime || ''} onChange={e => setAttendanceForm({...attendanceForm, lastDayCompletionTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border pr-12" />
+                        <input type="text" placeholder="00:00" value={attendanceForm.lastDayCompletionTime || ''} onChange={e => setAttendanceForm({...attendanceForm, lastDayCompletionTime: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border pr-12" />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                           {attendanceForm.lastDayCompletionTime && <button onClick={() => setAttendanceForm({...attendanceForm, lastDayCompletionTime: ''})} className="p-1 text-slate-500"><X size={10} /></button>}
                           <RotateCw size={12} className="text-emerald-500 opacity-40" />
@@ -588,7 +611,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                 </div>
                 <button onClick={() => setActiveStep('attendance-download-range')} className="w-full py-3.5 bg-black/40 text-emerald-400 rounded-xl md:rounded-2xl font-black uppercase text-[9px] md:text-[10px] border border-emerald-500/20 shadow-lg flex items-center justify-center gap-2.5 transition-all active:scale-95 shrink-0 box-border mb-2">
                   <Download size={14} /> 
-                  <span>Export Log</span>
+                  <span>Download PDF</span>
                 </button>
               </div>
             </div>

@@ -565,7 +565,7 @@ const App: React.FC = () => {
 
         {view === 'calendar' && (
           <footer 
-            className="px-6 h-8 border-t border-white/10 backdrop-blur-sm flex items-center justify-center overflow-hidden shrink-0 z-50 print-hide"
+            className="px-6 h-10 md:h-12 border-t border-white/10 backdrop-blur-sm flex items-center justify-center overflow-hidden shrink-0 z-50 print-hide"
             style={{ backgroundColor: `${settings.ui.bgColor}F2` }}
           >
             <div key={footerIndex} className="animate-footer-wipe flex items-center justify-center gap-2 min-w-max">
