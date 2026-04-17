@@ -55,6 +55,10 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
   const [attendanceRecords, setAttendanceRecords] = useState<DriverAttendance[]>([]);
   const [historyMonth, setHistoryMonth] = useState(new Date());
   
+  const inTimeRef = useRef<HTMLInputElement>(null);
+  const outTimeRef = useRef<HTMLInputElement>(null);
+  const entryTimeRef = useRef<HTMLInputElement>(null);
+  
   const [isAddingAttendance, setIsAddingAttendance] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -194,11 +198,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
       const db = getDatabase();
       const attendanceRef = ref(db, 'attendance');
       const now = format(new Date(), 'HH:mm');
-      const recordToSave = { 
-        ...attendanceForm,
-        inTime: attendanceForm.inTime || now,
-        outTime: attendanceForm.outTime || now
-      };
+      const recordToSave = { ...attendanceForm };
       
       if (recordToSave.id) {
          await set(ref(db, `attendance/${recordToSave.id}`), recordToSave);
@@ -500,32 +500,52 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                           <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">In Time (24h)</label>
                           <div className="relative group w-full">
                             <input 
+                              ref={inTimeRef}
                               type="time" 
                               value={attendanceForm.inTime || ''} 
                               onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} 
-                              className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6 text-center [appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" 
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-8 text-center [appearance:none] time-picker-trigger" 
                             />
-                            {attendanceForm.inTime && (
-                              <button onClick={() => setAttendanceForm({...attendanceForm, inTime: ''})} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-rose-400 transition-colors z-30">
-                                <X size={10} />
-                              </button>
-                            )}
+                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 z-30 pointer-events-none">
+                              {attendanceForm.inTime && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAttendanceForm({...attendanceForm, inTime: ''});
+                                  }} 
+                                  className="p-0.5 text-slate-500 hover:text-rose-400 transition-colors pointer-events-auto"
+                                >
+                                  <X size={10} />
+                                </button>
+                              )}
+                              <Clock size={10} className="text-slate-500" />
+                            </div>
                           </div>
                         </div>
                         <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 text-center">Out Time (24h)</label>
                           <div className="relative group w-full">
                             <input 
+                              ref={outTimeRef}
                               type="time" 
                               value={attendanceForm.outTime || ''} 
                               onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} 
-                              className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-6 text-center [appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" 
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-8 text-center [appearance:none] time-picker-trigger" 
                             />
-                            {attendanceForm.outTime && (
-                              <button onClick={() => setAttendanceForm({...attendanceForm, outTime: ''})} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-rose-400 transition-colors z-30">
-                                <X size={10} />
-                              </button>
-                            )}
+                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 z-30 pointer-events-none">
+                              {attendanceForm.outTime && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAttendanceForm({...attendanceForm, outTime: ''});
+                                  }} 
+                                  className="p-0.5 text-slate-500 hover:text-rose-400 transition-colors pointer-events-auto"
+                                >
+                                  <X size={10} />
+                                </button>
+                              )}
+                              <Clock size={10} className="text-slate-500" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -535,18 +555,28 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                       <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1 leading-tight">ENTRY TIME (CANTONMENT) [24H]</label>
                       <div className="relative w-full">
                         <input 
+                          ref={entryTimeRef}
                           type="time" 
                           value={attendanceForm.lastDayCompletionTime || ''} 
                           onChange={e => setAttendanceForm({...attendanceForm, lastDayCompletionTime: e.target.value})} 
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border pr-12 [appearance:none] [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" 
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border pr-16 [appearance:none] time-picker-trigger" 
                         />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 z-30">
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-30 pointer-events-none">
                           {attendanceForm.lastDayCompletionTime && (
-                            <button onClick={() => setAttendanceForm({...attendanceForm, lastDayCompletionTime: ''})} className="p-1 text-slate-500 hover:text-rose-400 transition-colors">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAttendanceForm({...attendanceForm, lastDayCompletionTime: ''});
+                              }} 
+                              className="p-1 text-slate-500 hover:text-rose-400 transition-colors pointer-events-auto"
+                            >
                               <X size={12} />
                             </button>
                           )}
-                          <RotateCw size={12} className="text-emerald-500 opacity-40 ml-1" />
+                          <div className="flex items-center gap-2">
+                            <Clock size={12} className="text-slate-500" />
+                            <RotateCw size={12} className="text-emerald-500 opacity-40" />
+                          </div>
                         </div>
                       </div>
                     </div>
