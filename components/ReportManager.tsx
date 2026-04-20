@@ -506,7 +506,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                               onChange={e => setAttendanceForm({...attendanceForm, inTime: e.target.value})} 
                               className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-8 text-center [appearance:none] time-picker-trigger" 
                             />
-                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 z-30 pointer-events-none">
+                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 z-50 pointer-events-none">
                               {attendanceForm.inTime && (
                                 <button 
                                   onClick={(e) => {
@@ -532,7 +532,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                               onChange={e => setAttendanceForm({...attendanceForm, outTime: e.target.value})} 
                               className="w-full bg-black/40 border border-white/10 rounded-xl px-1 py-2 text-[10px] text-white outline-none focus:border-emerald-500 transition-all box-border pr-8 text-center [appearance:none] time-picker-trigger" 
                             />
-                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 z-30 pointer-events-none">
+                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 z-50 pointer-events-none">
                               {attendanceForm.outTime && (
                                 <button 
                                   onClick={(e) => {
@@ -561,7 +561,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                           onChange={e => setAttendanceForm({...attendanceForm, lastDayCompletionTime: e.target.value})} 
                           className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all box-border pr-16 [appearance:none] time-picker-trigger" 
                         />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-30 pointer-events-none">
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-50 pointer-events-none">
                           {attendanceForm.lastDayCompletionTime && (
                             <button 
                               onClick={(e) => {
