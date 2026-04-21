@@ -105,7 +105,7 @@ export interface DriverAttendance {
   remarks?: string;
 }
 
-export type BookingField = keyof Booking | 'totalDays';
+export type BookingField = keyof Booking | 'totalDays' | 'kpl';
 
 export interface CalendarDay {
   date: Date;

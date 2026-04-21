@@ -76,4 +76,5 @@ export const BOOKING_FIELDS: { label: string; value: string }[] = [
   { label: 'Purchased Fuel', value: 'purchasedFuel' },
   { label: 'Rate', value: 'fuelRate' },
   { label: 'Total Taka', value: 'totalFuelPrice' },
+  { label: 'KPL', value: 'kpl' },
 ];

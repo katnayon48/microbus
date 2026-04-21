@@ -853,7 +853,16 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
     const fuelFields = ['purchasedFuel', 'fuelRate', 'totalFuelPrice'];
     const hasFuelFields = fields.some(f => fuelFields.includes(f as string));
 
+    let kplSum = 0;
+    let kplCount = 0;
+
     filtered.forEach((b) => {
+      const totalFuelForKpl = b.fuelPurchases?.reduce((sum, fp) => sum + (fp.purchasedFuel || 0), 0) || 0;
+      if (totalFuelForKpl > 0 && b.totalKm !== undefined) {
+        kplSum += (b.totalKm / totalFuelForKpl);
+        kplCount++;
+      }
+
       const purchaseCount = (hasFuelFields && b.fuelPurchases && b.fuelPurchases.length > 0) ? b.fuelPurchases.length : 1;
       
       for (let j = 0; j < purchaseCount; j++) {
@@ -878,6 +887,10 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
               if (f === 'totalDays') content = differenceInDays(parseISO(b.endDate), parseISO(b.startDate)) + 1;
               else if (f === 'startDate' || f === 'endDate') content = b[f as keyof Booking] ? format(parseISO(b[f as keyof Booking] as string), DATE_FORMAT) : 'N/A';
               else if (f === 'fare') content = b.isExempt ? 'EXEMPTED' : (b.fare !== undefined ? formatCurrency(b.fare) : '-');
+              else if (f === 'kpl') {
+                const totalFuel = b.fuelPurchases?.reduce((sum, fp) => sum + (fp.purchasedFuel || 0), 0) || 0;
+                content = (totalFuel > 0 && b.totalKm !== undefined) ? (b.totalKm / totalFuel).toFixed(2) : '-';
+              }
               else if (f === 'outTime' || f === 'inTime') {
                 const val = b[f as keyof Booking];
                 content = val ? `${val} hrs` : 'N/A';
@@ -893,10 +906,40 @@ export const generateOverallReport = async (bookings: Booking[], startDate: stri
       }
     });
 
+    let totalCols = 0;
+    let kplColIndex = -1;
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      if (f === 'kpl') kplColIndex = totalCols;
+      if (((f === 'kmStart' && fields[i+1] === 'kmEnd') || (f === 'kmEnd' && fields[i+1] === 'kmStart')) ||
+          ((f === 'startDate' && fields[i+1] === 'endDate') || (f === 'endDate' && fields[i+1] === 'startDate'))) {
+        totalCols += 2;
+        i++;
+      } else {
+        totalCols++;
+      }
+    }
+
+    const footRow: any[] = [];
+    if (fields.includes('kpl')) {
+      const averageKpl = kplCount > 0 ? (kplSum / kplCount).toFixed(2) : '-';
+      for (let i = 0; i < totalCols; i++) {
+        if (kplColIndex > 0 && i === kplColIndex - 1) {
+          footRow.push({ content: 'AVERAGE KPL', styles: { halign: 'center', fontStyle: 'bold', fillColor: [240, 240, 240] } });
+        } else if (i === kplColIndex) {
+          footRow.push({ content: averageKpl, styles: { halign: 'center', fontStyle: 'bold', fillColor: [240, 240, 240] } });
+        } else {
+          footRow.push({ content: '', styles: { fillColor: [240, 240, 240] } });
+        }
+      }
+    }
+
     autoTable(doc, {
       startY: 30,
       head: [headRow1, headRow2],
       body: tableBody,
+      foot: footRow.length > 0 ? [footRow] : undefined,
+      showFoot: 'lastPage',
       theme: 'grid',
       headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontSize: 8, fontStyle: 'bold', halign: 'center', font: 'helvetica' },
       styles: { font: 'helvetica', fontSize: 7, cellPadding: 1.5, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
@@ -1054,7 +1097,7 @@ export const generateAttendanceSheet = async (records: DriverAttendance[], start
       body: filtered.map((r) => {
         const dateObj = parseISO(r.date);
         const baseData = [format(dateObj, 'dd MMM yy').toUpperCase(), format(dateObj, 'EEEE').toUpperCase()];
-        let dynamicColumns = r.isHoliday && !r.isDutyDay ? [{ content: 'HOLIDAY', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 250] } }, r.lastDayCompletionTime || '-'] : [r.inTime || '-', r.outTime || '-', r.lastDayCompletionTime || '-'];
+        const dynamicColumns = r.isHoliday && !r.isDutyDay ? [{ content: 'HOLIDAY', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [250, 250, 250] } }, r.lastDayCompletionTime || '-'] : [r.inTime || '-', r.outTime || '-', r.lastDayCompletionTime || '-'];
         
         // Final logic for remarks: prioritizes user input, then DUTY for duty days
         const remarkDisplay = (r.remarks && r.remarks.trim() !== '') ? r.remarks : (r.isDutyDay ? 'DUTY' : '');

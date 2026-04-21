@@ -67,7 +67,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
   const [fuelWithSignature, setFuelWithSignature] = useState(true);
   const [masterDataWithSignature, setMasterDataWithSignature] = useState(false);
   const [customHeader, setCustomHeader] = useState('');
-  const [selectedFields, setSelectedFields] = useState<BookingField[]>([]);
+  const [selectedFields, setSelectedFields] = useState<BookingField[]>(['rankName', 'unit', 'startDate', 'endDate', 'totalKm', 'purchasedFuel', 'totalFuelPrice', 'kpl']);
 
   const sigLabel1 = appSettings.branding.pdfSignatureLabel1 || "Driver";
   const sigLabel2 = appSettings.branding.pdfSignatureLabel2 || "JCO/NCO";
