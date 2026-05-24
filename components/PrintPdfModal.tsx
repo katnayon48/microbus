@@ -69,7 +69,7 @@ const PrintPdfModal: React.FC<PrintPdfModalProps> = ({ isOpen, onClose, bookings
             type="text" 
             value={customHeader} 
             onChange={e => setCustomHeader(e.target.value)} 
-            placeholder="MICROBUS SCHEDULE" 
+            placeholder="MICROBUS MANAGEMENT" 
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all box-border" 
           />
         </div>

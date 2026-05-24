@@ -79,7 +79,7 @@ const loadOriginalImage = (url: string): Promise<{data: string, width: number, h
   });
 };
 
-const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false) => {
+const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false, hideSystemGenerated: boolean = false) => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
   
@@ -87,11 +87,18 @@ const drawDeveloperFooter = (doc: jsPDF, startY: number, isSlip: boolean = false
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   
-  doc.text('SYSTEM GENERATED REPORT', centerX, startY, { align: 'center' });
+  if (!hideSystemGenerated) {
+    doc.text('SYSTEM GENERATED REPORT', centerX, startY, { align: 'center' });
+  }
   
   doc.setFontSize(6);
-  doc.text('SOFTWARE DEVELOPED BY', centerX, startY + 4, { align: 'center' });
-  doc.text('1815124 Cpl (Clk) Billal, ASC', centerX, startY + 7, { align: 'center' });
+  if (hideSystemGenerated) {
+    doc.text('SOFTWARE DEVELOPED BY', centerX, startY, { align: 'center' });
+    doc.text('1815124 Cpl (Clk) Billal, ASC', centerX, startY + 3, { align: 'center' });
+  } else {
+    doc.text('SOFTWARE DEVELOPED BY', centerX, startY + 4, { align: 'center' });
+    doc.text('1815124 Cpl (Clk) Billal, ASC', centerX, startY + 7, { align: 'center' });
+  }
 };
 
 const filterByRange = (bookings: Booking[], start: string, end: string) => {
@@ -1275,10 +1282,10 @@ export const generateCalendarPDF = async (bookings: Booking[], startDateStr: str
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(18);
       doc.setTextColor(0, 0, 0);
-      doc.text("MICROBUS SCHEDULE", 148.5, 10, { align: 'center' });
+      doc.text("MICROBUS MANAGEMENT", 148.5, 10, { align: 'center' });
       
-      // Underline MICROBUS SCHEDULE
-      const titleWidth = doc.getTextWidth("MICROBUS SCHEDULE");
+      // Underline MICROBUS MANAGEMENT
+      const titleWidth = doc.getTextWidth("MICROBUS MANAGEMENT");
       doc.setLineWidth(0.5);
       doc.line(148.5 - titleWidth/2, 11.5, 148.5 + titleWidth/2, 11.5);
 
@@ -1291,7 +1298,7 @@ export const generateCalendarPDF = async (bookings: Booking[], startDateStr: str
       doc.setLineWidth(0.5);
       doc.line(148.5 - monthYearWidth/2, 19.5, 148.5 + monthYearWidth/2, 19.5);
 
-      if (customHeader && customHeader !== "MICROBUS SCHEDULE") {
+      if (customHeader && customHeader !== "MICROBUS MANAGEMENT" && customHeader !== "MICROBUS SCHEDULE") {
         doc.setFontSize(10);
         doc.text(customHeader, 148.5, 25, { align: 'center' });
       }
@@ -1300,7 +1307,7 @@ export const generateCalendarPDF = async (bookings: Booking[], startDateStr: str
       const startX = 10;
       const startY = 35;
       const cellW = 277 / 7;
-      const cellH = 165 / 6; // Adjusted for new startY
+      const cellH = 156 / 6; // Adjusted to avoid overlap with footer
 
       // Days of week
       const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -1385,7 +1392,7 @@ export const generateCalendarPDF = async (bookings: Booking[], startDateStr: str
         if (currentDay > daysInMonth) break;
       }
       
-      drawDeveloperFooter(doc, 200);
+      drawDeveloperFooter(doc, 202, false, true);
     });
 
     doc.save(`Calendar_View_${startDateStr}_to_${endDateStr}.pdf`);

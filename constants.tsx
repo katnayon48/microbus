@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     currencyPosition: 'prefix',
   },
   branding: {
-    title: "MICROBUS SCHEDULE",
+    title: "MICROBUS MANAGEMENT",
     subtitle: "AREA HQ BARISHAL",
     footerText: "DEVELOPED BY CPL (CLK) BILLAL, ASC",
     footerPhone: "+8801783413333",

@@ -100,7 +100,7 @@ const LoadingScreen: React.FC<{ bgColor: string }> = ({ bgColor }) => {
         <div className="space-y-6 w-full">
           <div className="space-y-1">
             <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
-              Microbus Schedule
+              Microbus Management
             </h1>
             <p className="text-[11px] md:text-[13px] font-black text-emerald-400 tracking-[0.4em] uppercase opacity-90 drop-shadow-sm">
               Area HQ Barishal
@@ -493,7 +493,7 @@ const App: React.FC = () => {
 
           <div className="text-center px-2 flex flex-col justify-center">
             <h1 className="text-[14px] sm:text-lg md:text-[24px] font-black text-white tracking-tight uppercase leading-tight whitespace-nowrap drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] sm:drop-shadow-none print-text-black print-no-shadow">
-              {view === 'reports' ? 'Report Center' : view === 'attendance' ? "Driver's Attendance Log" : (settings?.branding?.title || "MICROBUS SCHEDULE")}
+              {view === 'reports' ? 'Report Center' : view === 'attendance' ? "Driver's Attendance Log" : (settings?.branding?.title === "MICROBUS SCHEDULE" ? "MICROBUS MANAGEMENT" : (settings?.branding?.title || "MICROBUS MANAGEMENT"))}
             </h1>
             <p className="text-[9px] sm:text-[10px] md:text-[12px] font-bold text-white tracking-[0.1em] md:tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap leading-none opacity-90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] sm:drop-shadow-none print-text-black print-no-shadow">
               {view === 'reports' ? 'Data Analytics & PDF' : view === 'attendance' ? 'Driver Timing History' : (settings?.branding?.subtitle || "AREA HQ BARISHAL")}
