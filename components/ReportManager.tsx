@@ -71,7 +71,6 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
 
   const sigLabel1 = appSettings.branding.pdfSignatureLabel1 || "Driver";
   const sigLabel2 = appSettings.branding.pdfSignatureLabel2 || "JCO/NCO";
-  const bgColor = appSettings.ui.bgColor || "#062c1e";
 
   const [handoffData, setHandoffData] = useState<HandoffInfo>({
     providerArmyNo: '',
@@ -318,7 +317,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
         <ArrowLeft size={16} />
       </button>
       <div className="min-w-0 flex-1">
-        <h3 className="text-[11px] md:text-lg font-black text-white uppercase tracking-tight leading-none truncate">{title}</h3>
+        <h3 className="text-[11px] md:text-lg font-black text-off-white uppercase tracking-tight leading-none truncate">{title}</h3>
         <p className="text-emerald-500 font-bold text-[7px] md:text-[9px] uppercase tracking-widest mt-1 truncate">{subtitle}</p>
       </div>
     </div>
@@ -340,10 +339,10 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
           </div>
         </div>
         <div className="space-y-1 w-full px-1 min-w-0">
-          <h4 className="text-[9px] md:text-lg font-black text-white uppercase tracking-tight leading-tight group-hover:text-emerald-400 transition-colors truncate">
+          <h4 className="text-[9px] md:text-lg font-black text-off-white uppercase tracking-tight leading-tight group-hover:text-emerald-400 transition-colors truncate">
             {title}
           </h4>
-          <p className="text-slate-500 font-bold text-[5px] md:text-[10px] uppercase tracking-[0.3em] opacity-80 leading-none truncate">
+          <p className="text-silver font-bold text-[5px] md:text-[10px] uppercase tracking-[0.3em] opacity-80 leading-none truncate">
             {subtitle}
           </p>
         </div>
@@ -369,8 +368,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
 
   return (
     <div 
-      className="flex flex-col w-full h-full box-border relative overflow-hidden"
-      style={{ backgroundColor: bgColor }}
+      className="flex flex-col w-full h-full box-border relative overflow-hidden bg-transparent"
     >
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
         <img 
@@ -385,7 +383,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
           <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 justify-center w-full box-border">
             <div className="flex items-center justify-between mb-4 md:mb-8 shrink-0 w-full box-border">
               <div className="min-w-0">
-                <h2 className="text-sm md:text-3xl font-black text-white uppercase tracking-tighter leading-none flex items-center gap-3">
+                <h2 className="text-sm md:text-3xl font-black text-off-white uppercase tracking-tighter leading-none flex items-center gap-3">
                   REPORT COMMAND CENTER
                   <div className="hidden md:block h-px w-20 bg-gradient-to-r from-emerald-500/50 to-transparent"></div>
                 </h2>
@@ -418,16 +416,16 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
             
             {deletingId && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
-                <div className="bg-[#0a1128] border-2 border-rose-500/50 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center space-y-6">
+                <div className="glass-container border-2 border-rose-500/50 p-6 md:p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center space-y-6">
                   <div className="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20 shadow-inner">
                     <AlertTriangle size={32} />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-xl font-black text-white uppercase tracking-tight">Delete record?</h4>
-                    <p className="text-xs font-medium text-slate-400 leading-relaxed">Are you sure? This cannot be undone.</p>
+                    <h4 className="text-xl font-black text-off-white uppercase tracking-tight">Delete record?</h4>
+                    <p className="text-xs font-medium text-silver leading-relaxed">Are you sure? This cannot be undone.</p>
                   </div>
                   <div className="flex gap-4">
-                    <button onClick={() => setDeletingId(null)} className="flex-1 py-3 bg-white/5 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all">Cancel</button>
+                    <button onClick={() => setDeletingId(null)} className="flex-1 py-3 bg-white/5 text-off-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all">Cancel</button>
                     <button onClick={confirmDeleteAttendance} className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">Delete</button>
                   </div>
                 </div>
@@ -461,7 +459,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                     </button>
                   </div>
                 ) : (
-                  <div className="bg-black/30 backdrop-blur-xl p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] border border-white/10 flex flex-col gap-4 animate-in slide-in-from-left-4 duration-300 shadow-2xl relative w-full box-border overflow-hidden">
+                  <div className="bg-white/5 backdrop-blur-xl p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] border border-white/10 flex flex-col gap-4 animate-in slide-in-from-left-4 duration-300 shadow-2xl relative w-full box-border overflow-hidden">
                     <button onClick={() => setIsAddingAttendance(false)} className="absolute right-3 top-3 text-slate-500 hover:text-white transition-colors z-20"><X size={18} /></button>
                     
                     <div className="flex flex-col gap-1 w-full box-border">
@@ -595,11 +593,11 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
               </div>
 
               <div className="flex-1 flex flex-col min-h-0 min-w-0 gap-3 box-border">
-                <div className="flex-1 bg-black/30 rounded-xl md:rounded-[2rem] border border-white/10 overflow-hidden shadow-2xl w-full backdrop-blur-sm flex flex-col min-h-0 min-w-0 box-border">
-                   <div className="p-4 border-b border-white/10 bg-[#0a1128]/50 flex items-center justify-between shrink-0 box-border">
+                <div className="flex-1 bg-white/5 rounded-xl md:rounded-[2rem] border border-white/10 overflow-hidden shadow-2xl w-full backdrop-blur-sm flex flex-col min-h-0 min-w-0 box-border">
+                   <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between shrink-0 box-border">
                       <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">History</span>
                       
-                      <div className="flex items-center gap-1 bg-black/40 px-2 py-1 rounded-lg border border-white/10">
+                      <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-lg border border-white/10">
                         <button 
                           onClick={() => setHistoryMonth(m => subMonths(m, 1))}
                           className="p-0.5 text-slate-500 hover:text-white transition-colors active:scale-90"
@@ -621,12 +619,12 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                    </div>
                    <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar w-full box-border">
                       <table className="w-full text-left border-collapse table-fixed min-w-[320px] box-border">
-                         <thead className="sticky top-0 z-20 bg-[#0a1128]">
+                         <thead className="sticky top-0 z-20 bg-white/10 backdrop-blur-md">
                             <tr className="border-b border-white/10">
-                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">Date</th>
-                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">In</th>
-                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest border-r border-white/5 w-[25%]">Out</th>
-                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest text-center w-[25%]">Edit</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">Date</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">In</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">Out</th>
+                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest text-center w-[25%]">Edit</th>
                             </tr>
                          </thead>
                          <tbody className="divide-y divide-white/5">
@@ -760,20 +758,20 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                     <div className="space-y-3">
                       <input type="text" value={handoffData.providerArmyNo} onChange={e => setHandoffData({...handoffData, providerArmyNo: e.target.value})} placeholder="Army No" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
                       <input type="text" value={handoffData.providerRank} onChange={e => setHandoffData({...handoffData, providerRank: e.target.value})} placeholder="Rank" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
-                      <input type="text" value={handoffData.providerName} onChange={e => setHandoffData({...handoffData, providerName: e.target.value})} placeholder="Name" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
+                      <input type="text" value={handoffData.providerName} onChange={e => setHandoffData({...handoffData, providerName: e.target.value})} placeholder="Name" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-off-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
                     </div>
                   </div>
                   <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/5 shadow-inner box-border">
-                    <h5 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2"><UserCheck className="text-emerald-500" size={14} /> Receiver</h5>
+                    <h5 className="text-[10px] font-black text-off-white uppercase tracking-widest flex items-center gap-2"><UserCheck className="text-emerald-500" size={14} /> Receiver</h5>
                     <div className="space-y-3">
-                      <input type="text" value={handoffData.receiverArmyNo} onChange={e => setHandoffData({...handoffData, receiverArmyNo: e.target.value})} placeholder="Army No" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
-                      <input type="text" value={handoffData.receiverRank} onChange={e => setHandoffData({...handoffData, receiverRank: e.target.value})} placeholder="Rank" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
-                      <input type="text" value={handoffData.receiverName} onChange={e => setHandoffData({...handoffData, receiverName: e.target.value})} placeholder="Name" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
+                      <input type="text" value={handoffData.receiverArmyNo} onChange={e => setHandoffData({...handoffData, receiverArmyNo: e.target.value})} placeholder="Army No" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-off-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
+                      <input type="text" value={handoffData.receiverRank} onChange={e => setHandoffData({...handoffData, receiverRank: e.target.value})} placeholder="Rank" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-off-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
+                      <input type="text" value={handoffData.receiverName} onChange={e => setHandoffData({...handoffData, receiverName: e.target.value})} placeholder="Name" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-off-white outline-none focus:border-emerald-500 transition-all box-border placeholder:text-slate-700" />
                     </div>
                   </div>
                 </div>
                 <div className="px-6 w-full box-border mt-5 shrink-0">
-                  <button onClick={handlePaymentSlipGenerate} disabled={isGenerating} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                  <button onClick={handlePaymentSlipGenerate} disabled={isGenerating} className="w-full bg-emerald-600 text-off-white py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
                     {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                     Export Monthly PDF
                   </button>
@@ -787,9 +785,9 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
             <div className="flex items-center justify-between mb-2 shrink-0 w-full box-border px-1">
               <StepHeader title="Trip Stats" subtitle={`Annual ${selectedYear}`} onBackStep={() => setActiveStep('dashboard')} />
               <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-white/10 shrink-0">
-                 <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 text-slate-400 hover:text-white transition-colors"><ChevronLeft size={16}/></button>
-                 <span className="text-[10px] font-black text-white px-2 min-w-[40px] text-center">{selectedYear}</span>
-                 <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 text-slate-400 hover:text-white transition-colors"><ChevronRight size={16}/></button>
+                 <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 text-slate-400 hover:text-off-white transition-colors"><ChevronLeft size={16}/></button>
+                 <span className="text-[10px] font-black text-off-white px-2 min-w-[40px] text-center">{selectedYear}</span>
+                 <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 text-slate-400 hover:text-off-white transition-colors"><ChevronRight size={16}/></button>
               </div>
             </div>
             <div className="flex-1 bg-black/20 p-4 md:p-8 rounded-[2rem] border border-white/5 flex flex-col min-h-0 overflow-hidden shadow-inner w-full box-border mx-auto">
@@ -827,7 +825,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                  <div className="bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-500/20 truncate mr-2">
                    <span className="text-[8px] md:text-[11px] font-black text-emerald-400 uppercase tracking-widest">Aggregate: {monthlyStats.reduce((a, b) => a + b.count, 0)} Trips</span>
                  </div>
-                 <button onClick={() => setActiveStep('summary-download-range')} className="flex items-center gap-2 px-5 md:px-7 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[8px] md:text-[11px] font-black uppercase tracking-widest shadow-xl shrink-0 transition-all active:scale-95">
+                 <button onClick={() => setActiveStep('summary-download-range')} className="flex items-center gap-2 px-5 md:px-7 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-off-white rounded-xl text-[8px] md:text-[11px] font-black uppercase tracking-widest shadow-xl shrink-0 transition-all active:scale-95">
                    <Download size={14} /> EXPORT
                  </button>
                </div>
@@ -842,7 +840,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                 {activeStep === 'handoff-prompt' ? <UserCheck size={32} /> : <BarChart size={32} />}
               </div>
               <div className="space-y-2.5">
-                <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight leading-none">
+                <h3 className="text-xl md:text-2xl font-black text-off-white uppercase tracking-tight leading-none">
                   {activeStep === 'handoff-prompt' ? 'AUTHORIZED SIGNATURES' : 'DATA VISUALIZATION'}
                 </h3>
                 <p className="text-slate-400 font-bold text-[9px] md:text-[10px] uppercase tracking-widest leading-relaxed opacity-60">
@@ -852,13 +850,13 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
               <div className="flex flex-col gap-3.5">
                 {activeStep === 'handoff-prompt' ? (
                   <>
-                    <button onClick={() => setActiveStep('handoff-form')} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] md:text-[11px] shadow-lg active:scale-95 transition-all">Yes, Include Info</button>
-                    <button onClick={handlePaymentSlipGenerate} className="w-full bg-white/5 text-slate-300 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] md:text-[11px] border border-white/10 active:scale-95 transition-all hover:bg-white/10">No, Skip</button>
+                    <button onClick={() => setActiveStep('handoff-form')} className="w-full bg-emerald-600 text-off-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] md:text-[11px] shadow-lg active:scale-[0.98] transition-all">Yes, Include Info</button>
+                    <button onClick={handlePaymentSlipGenerate} className="w-full bg-white/5 text-off-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] md:text-[11px] border border-white/10 active:scale-95 transition-all hover:bg-white/10">No, Skip</button>
                   </>
                 ) : (
                   <>
-                    <button onClick={() => handleTripSummaryDownload(true)} disabled={isGenerating} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px] md:text-[11px] shadow-lg active:scale-95 transition-all">Statistical Chart</button>
-                    <button onClick={() => handleTripSummaryDownload(false)} disabled={isGenerating} className="w-full bg-white/5 text-slate-300 py-4 rounded-xl font-black uppercase text-[10px] md:text-[11px] border border-white/10 active:scale-95 transition-all hover:bg-white/10">Data Table Only</button>
+                    <button onClick={() => handleTripSummaryDownload(true)} disabled={isGenerating} className="w-full bg-emerald-600 text-off-white py-4 rounded-xl font-black uppercase text-[10px] md:text-[11px] shadow-lg active:scale-95 transition-all">Statistical Chart</button>
+                    <button onClick={() => handleTripSummaryDownload(false)} disabled={isGenerating} className="w-full bg-white/5 text-off-white py-4 rounded-xl font-black uppercase text-[10px] md:text-[11px] border border-white/10 active:scale-95 transition-all hover:bg-white/10">Data Table Only</button>
                   </>
                 )}
               </div>

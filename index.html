@@ -11,12 +11,29 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000000;
             margin: 0;
             padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: #020208;
             overflow: hidden;
             touch-action: manipulation;
             transition: background-color 0.3s ease;
+        }
+
+        .glass-container {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .text-silver {
+            color: #cbd5e1;
+        }
+
+        .text-off-white {
+            color: #ffffff;
         }
         
         @keyframes logo-glow {
@@ -32,7 +49,7 @@
             }
         }
         .animate-logo-glow {
-            animation: logo-glow 3s ease-in-out infinite;
+            animation: logo-glow 1.2s ease-in-out infinite;
         }
 
         @keyframes today-green-glow {
@@ -51,7 +68,7 @@
             z-index: 20;
             border: 2px solid rgba(16, 185, 129, 0.2) !important;
             background: transparent !important;
-            animation: today-green-glow 3s ease-in-out infinite;
+            animation: today-green-glow 1.2s ease-in-out infinite;
         }
 
         @keyframes progress-fill {
@@ -59,7 +76,7 @@
             100% { width: 100%; }
         }
         .animate-progress-fill {
-            animation: progress-fill 3s ease-out forwards;
+            animation: progress-fill 1.5s ease-out forwards;
         }
         
         @keyframes bar-grow {
@@ -67,7 +84,7 @@
             100% { transform: scaleY(1); }
         }
         .animate-bar-grow {
-            animation: bar-grow 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: bar-grow 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             transform-origin: bottom;
         }
         
@@ -107,7 +124,7 @@
             }
         }
         .animate-booking-pop {
-            animation: booking-fast-drop 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            animation: booking-fast-drop 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
         }
 
         @keyframes stats-reveal {
@@ -123,7 +140,7 @@
             }
         }
         .animate-stats-reveal {
-            animation: stats-reveal 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+            animation: stats-reveal 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
         }
 
         @keyframes fade-in {
@@ -164,7 +181,7 @@
             100% { clip-path: inset(0 0 0 100%); }
         }
         .animate-footer-wipe {
-            animation: footer-wipe 5s ease-in-out infinite;
+            animation: footer-wipe 3s ease-in-out infinite;
         }
 
         @keyframes rotate-y-3d {
@@ -180,12 +197,12 @@
         }
 
         .animate-3d-rotate-watermark {
-            animation: rotate-y-3d-watermark 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            animation: rotate-y-3d-watermark 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
             transform-style: preserve-3d;
         }
 
         .animate-3d-rotate {
-            animation: rotate-y-3d 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            animation: rotate-y-3d 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             transform-style: preserve-3d;
         }
         .logo-3d-container {
@@ -196,7 +213,7 @@
             width: 180px;
             height: 180px;
             transform-style: preserve-3d;
-            animation: rotate-y-3d 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            animation: rotate-y-3d 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
         @media (min-width: 768px) {
             .logo-3d-card.xl {

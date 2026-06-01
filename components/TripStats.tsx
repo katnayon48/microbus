@@ -28,7 +28,6 @@ const MONTH_BAR_STYLES = [
 const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
   const [selectedYear, setSelectedYear] = useState(() => getYear(new Date()));
   const themeColor = appSettings?.ui?.themeColor || "#10b981";
-  const bgColor = appSettings?.ui?.bgColor || "#062c1e";
 
   const monthlyStats = useMemo(() => {
     const statsArray = Array(12).fill(0).map((_, i) => ({
@@ -69,8 +68,7 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
 
   return (
     <div 
-      className="flex flex-col w-full h-[85vh] overflow-hidden animate-stats-reveal relative px-2 md:px-8 py-4"
-      style={{ backgroundColor: bgColor }}
+      className="flex flex-col w-full h-[85vh] overflow-hidden animate-stats-reveal relative px-2 md:px-8 py-4 bg-transparent"
     >
       <div className="w-full grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-8 shrink-0 relative z-10">
          <div className="flex items-center gap-3">
@@ -81,24 +79,24 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
                <BarChart3 size={16} md:size={18} />
             </div>
             <div className="min-w-0">
-               <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-tighter leading-none">TRIP STATISTICS</h3>
+               <h3 className="text-xs md:text-sm font-black text-off-white uppercase tracking-tighter leading-none">TRIP STATISTICS</h3>
             </div>
          </div>
          
          <div className="flex justify-center">
-           <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 shadow-2xl shrink-0">
+           <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shadow-2xl shrink-0">
               <button 
                 onClick={() => setSelectedYear(y => y - 1)} 
-                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-all active:scale-90"
+                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-silver hover:text-off-white transition-all active:scale-90"
               >
                 <ChevronLeft size={14} md:size={16} />
               </button>
               <div className="px-3 md:px-5 flex flex-col items-center">
-                <span className="text-[11px] md:text-sm font-black text-white tabular-nums tracking-[0.2em]">{selectedYear}</span>
+                <span className="text-[11px] md:text-sm font-black text-off-white tabular-nums tracking-[0.2em]">{selectedYear}</span>
               </div>
               <button 
                 onClick={() => setSelectedYear(y => y + 1)} 
-                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-all active:scale-90"
+                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-silver hover:text-off-white transition-all active:scale-90"
               >
                 <ChevronRight size={14} md:size={16} />
               </button>
@@ -108,7 +106,7 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
          <div className="hidden md:block"></div>
       </div>
 
-      <div className="w-full flex-1 bg-black/20 rounded-[2rem] md:rounded-[3rem] border border-white/5 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)] relative flex flex-col overflow-hidden p-6 md:p-12">
+      <div className="w-full flex-1 bg-white/5 rounded-[2rem] md:rounded-[3rem] border border-white/5 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)] relative flex flex-col overflow-hidden p-6 md:p-12">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.03]">
           <img 
             src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" 
@@ -121,8 +119,8 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
           <div className="flex flex-col justify-between h-full text-right pr-2 md:pr-6 select-none border-r border-white/5 pb-10">
              {scaleValues.map(val => (
                <div key={`l-${val}`} className="flex items-center justify-end gap-2 md:gap-4 relative group">
-                 <span className="text-[9px] md:text-[10px] font-black text-slate-500/80 group-hover:text-slate-300 transition-colors">{val}</span>
-                 <div className="w-2 md:w-3 h-[1px] bg-slate-700"></div>
+                 <span className="text-[9px] md:text-[10px] font-black text-silver/60 group-hover:text-silver transition-colors">{val}</span>
+                 <div className="w-2 md:w-3 h-[1px] bg-white/10"></div>
                </div>
              ))}
           </div>
@@ -130,7 +128,7 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
           <div className="flex-1 relative h-full flex items-end justify-between gap-1.5 md:gap-6 px-1 md:px-6 border-b-2 border-white/10 pb-10">
              <div className="absolute inset-0 flex flex-col pointer-events-none opacity-[0.03] px-6 pb-10">
                 {scaleValues.slice(0, -1).map((_, i) => (
-                  <div key={i} className="flex-1 border-t border-white"></div>
+                  <div key={i} className="flex-1 border-t border-off-white"></div>
                 ))}
              </div>
 
@@ -162,8 +160,8 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
                     </div>
 
                     <span 
-                      className="absolute -bottom-7 md:-bottom-9 text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-tight group-hover/bar:text-emerald-400 transition-colors"
-                      style={{ color: stat.count > 0 ? '' : '#475569' }}
+                      className="absolute -bottom-7 md:-bottom-9 text-[8px] md:text-[10px] font-black text-silver uppercase tracking-tight group-hover/bar:text-emerald-400 transition-colors"
+                      style={{ color: stat.count > 0 ? '' : '#94a3b8aa' }}
                     >
                       {stat.month}
                     </span>
@@ -178,9 +176,9 @@ const TripStats: React.FC<TripStatsProps> = ({ bookings, appSettings }) => {
               className="px-5 py-2.5 md:px-7 md:py-3 rounded-xl md:rounded-2xl shadow-lg transition-all hover:scale-105 duration-300"
               style={{ backgroundColor: `${themeColor}CC`, borderColor: `${themeColor}44`, borderWidth: '1px', borderStyle: 'solid' }}
            >
-              <span className="text-[10px] md:text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2.5">
+              <span className="text-[10px] md:text-sm font-black text-off-white uppercase tracking-[0.2em] flex items-center gap-2.5">
                 <TrendingUp size={14} md:size={18} /> 
-                Annual Total: <span className="text-white drop-shadow-md">{monthlyStats.reduce((a, b) => a + b.count, 0)} Days</span>
+                Annual Total: <span className="text-off-white drop-shadow-md">{monthlyStats.reduce((a, b) => a + b.count, 0)} Days</span>
               </span>
            </div>
         </div>

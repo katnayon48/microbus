@@ -38,7 +38,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, currentSettin
 
   return (
     <div className="flex flex-col items-center justify-center space-y-5 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="w-full flex items-center justify-between px-4 py-2 bg-black/40 rounded-full border border-white/5 mb-1">
+      <div className="w-full flex items-center justify-between px-4 py-2 bg-white/5 rounded-full border border-white/5 mb-1">
         <div className="flex items-center gap-2">
           <div 
             className="w-2 h-2 rounded-full animate-pulse"
@@ -47,8 +47,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, currentSettin
           <span className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: `${themeColor}cc` }}>Secure Session</span>
         </div>
         <div className="flex items-center gap-1.5 opacity-40">
-          <Fingerprint size={10} className="text-slate-400" />
-          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">SSL 256</span>
+          <Fingerprint size={10} className="text-silver" />
+          <span className="text-[8px] font-bold text-silver uppercase tracking-widest">SSL 256</span>
         </div>
       </div>
 
@@ -60,16 +60,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, currentSettin
           <ShieldCheck size={32} strokeWidth={1.5} style={{ color: themeColor }} />
         </div>
         <div 
-          className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform duration-500"
-          style={{ backgroundColor: bgColor, borderColor: `${themeColor}66`, borderWidth: '2px', borderStyle: 'solid', color: themeColor }}
+          className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform duration-500 bg-white/10 backdrop-blur-md"
+          style={{ borderColor: `${themeColor}66`, borderWidth: '2px', borderStyle: 'solid', color: themeColor }}
         >
           <Lock size={12} />
         </div>
       </div>
       
       <div className="text-center space-y-1.5">
-        <h4 className="text-lg font-black text-white uppercase tracking-tight leading-none">Terminal Access</h4>
-        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] max-w-[180px] mx-auto leading-relaxed opacity-60">
+        <h4 className="text-lg font-black text-off-white uppercase tracking-tight leading-none">Terminal Access</h4>
+        <p className="text-[9px] font-bold text-silver uppercase tracking-[0.2em] max-w-[180px] mx-auto leading-relaxed opacity-60">
           Enter Authorization Pin
         </p>
       </div>
@@ -77,8 +77,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, currentSettin
       <form onSubmit={handleSubmit} className={`w-full max-w-[220px] space-y-7 ${error ? 'animate-shake' : ''}`}>
         <div className="space-y-3">
           <div className="relative group flex flex-col items-center">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 z-10" style={{ backgroundColor: bgColor }}>
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Pin Code</span>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 z-10 bg-transparent">
+              <span className="text-[8px] font-black text-silver/60 uppercase tracking-widest">Pin Code</span>
             </div>
             <input
               type="password"
@@ -92,7 +92,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, currentSettin
               }}
               autoFocus
               className={`
-                w-32 text-center text-2xl tracking-[0.5em] py-3 bg-black/40 text-white border-2 
+                w-32 text-center text-2xl tracking-[0.5em] py-3 bg-white/5 backdrop-blur-md text-off-white border-2 
                 ${error ? 'border-rose-500/50 focus:border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.1)]' : 'border-white/10'} 
                 rounded-xl outline-none transition-all font-mono shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)]
               `}
@@ -106,8 +106,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, currentSettin
               </div>
             ) : (
               <div className="absolute inset-x-0 -bottom-6 flex items-center justify-center gap-1.5 opacity-30 group-focus-within:opacity-60 transition-opacity">
-                <Info size={10} className="text-slate-400" />
-                <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest">4-Digits Only</p>
+                <Info size={10} className="text-silver" />
+                <p className="text-silver text-[8px] font-bold uppercase tracking-widest">4-Digits Only</p>
               </div>
             )}
           </div>

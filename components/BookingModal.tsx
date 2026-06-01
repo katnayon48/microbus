@@ -400,15 +400,15 @@ const BookingModal: React.FC<BookingModalProps> = ({
     setIsConfirmingDelete(false);
   };
 
-  const inputClasses = "w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm font-medium text-white placeholder:text-slate-500 placeholder:font-normal";
-  const labelClasses = "flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1";
+  const inputClasses = "w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm font-medium text-off-white placeholder:text-silver/50 placeholder:font-normal";
+  const labelClasses = "flex items-center gap-2 text-[11px] font-bold text-silver uppercase tracking-widest mb-1.5 ml-1";
 
   return (
     <div className="relative">
       {/* Mode Toggles */}
       <div className="flex bg-black/20 p-1 rounded-2xl mb-8 border border-white/5 shadow-inner">
-        <button type="button" onClick={() => setMode('reservation')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[10px] ${!formData.isSpecialNote ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}>Reservation</button>
-        <button type="button" onClick={() => setMode('special')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[10px] ${formData.isSpecialNote ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5 hover:text-amber-500'}`}>Special Note</button>
+        <button type="button" onClick={() => setMode('reservation')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[10px] ${!formData.isSpecialNote ? 'bg-emerald-600 text-off-white shadow-lg' : 'text-silver hover:bg-white/5 hover:text-off-white'}`}>Reservation</button>
+        <button type="button" onClick={() => setMode('special')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[10px] ${formData.isSpecialNote ? 'bg-amber-500 text-off-white shadow-lg' : 'text-silver hover:bg-white/5 hover:text-amber-500'}`}>Special Note</button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 pb-2" noValidate>
@@ -417,14 +417,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
           <div className="relative">
             <label className={labelClasses}><Calendar size={12} className="text-emerald-500" /> Start Date</label>
             <div className="relative group">
-              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 transition-colors pointer-events-none group-focus-within:text-emerald-500" size={16} />
+              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver transition-colors pointer-events-none group-focus-within:text-emerald-500" size={16} />
               <input type="date" name="startDate" value={formData.startDate || ''} onChange={handleChange} className={inputClasses} />
             </div>
           </div>
           <div className="relative">
             <label className={labelClasses}><Calendar size={12} className="text-emerald-500" /> End Date</label>
             <div className="relative group">
-              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
               <input type="date" name="endDate" value={formData.endDate || ''} onChange={handleChange} min={formData.startDate} className={inputClasses} />
             </div>
           </div>
@@ -437,14 +437,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <div className="relative">
                 <label className={labelClasses}><User size={12} className="text-emerald-500" /> Rank and Name</label>
                 <div className="relative group">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 transition-colors pointer-events-none group-focus-within:text-emerald-500" size={16} />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver transition-colors pointer-events-none group-focus-within:text-emerald-500" size={16} />
                   <input name="rankName" value={formData.rankName || ''} onChange={handleChange} className={inputClasses} placeholder="Example: Billal Hossain" />
                 </div>
               </div>
               <div className="relative">
                 <label className={labelClasses}><Landmark size={12} className="text-emerald-500" /> Unit</label>
                 <div className="relative group">
-                  <Landmark className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 transition-colors pointer-events-none group-focus-within:text-emerald-500" size={16} />
+                  <Landmark className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver transition-colors pointer-events-none group-focus-within:text-emerald-500" size={16} />
                   <input name="unit" value={formData.unit || ''} onChange={handleChange} className={inputClasses} placeholder="e.g., HQ Company" />
                 </div>
               </div>
@@ -454,7 +454,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <div className="relative">
                 <label className={labelClasses}><Phone size={12} className="text-emerald-500" /> Mobile Number</label>
                 <div className="relative group">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
                   <input name="mobileNumber" value={formData.mobileNumber || ''} onChange={handleChange} className={inputClasses} placeholder="Optional" />
                 </div>
               </div>
@@ -462,7 +462,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                  <label className={labelClasses}><Shield size={12} className="text-emerald-500" /> Garrison Status</label>
                  <div className="flex gap-4">
                    {(['In Garrison', 'Out Garrison'] as GarrisonStatusType[]).map((s) => (
-                     <label key={s} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-xl border transition-all ${formData.garrisonStatus === s ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-sm' : 'bg-white/5 border-white/10 text-slate-500 hover:border-emerald-500/50'}`}>
+                     <label key={s} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-xl border transition-all ${formData.garrisonStatus === s ? 'bg-emerald-600/20 border-emerald-500 text-off-white shadow-sm' : 'bg-white/5 border-white/10 text-silver hover:border-emerald-500/50'}`}>
                        <input type="radio" name="garrisonStatus" checked={formData.garrisonStatus === s} onChange={() => handleToggle('garrisonStatus', s)} className="hidden" />
                        <span className="text-xs font-bold">{s}</span>
                      </label>
@@ -474,7 +474,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             <div className="relative">
               <label className={labelClasses}><MapPin size={12} className="text-emerald-500" /> Destination</label>
               <div className="relative group">
-                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
                 <input name="destination" value={formData.destination || ''} onChange={handleChange} className={inputClasses} placeholder="Destination" />
               </div>
             </div>
@@ -484,7 +484,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 <label className={labelClasses}>Duration</label>
                 <div className="flex gap-4">
                   {(['Full Day', 'Half Day'] as DurationType[]).map((d) => (
-                    <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-sm' : 'bg-transparent border-white/10 text-slate-500 hover:border-emerald-500/50'}`}>
+                    <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-off-white shadow-sm' : 'bg-transparent border-white/10 text-silver hover:border-emerald-500/50'}`}>
                       <input type="radio" name="duration" checked={formData.duration === d} onChange={() => handleToggle('duration', d)} className="hidden" />
                       <span className="text-xs font-bold">{d}</span>
                     </label>
@@ -495,11 +495,11 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                 <div>
                   <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> Out Time</label>
-                  <input type="time" name="outTime" value={formData.outTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-white" />
+                  <input type="time" name="outTime" value={formData.outTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-off-white" />
                 </div>
                 <div>
                   <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> In Time</label>
-                  <input type="time" name="inTime" value={formData.inTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-white" />
+                  <input type="time" name="inTime" value={formData.inTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-off-white" />
                 </div>
               </div>
             </div>
@@ -536,7 +536,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             <div className="pt-4 space-y-4">
               <button type="button" onClick={() => handleToggle('isFuelEntry', !formData.isFuelEntry)} className={`flex items-center gap-3 w-full p-4 rounded-xl border transition-all ${formData.isFuelEntry ? 'bg-emerald-600/20 border-emerald-500/50 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${formData.isFuelEntry ? 'bg-emerald-500 border-emerald-400' : 'border-slate-600'}`}>
-                  {formData.isFuelEntry && <Check size={14} className="text-white" />}
+                  {formData.isFuelEntry && <Check size={14} className="text-off-white" />}
                 </div>
                 <div className="flex-1 text-left">
                   <span className={`text-xs font-black uppercase tracking-widest ${formData.isFuelEntry ? 'text-emerald-400' : 'text-slate-500'}`}>Add Fuel Consumption Details</span>
@@ -629,7 +629,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                           </div>
                         </div>
 
-                        <button type="button" onClick={() => removeFuelPurchase(index)} className="absolute -right-2 -top-2 w-6 h-6 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/purchase:opacity-100 transition-all active:scale-90 z-20">
+                        <button type="button" onClick={() => removeFuelPurchase(index)} className="absolute -right-2 -top-2 w-6 h-6 bg-rose-600 text-off-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/purchase:opacity-100 transition-all active:scale-[0.85] z-20">
                           <X size={12} />
                         </button>
                       </div>
@@ -649,17 +649,17 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
-          <button type="submit" className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-500 transition-all active:scale-95">
+          <button type="submit" className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-off-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-500 transition-all active:scale-95">
             <Check size={16} /> {existingBooking ? 'Update Reservation' : 'Confirm Reservation'}
           </button>
           
           {!formData.isSpecialNote && (
             <div className="flex flex-col gap-3">
-              <button type="button" onClick={handleDownloadBookingInfo} disabled={!!downloadType} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50">
+              <button type="button" onClick={handleDownloadBookingInfo} disabled={!!downloadType} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-off-white transition-all disabled:opacity-50">
                 {downloadType === 'info' ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
                 Download Booking Info
               </button>
-              <button type="button" onClick={handleDownloadSlip} disabled={!!downloadType} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50">
+              <button type="button" onClick={handleDownloadSlip} disabled={!!downloadType} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-off-white transition-all disabled:opacity-50">
                 {downloadType === 'slip' ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
                 Download Slip
               </button>
@@ -667,7 +667,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           )}
           
           {existingBooking && onDelete && (
-            <button type="button" onClick={() => setIsConfirmingDelete(true)} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-rose-600/10 text-rose-500 border border-rose-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-600 hover:text-white transition-all">
+            <button type="button" onClick={() => setIsConfirmingDelete(true)} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-rose-600/10 text-rose-500 border border-rose-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-600 hover:text-off-white transition-all">
               <Trash2 size={16} /> Delete Record
             </button>
           )}
@@ -694,7 +694,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           <button 
             onClick={confirmDownload}
             disabled={!!downloadType}
-            className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-emerald-600 text-off-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {downloadType === 'slip' ? <Loader2 size={18} className="animate-spin" /> : null}
             {downloadType === 'slip' ? 'Generating...' : 'Generate PDF Slip'}
@@ -715,9 +715,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   onClick={() => setBookingInfoStatus(status)}
                   className={`py-3 px-2 rounded-xl border font-black uppercase text-[10px] tracking-widest transition-all ${
                     bookingInfoStatus === status
-                      ? status === 'CONFIRM' ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' :
-                        status === 'PENDING' ? 'bg-amber-500 border-amber-400 text-white shadow-lg' :
-                        'bg-rose-600 border-rose-500 text-white shadow-lg'
+                      ? status === 'CONFIRM' ? 'bg-emerald-600 border-emerald-500 text-off-white shadow-lg' :
+                        status === 'PENDING' ? 'bg-amber-500 border-amber-400 text-off-white shadow-lg' :
+                        'bg-rose-600 border-rose-500 text-off-white shadow-lg'
                       : 'bg-white/5 border-white/10 text-slate-500 hover:border-white/20'
                   }`}
                 >
@@ -744,7 +744,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           <button 
             onClick={confirmBookingInfoDownload}
             disabled={!!downloadType}
-            className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-indigo-600 text-off-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {downloadType === 'info' ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
             {downloadType === 'info' ? 'Generating...' : 'Download Booking Info'}
@@ -759,12 +759,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
             <AlertTriangle size={32} />
           </div>
           <div className="space-y-2">
-            <h4 className="text-xl font-black text-white uppercase tracking-tight">Delete Reservation?</h4>
-            <p className="text-xs font-medium text-slate-400 leading-relaxed">This action cannot be undone. This record will be permanently removed from the database.</p>
+            <h4 className="text-xl font-black text-off-white uppercase tracking-tight">Delete Reservation?</h4>
+            <p className="text-xs font-medium text-silver/60 leading-relaxed">This action cannot be undone. This record will be permanently removed from the database.</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => setIsConfirmingDelete(false)} className="flex-1 py-4 bg-white/5 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all">Cancel</button>
-            <button onClick={handleConfirmDelete} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+            <button onClick={() => setIsConfirmingDelete(false)} className="flex-1 py-4 bg-white/5 text-silver rounded-xl font-black uppercase text-[10px] tracking-widest transition-all">Cancel</button>
+            <button onClick={handleConfirmDelete} className="flex-1 py-4 bg-rose-600 text-off-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
               <Trash2 size={14} /> Delete
             </button>
           </div>

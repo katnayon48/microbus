@@ -12,9 +12,9 @@ interface ViewBookingModalProps {
 const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking, appSettings }) => {
   const themeColor = appSettings?.ui?.themeColor || "#10b981";
 
-  const detailItem = (icon: React.ReactNode, label: string, value: string | number | undefined, colorClass: string = "text-white") => (
+  const detailItem = (icon: React.ReactNode, label: string, value: string | number | undefined, colorClass: string = "text-off-white") => (
     <div className="flex flex-col gap-1 p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/5 transition-colors z-10">
-      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+      <div className="flex items-center gap-2 text-[10px] font-bold text-silver uppercase tracking-widest">
         {icon}
         {label}
       </div>
@@ -25,7 +25,7 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking, appSetting
   );
 
   const fareValue = booking.isExempt ? "Not Required" : `৳ ${booking.fare}`;
-  const fareColor = booking.isExempt ? "text-emerald-400 font-black" : "text-white";
+  const fareColor = booking.isExempt ? "text-emerald-400 font-black" : "text-off-white";
 
   return (
     <div className="relative">
@@ -49,8 +49,8 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking, appSetting
             <Info size={20} />
           </div>
           <div className="min-w-0">
-            <h4 className="text-sm font-black text-white uppercase tracking-tight truncate">Booking Details</h4>
-            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest truncate opacity-80">Reserved Schedule Info</p>
+            <h4 className="text-sm font-black text-off-white uppercase tracking-tight truncate">Booking Details</h4>
+            <p className="text-[10px] font-bold text-off-white uppercase tracking-widest truncate opacity-80">Reserved Schedule Info</p>
           </div>
         </div>
 
@@ -74,18 +74,18 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking, appSetting
           )}
         </div>
 
-        <div className="flex flex-col gap-1 p-4 bg-black/40 backdrop-blur-sm rounded-xl border border-white/5">
-          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+        <div className="flex flex-col gap-1 p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/5">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-silver uppercase tracking-widest">
             <AlignLeft size={12} style={{ color: themeColor }} />
             Remarks
           </div>
-          <div className="text-xs font-medium text-slate-300 pl-5 italic leading-relaxed">
+          <div className="text-xs font-medium text-off-white pl-5 italic leading-relaxed">
             {booking.remarks || 'No additional remarks provided for this booking.'}
           </div>
         </div>
 
         <div className="pt-4 text-center">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+          <p className="text-[10px] font-bold text-silver uppercase tracking-widest">
             This is a read-only view. Only administrators can modify entries.
           </p>
         </div>

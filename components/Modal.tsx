@@ -29,24 +29,24 @@ const Modal: React.FC<ModalProps> = ({
   const bgColor = customBgColor || (isDark ? '#062c1e' : '#f8fafc');
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
       <div 
         className={`
           ${isDark 
-            ? 'border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]' 
+            ? 'border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.8)]' 
             : 'border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.15)]'} 
-          rounded-2xl md:rounded-3xl w-full ${size} overflow-hidden flex flex-col ${isFull ? 'h-[96vh]' : 'max-h-[92vh]'} border animate-in zoom-in-95 duration-200
+          rounded-2xl md:rounded-3xl w-full ${size} overflow-hidden flex flex-col ${isFull ? 'h-[96vh]' : 'max-h-[92vh]'} border animate-in zoom-in-95 duration-200 shadow-2xl relative
         `}
         style={{ backgroundColor: bgColor }}
       >
-        <div className={`px-4 md:px-8 py-3 md:py-5 border-b flex items-center justify-between shrink-0 ${isDark ? 'border-white/5 bg-black/20' : 'border-slate-200 bg-slate-50'}`}>
+        <div className={`px-4 md:px-8 py-3 md:py-5 border-b flex items-center justify-between shrink-0 ${isDark ? 'border-white/5 bg-white/5' : 'border-slate-200 bg-white/40'}`}>
           <div className="flex flex-col">
-            <h3 className={`text-sm md:text-lg font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+            <h3 className={`text-sm md:text-lg font-black uppercase tracking-tight ${isDark ? 'text-off-white' : 'text-slate-900'}`}>{title}</h3>
             <div className={`w-8 md:w-12 h-1 rounded-full mt-1 ${isDark ? 'bg-emerald-500' : 'bg-indigo-600'}`}></div>
           </div>
           <button 
             onClick={onClose}
-            className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all active:scale-90 ${isDark ? 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-900'}`}
+            className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all active:scale-90 ${isDark ? 'bg-white/5 text-silver hover:bg-white/10 hover:text-off-white' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-900'}`}
           >
             <X size={18} />
           </button>

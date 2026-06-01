@@ -44,33 +44,33 @@ const PrintPdfModal: React.FC<PrintPdfModalProps> = ({ isOpen, onClose, bookings
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
+            <label className="text-[10px] font-black text-silver uppercase tracking-widest ml-1">Start Date</label>
             <input 
               type="date" 
               value={range.start} 
               onChange={e => setRange({...range, start: e.target.value})} 
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all box-border" 
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-off-white outline-none focus:border-emerald-500 transition-all box-border" 
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">End Date</label>
+            <label className="text-[10px] font-black text-silver uppercase tracking-widest ml-1">End Date</label>
             <input 
               type="date" 
               value={range.end} 
               onChange={e => setRange({...range, end: e.target.value})} 
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all box-border" 
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-off-white outline-none focus:border-emerald-500 transition-all box-border" 
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Custom Header (Optional)</label>
+          <label className="text-[10px] font-black text-silver uppercase tracking-widest ml-1">Custom Header (Optional)</label>
           <input 
             type="text" 
             value={customHeader} 
             onChange={e => setCustomHeader(e.target.value)} 
             placeholder="MICROBUS MANAGEMENT" 
-            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all box-border" 
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-off-white outline-none focus:border-emerald-500 transition-all box-border" 
           />
         </div>
       </div>
