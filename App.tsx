@@ -111,7 +111,7 @@ const LoadingScreen: React.FC<{ bgColor: string }> = () => {
             <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
               <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 animate-progress-fill shadow-[0_0_15px_rgba(16,185,129,0.8)]"></div>
             </div>
-            <div className="flex items-center justify-center gap-2.5 text-[11px] font-black text-silver/50 uppercase tracking-[0.2em] pt-1">
+            <div className="flex items-center justify-center gap-2.5 text-[11px] font-black text-white uppercase tracking-[0.2em] pt-1">
               <Loader2 size={14} className="animate-spin text-emerald-500" /> 
               <span>Synchronizing Data</span>
             </div>
