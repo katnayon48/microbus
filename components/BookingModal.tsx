@@ -413,8 +413,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
       if (!formData.rankStatus) { alert("অনুগ্রহ করে পদবী/স্ট্যাটাস নির্বাচন করুন।"); return; }
       if (!formData.unit) { alert("অনুগ্রহ করে ইউনিট লিখুন।"); return; }
       if (!formData.reason) { alert("অনুগ্রহ করে ভ্রমণের উদ্দেশ্য লিখুন।"); return; }
-      if (!formData.location) { alert("অনুগ্রহ করে গন্তব্যস্থল লিখুন।"); return; }
-      if (!formData.mobile) { alert("অনুগ্রহ করে মোবাইল নাম্বার লিখুন।"); return; }
+      if (!formData.destination) { alert("অনুগ্রহপূর্বক গন্তব্যস্থল উল্লেখ করুন"); return; }
+      if (!formData.mobileNumber) { alert("অনুগ্রহ করে মোবাইল নাম্বার দিন"); return; }
       if (!formData.duration) { alert("অনুগ্রহ করে সময়কাল (Full Day/Half Day) নির্বাচন করুন।"); return; }
     } else {
       if (!formData.isSpecialNote && !formData.rankName) {
@@ -522,7 +522,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 <label className={labelClasses}><Phone size={12} className="text-emerald-500" /> Mobile Number</label>
                 <div className="relative group">
                   <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver group-focus-within:text-emerald-500 transition-colors pointer-events-none" size={16} />
-                  <input name="mobileNumber" value={formData.mobileNumber || ''} onChange={handleChange} className={inputClasses} placeholder="Optional" />
+                  <input name="mobileNumber" value={formData.mobileNumber || ''} onChange={handleChange} className={inputClasses} placeholder="" />
                 </div>
               </div>
               <div className="relative">
