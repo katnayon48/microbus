@@ -591,6 +591,7 @@ const App: React.FC = () => {
                           <p className="text-off-white font-bold leading-relaxed uppercase tracking-tight text-sm">
                             YOUR BOOKING HAS BEEN FORWARDED FOR APPROVAL. <br />
                             <span className="text-blue-400 mt-2 block">PLEASE CONTRACT WITH AUTHORIZED PERSON FOR FURTHER DETAILS</span>
+                            <span className="text-white mt-4 block text-lg font-black tracking-widest bg-blue-600/20 py-2 rounded-xl border border-blue-500/30">01769072081</span>
                           </p>
                         </div>
                         <button 

@@ -406,13 +406,25 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!formData.isSpecialNote && !formData.rankName) {
-      alert("Please enter Rank and Name.");
-      return;
-    }
-    if (!formData.startDate) {
-      alert("Please select a date.");
-      return;
+    
+    if (isPublicMode) {
+      if (!formData.startDate) { alert("অনুগ্রহ করে তারিখ নির্বাচন করুন।"); return; }
+      if (!formData.rankName) { alert("অনুগ্রহ করে নাম লিখুন।"); return; }
+      if (!formData.rankStatus) { alert("অনুগ্রহ করে পদবী/স্ট্যাটাস নির্বাচন করুন।"); return; }
+      if (!formData.unit) { alert("অনুগ্রহ করে ইউনিট লিখুন।"); return; }
+      if (!formData.reason) { alert("অনুগ্রহ করে ভ্রমণের উদ্দেশ্য লিখুন।"); return; }
+      if (!formData.location) { alert("অনুগ্রহ করে গন্তব্যস্থল লিখুন।"); return; }
+      if (!formData.mobile) { alert("অনুগ্রহ করে মোবাইল নাম্বার লিখুন।"); return; }
+      if (!formData.duration) { alert("অনুগ্রহ করে সময়কাল (Full Day/Half Day) নির্বাচন করুন।"); return; }
+    } else {
+      if (!formData.isSpecialNote && !formData.rankName) {
+        alert("Please enter Rank and Name.");
+        return;
+      }
+      if (!formData.startDate) {
+        alert("Please select a date.");
+        return;
+      }
     }
 
     const finalBooking = prepareBookingData();
