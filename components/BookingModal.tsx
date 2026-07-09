@@ -408,7 +408,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     if (e) e.preventDefault();
     
     if (isPublicMode) {
-      const requiredFields = ['startDate', 'rankName', 'rankStatus', 'unit', 'remarks', 'destination', 'mobileNumber', 'duration'];
+      const requiredFields = ['startDate', 'rankName', 'rankStatus', 'unit', 'destination', 'mobileNumber', 'duration'];
       const isAnyEmpty = requiredFields.some(field => {
         const val = formData[field as keyof Partial<Booking>];
         return val === undefined || val === null || val === '';
@@ -719,19 +719,21 @@ const BookingModal: React.FC<BookingModalProps> = ({
         )}
 
         {/* Remarks Section */}
-        <div className="relative">
-          <label className={labelClasses}>
-            <AlignLeft size={12} className="text-emerald-500" /> 
-            {isPublicMode ? "ভ্রমণের উদ্দেশ্য" : "Remarks / Notes"}
-          </label>
-          <textarea 
-            name="remarks" 
-            value={formData.remarks || ''} 
-            onChange={handleChange} 
-            className={`${inputClasses} min-h-[80px] py-3 resize-none`} 
-            placeholder={isPublicMode ? "ভ্রমণের উদ্দেশ্য লিখুন..." : "Additional information..."} 
-          />
-        </div>
+        {!isPublicMode && (
+          <div className="relative">
+            <label className={labelClasses}>
+              <AlignLeft size={12} className="text-emerald-500" /> 
+              Remarks / Notes
+            </label>
+            <textarea 
+              name="remarks" 
+              value={formData.remarks || ''} 
+              onChange={handleChange} 
+              className={`${inputClasses} min-h-[80px] py-3 resize-none`} 
+              placeholder="Additional information..." 
+            />
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
