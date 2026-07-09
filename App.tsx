@@ -187,6 +187,7 @@ const Sidebar: React.FC<{
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isPublicBookingMode, setIsPublicBookingMode] = useState(false);
   const [view, setView] = useState<'calendar' | 'reports' | 'attendance'>('calendar');
   const [reportInitialStep, setReportInitialStep] = useState<any>('dashboard');
   const [reportKey, setReportKey] = useState(0);
@@ -211,6 +212,12 @@ const App: React.FC = () => {
   useEffect(() => {
     const startTime = Date.now();
     
+    // Check for public booking mode
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'booking') {
+      setIsPublicBookingMode(true);
+    }
+
     if (!db) {
       console.error("Database connection not available");
       setTimeout(() => setIsLoading(false), 3000);
@@ -277,13 +284,30 @@ const App: React.FC = () => {
     if (!db) return;
     try {
       let id = booking.id;
-      if (!id || id.startsWith('TEMP')) {
+      const isNew = !id || id.startsWith('TEMP');
+      
+      if (isNew) {
         const newRef = push(ref(db, 'bookings'));
         id = newRef.key as string;
       }
-      await set(ref(db, `bookings/${id}`), { ...booking, id });
-      closeBookingModal();
-      setView('calendar');
+
+      // If public mode, always set to pending
+      // If admin, keep existing status or default to confirmed
+      const finalStatus = isPublicBookingMode ? 'pending' : (booking.status || 'confirmed');
+
+      await set(ref(db, `bookings/${id}`), { 
+        ...booking, 
+        id, 
+        status: finalStatus 
+      });
+
+      if (isPublicBookingMode) {
+        alert("আপনার রিজার্ভেশনটি সফলভাবে পাঠানো হয়েছে। এডমিন যাচাই করে কনফার্ম করলে মূল ক্যালেন্ডারে দেখা যাবে।");
+        setShowBookingModal(false);
+      } else {
+        closeBookingModal();
+        setView('calendar');
+      }
     } catch (e) {
       alert("সেভ করা সম্ভব হয়নি।");
     }
@@ -372,6 +396,10 @@ const App: React.FC = () => {
   };
 
   const closeBookingModal = () => {
+    if (isPublicBookingMode) {
+      // Don't allow closing in public mode if user is just booking
+      // or maybe just keep it open.
+    }
     setShowBookingModal(false);
     setEditingBooking(null);
     setSelectedDate(undefined);
@@ -474,7 +502,11 @@ const App: React.FC = () => {
           className="glass-container border-t-0 border-x-0 rounded-none px-2 md:px-6 py-1.5 md:py-2 grid grid-cols-[1fr_auto_1fr] items-center sticky top-0 z-50 shadow-xl shrink-0 print-bg-white print-border-black print-border-b print-no-shadow"
         >
           <section className="flex justify-start">
-            {view !== 'calendar' ? (
+            {isPublicBookingMode ? (
+              <div className="flex items-center justify-center overflow-hidden rounded-full">
+                <img src="https://i.ibb.co.com/mrKzTCgt/IMG-0749.jpg" alt="Logo Left" className={logoStyles} />
+              </div>
+            ) : view !== 'calendar' ? (
               <button 
                 onClick={() => { setView('calendar'); setReportInitialStep('dashboard'); }}
                 className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center bg-white/5 text-silver rounded-lg md:rounded-xl hover:bg-white/10 hover:text-off-white transition-all active:scale-90 shadow-sm border border-white/5 print-hide"
@@ -515,22 +547,40 @@ const App: React.FC = () => {
         </header>
 
         <main className="p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-4 flex-1 overflow-hidden min-h-0 relative z-10">
-          <Sidebar 
-            onReportClick={handleReportClick} 
-            activeView={view} 
-            activeReportStep={reportInitialStep} 
-            settings={settings} 
-          />
+          {!isPublicBookingMode && (
+            <Sidebar 
+              onReportClick={handleReportClick} 
+              activeView={view} 
+              activeReportStep={reportInitialStep} 
+              settings={settings} 
+            />
+          )}
           
           <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-0 flex-1">
             <div 
               className="rounded-2xl md:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] sm:shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-white/10 overflow-hidden flex flex-col flex-1 min-h-0 print-bg-white print-no-shadow print-border-black glass-container"
             >
-              {view === 'calendar' ? (
+              {isPublicBookingMode ? (
+                <div className="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar">
+                  <div className="max-w-2xl mx-auto">
+                    <div className="mb-8 text-center">
+                      <h2 className="text-2xl font-black text-off-white uppercase tracking-tight">New Reservation</h2>
+                      <p className="text-silver/60 text-xs font-bold uppercase tracking-widest mt-1">Please fill in the details below</p>
+                    </div>
+                    <BookingModal 
+                      isOpen={true} 
+                      onClose={() => {}} 
+                      onSave={handleSaveBooking} 
+                      bookings={bookings} 
+                      appSettings={settings}
+                    />
+                  </div>
+                </div>
+              ) : view === 'calendar' ? (
                 <Calendar 
                   currentDate={currentDate} 
                   setCurrentDate={setCurrentDate} 
-                  bookings={bookings} 
+                  bookings={isAdmin ? bookings : bookings.filter(b => b.status !== 'pending')} 
                   isAdmin={isAdmin} 
                   isMaster={isMaster}
                   onDateClick={handleDateClick} 

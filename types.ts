@@ -2,6 +2,7 @@
 export type DurationType = 'Full Day' | 'Half Day';
 export type FareStatusType = 'Paid' | 'Unpaid';
 export type GarrisonStatusType = 'In Garrison' | 'Out Garrison';
+export type RankStatusType = '' | 'Officer' | 'JCO/OR' | 'Civil (1st Class)' | 'Civil Person';
 export type UserRole = 'viewer' | 'admin' | 'master';
 
 export interface DriverInfo {
@@ -20,10 +21,18 @@ export interface AppSettings {
     maskPinInput: boolean;
   };
   fares: {
-    inGarrisonFull: number;
-    inGarrisonHalf: number;
-    outGarrisonFull: number;
-    outGarrisonHalf: number;
+    officerInFull: number;
+    officerInHalf: number;
+    officerOutFull: number;
+    officerOutHalf: number;
+    jcoInFull: number;
+    jcoInHalf: number;
+    jcoOutFull: number;
+    jcoOutHalf: number;
+    civil1stFull: number;
+    civil1stHalf: number;
+    civilPersonFull: number;
+    civilPersonHalf: number;
     currencySymbol: string;
     taxRate: number; // Percentage
     currencyPosition: 'prefix' | 'suffix';
@@ -68,6 +77,7 @@ export interface FuelPurchase {
 export interface Booking {
   id: string;
   rankName: string;
+  rankStatus?: RankStatusType;
   unit: string;
   mobileNumber?: string;
   garrisonStatus: GarrisonStatusType;
@@ -90,6 +100,7 @@ export interface Booking {
   purchasedFuel?: number;
   fuelRate?: number;
   totalFuelPrice?: number;
+  status?: 'pending' | 'confirmed';
 }
 
 export interface DriverAttendance {

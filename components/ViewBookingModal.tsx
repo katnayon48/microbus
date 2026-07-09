@@ -56,6 +56,7 @@ const ViewBookingModal: React.FC<ViewBookingModalProps> = ({ booking, appSetting
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {detailItem(<User size={12} style={{ color: themeColor }} />, "Rank and Name", booking.rankName)}
+          {detailItem(<Shield size={12} style={{ color: themeColor }} />, "Rank Status", booking.rankStatus)}
           {detailItem(<Landmark size={12} style={{ color: themeColor }} />, "Unit", booking.unit)}
           {detailItem(<Phone size={12} style={{ color: themeColor }} />, "Mobile Number", booking.mobileNumber)}
           {detailItem(<Shield size={12} style={{ color: themeColor }} />, "Garrison Status", booking.garrisonStatus)}

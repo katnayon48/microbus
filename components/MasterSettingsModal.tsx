@@ -124,27 +124,75 @@ const MasterSettingsModal: React.FC<MasterSettingsModalProps> = ({
         <div className="animate-in slide-in-from-bottom-2 duration-300">
           
           {activeTab === 'fares' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className={cardClasses}>
                 <h5 className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                  <Banknote size={16} /> Base Tariff Configuration
+                  <ShieldCheck size={16} /> Officer Tariff Configuration
                 </h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className={labelClasses}>In-Garrison Full Day</label>
-                    <input type="number" value={formData.fares.inGarrisonFull} onChange={e => handleUpdate('fares', 'inGarrisonFull', Number(e.target.value))} className={inputClasses} />
+                    <input type="number" value={formData.fares.officerInFull} onChange={e => handleUpdate('fares', 'officerInFull', Number(e.target.value))} className={inputClasses} />
                   </div>
                   <div>
                     <label className={labelClasses}>In-Garrison Half Day</label>
-                    <input type="number" value={formData.fares.inGarrisonHalf} onChange={e => handleUpdate('fares', 'inGarrisonHalf', Number(e.target.value))} className={inputClasses} />
+                    <input type="number" value={formData.fares.officerInHalf} onChange={e => handleUpdate('fares', 'officerInHalf', Number(e.target.value))} className={inputClasses} />
                   </div>
                   <div>
                     <label className={labelClasses}>Out-Garrison Full Day</label>
-                    <input type="number" value={formData.fares.outGarrisonFull} onChange={e => handleUpdate('fares', 'outGarrisonFull', Number(e.target.value))} className={inputClasses} />
+                    <input type="number" value={formData.fares.officerOutFull} onChange={e => handleUpdate('fares', 'officerOutFull', Number(e.target.value))} className={inputClasses} />
                   </div>
                   <div>
                     <label className={labelClasses}>Out-Garrison Half Day</label>
-                    <input type="number" value={formData.fares.outGarrisonHalf} onChange={e => handleUpdate('fares', 'outGarrisonHalf', Number(e.target.value))} className={inputClasses} />
+                    <input type="number" value={formData.fares.officerOutHalf} onChange={e => handleUpdate('fares', 'officerOutHalf', Number(e.target.value))} className={inputClasses} />
+                  </div>
+                </div>
+              </div>
+
+              <div className={cardClasses}>
+                <h5 className="text-[11px] font-black text-amber-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                  <UserCog size={16} /> JCO/OR Tariff Configuration
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className={labelClasses}>In-Garrison Full Day</label>
+                    <input type="number" value={formData.fares.jcoInFull} onChange={e => handleUpdate('fares', 'jcoInFull', Number(e.target.value))} className={inputClasses} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>In-Garrison Half Day</label>
+                    <input type="number" value={formData.fares.jcoInHalf} onChange={e => handleUpdate('fares', 'jcoInHalf', Number(e.target.value))} className={inputClasses} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Out-Garrison Full Day</label>
+                    <input type="number" value={formData.fares.jcoOutFull} onChange={e => handleUpdate('fares', 'jcoOutFull', Number(e.target.value))} className={inputClasses} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Out-Garrison Half Day</label>
+                    <input type="number" value={formData.fares.jcoOutHalf} onChange={e => handleUpdate('fares', 'jcoOutHalf', Number(e.target.value))} className={inputClasses} />
+                  </div>
+                </div>
+              </div>
+
+              <div className={cardClasses}>
+                <h5 className="text-[11px] font-black text-blue-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                  <Layout size={16} /> Civil Tariff Configuration
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className={labelClasses}>Civil (1st Class) - Full Day</label>
+                    <input type="number" value={formData.fares.civil1stFull} onChange={e => handleUpdate('fares', 'civil1stFull', Number(e.target.value))} className={inputClasses} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Civil (1st Class) - Half Day</label>
+                    <input type="number" value={formData.fares.civil1stHalf} onChange={e => handleUpdate('fares', 'civil1stHalf', Number(e.target.value))} className={inputClasses} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Civil Person - Full Day</label>
+                    <input type="number" value={formData.fares.civilPersonFull} onChange={e => handleUpdate('fares', 'civilPersonFull', Number(e.target.value))} className={inputClasses} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Civil Person - Half Day</label>
+                    <input type="number" value={formData.fares.civilPersonHalf} onChange={e => handleUpdate('fares', 'civilPersonHalf', Number(e.target.value))} className={inputClasses} />
                   </div>
                 </div>
               </div>

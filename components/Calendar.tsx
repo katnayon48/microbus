@@ -58,6 +58,11 @@ const BookingCycler: React.FC<{
     const isUnpaid = b.fareStatus === 'Unpaid';
     const isSpecial = b.isSpecialNote;
     const isExempt = b.isExempt;
+    const isPending = b.status === 'pending';
+    
+    if (isPending) {
+      return "bg-gradient-to-b from-yellow-400 to-yellow-600 animate-pulse print-bg-transparent print-text-black print-border-black shadow-[0_0_15px_rgba(250,204,21,0.5)]";
+    }
     
     if (isSpecial) {
       return "bg-gradient-to-b from-[#f59e0b] to-[#92400e] print-bg-transparent print-text-black print-border-black";

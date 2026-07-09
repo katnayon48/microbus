@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Booking, DurationType, GarrisonStatusType, FuelPurchase, AppSettings } from '../types';
-import { Trash2, User, Landmark, MapPin, Calendar, Clock, Banknote, Wallet, AlignLeft, FileDown, Shield, Check, Phone, Loader2, X, Gauge, Droplets, CircleDollarSign, Fuel, RotateCw, PlusCircle, AlertTriangle } from 'lucide-react';
+import { Booking, DurationType, GarrisonStatusType, RankStatusType, FuelPurchase, AppSettings } from '../types';
+import { Trash2, User, Landmark, MapPin, Calendar, Clock, Banknote, Wallet, AlignLeft, FileDown, Shield, Check, Phone, Loader2, X, Gauge, Droplets, CircleDollarSign, Fuel, RotateCw, PlusCircle, AlertTriangle, ChevronDown } from 'lucide-react';
 import { generateIndividualPaymentSlip } from '../services/pdfService';
 import { differenceInDays, parseISO, format, isBefore } from 'date-fns';
 import Modal from './Modal';
@@ -28,6 +28,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Partial<Booking>>({
     rankName: '',
+    rankStatus: '',
     unit: '',
     mobileNumber: '',
     garrisonStatus: 'In Garrison',
@@ -49,7 +50,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
     fuelPurchases: [{ id: Math.random().toString(), purchasedFuel: undefined, fuelRate: undefined, totalFuelPrice: undefined }],
     purchasedFuel: undefined,
     fuelRate: undefined,
-    totalFuelPrice: undefined
+    totalFuelPrice: undefined,
+    status: 'confirmed'
   });
 
   const [downloadType, setDownloadType] = useState<'info' | 'slip' | null>(null);
@@ -106,6 +108,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         const autoKmStart = getLastKmEnd(dateStr);
         setFormData({
           rankName: '',
+          rankStatus: '',
           unit: '',
           mobileNumber: '',
           garrisonStatus: 'In Garrison',
@@ -134,18 +137,33 @@ const BookingModal: React.FC<BookingModalProps> = ({
   }, [existingBooking, initialDate, isOpen, bookings]);
 
   useEffect(() => {
-    if (!formData.isSpecialNote && !formData.isExempt && formData.startDate && formData.endDate && formData.garrisonStatus && formData.duration) {
+    if (!formData.isSpecialNote && !formData.isExempt && formData.startDate && formData.endDate && formData.garrisonStatus && formData.duration && formData.rankStatus) {
       try {
         const start = parseISO(formData.startDate);
         const end = parseISO(formData.endDate);
         const days = differenceInDays(end, start) + 1;
         if (days > 0) {
           let rate = 0;
-          if (formData.garrisonStatus === 'In Garrison') {
-            rate = formData.duration === 'Full Day' ? appSettings.fares.inGarrisonFull : appSettings.fares.inGarrisonHalf;
-          } else {
-            rate = formData.duration === 'Full Day' ? appSettings.fares.outGarrisonFull : appSettings.fares.outGarrisonHalf;
+          const { rankStatus, garrisonStatus, duration } = formData;
+
+          if (rankStatus === 'Officer') {
+            if (garrisonStatus === 'In Garrison') {
+              rate = duration === 'Full Day' ? appSettings.fares.officerInFull : appSettings.fares.officerInHalf;
+            } else {
+              rate = duration === 'Full Day' ? appSettings.fares.officerOutFull : appSettings.fares.officerOutHalf;
+            }
+          } else if (rankStatus === 'JCO/OR') {
+            if (garrisonStatus === 'In Garrison') {
+              rate = duration === 'Full Day' ? appSettings.fares.jcoInFull : appSettings.fares.jcoInHalf;
+            } else {
+              rate = duration === 'Full Day' ? appSettings.fares.jcoOutFull : appSettings.fares.jcoOutHalf;
+            }
+          } else if (rankStatus === 'Civil (1st Class)') {
+            rate = duration === 'Full Day' ? appSettings.fares.civil1stFull : appSettings.fares.civil1stHalf;
+          } else if (rankStatus === 'Civil Person') {
+            rate = duration === 'Full Day' ? appSettings.fares.civilPersonFull : appSettings.fares.civilPersonHalf;
           }
+
           const calculatedFare = rate * days;
           if (formData.fare !== calculatedFare) {
             setFormData(prev => ({ ...prev, fare: calculatedFare }));
@@ -159,7 +177,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     } else if (formData.isExempt && formData.fare !== 0) {
       setFormData(prev => ({ ...prev, fare: 0, fareStatus: 'Paid' }));
     }
-  }, [formData.startDate, formData.endDate, formData.garrisonStatus, formData.duration, formData.isExempt, formData.isSpecialNote, appSettings]);
+  }, [formData.startDate, formData.endDate, formData.garrisonStatus, formData.duration, formData.rankStatus, formData.isExempt, formData.isSpecialNote, appSettings]);
 
   const calculateSummaries = (purchases: FuelPurchase[]) => {
     let totalFuel = 0;
@@ -344,6 +362,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     const rawBooking: any = {
       id: existingBooking?.id || '',
       rankName: formData.rankName || (formData.isSpecialNote ? 'SPECIAL NOTE' : 'N/A'),
+      rankStatus: formData.rankStatus || '',
       unit: formData.unit || '',
       mobileNumber: formData.mobileNumber || '',
       garrisonStatus: formData.garrisonStatus || 'In Garrison',
@@ -391,7 +410,15 @@ const BookingModal: React.FC<BookingModalProps> = ({
       Object.entries(rawBooking).filter(([_, value]) => value !== undefined && value !== null)
     ) as unknown as Booking;
     
+    // Preserve status if editing, or default to confirmed
+    finalBooking.status = formData.status || 'confirmed';
+    
     onSave(finalBooking);
+  };
+
+  const handleConfirmPending = () => {
+    const confirmedBooking = { ...formData, status: 'confirmed' } as Booking;
+    onSave(confirmedBooking);
   };
 
   const handleConfirmDelete = () => {
@@ -446,6 +473,29 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 <div className="relative group">
                   <Landmark className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver transition-colors pointer-events-none group-focus-within:text-emerald-500" size={16} />
                   <input name="unit" value={formData.unit || ''} onChange={handleChange} className={inputClasses} placeholder="e.g., HQ Company" />
+                </div>
+              </div>
+            </div>
+
+            <div className="relative">
+              <label className={labelClasses}><Shield size={12} className="text-emerald-500" /> Rank Status</label>
+              <div className="relative group">
+                <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver transition-colors pointer-events-none group-focus-within:text-emerald-500" size={16} />
+                <select 
+                  name="rankStatus" 
+                  value={formData.rankStatus || ''} 
+                  onChange={handleChange} 
+                  className={`${inputClasses} appearance-none`}
+                >
+                  <option value="" disabled className="bg-[#062c1e] text-silver">Select Rank Status</option>
+                  {(['Officer', 'JCO/OR', 'Civil (1st Class)', 'Civil Person'] as RankStatusType[]).filter(s => s !== '').map(status => (
+                    <option key={status} value={status} className="bg-[#062c1e] text-off-white">
+                      {status}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-silver group-focus-within:text-emerald-500">
+                  <ChevronDown size={14} />
                 </div>
               </div>
             </div>
@@ -649,7 +699,17 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
-          <button type="submit" className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-off-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-500 transition-all active:scale-95">
+          {formData.status === 'pending' && !isConfirmingDelete && (
+            <button 
+              type="button" 
+              onClick={handleConfirmPending}
+              className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-off-white rounded-xl font-black uppercase text-[12px] tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:bg-emerald-500 transition-all active:scale-95 border border-emerald-400/30 mb-2"
+            >
+              <Check size={18} className="text-white" /> Confirm & Add to Calendar
+            </button>
+          )}
+
+          <button type="submit" className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-600 hover:text-off-white transition-all active:scale-95">
             <Check size={16} /> {existingBooking ? 'Update Reservation' : 'Confirm Reservation'}
           </button>
           
