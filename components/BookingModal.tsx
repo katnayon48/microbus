@@ -350,20 +350,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
     setDownloadType(null);
   };
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!formData.isSpecialNote && !formData.rankName) {
-      alert("Please enter Rank and Name.");
-      return;
-    }
-    if (!formData.startDate) {
-      alert("Please select a date.");
-      return;
-    }
-
-    // Process and clean booking data
+  const prepareBookingData = (statusOverride?: 'pending' | 'confirmed') => {
     const rawBooking: any = {
-      id: existingBooking?.id || '',
+      id: existingBooking?.id || formData.id || '',
       rankName: formData.rankName || (formData.isSpecialNote ? 'SPECIAL NOTE' : 'N/A'),
       rankStatus: formData.rankStatus || '',
       unit: formData.unit || '',
@@ -381,7 +370,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
       isExempt: !!formData.isExempt,
       isSpecialNote: !!formData.isSpecialNote,
       isFuelEntry: !!formData.isFuelEntry,
-      status: formData.status || 'confirmed'
+      status: statusOverride || formData.status || 'confirmed'
     };
 
     if (formData.isFuelEntry && !formData.isSpecialNote) {
@@ -410,46 +399,28 @@ const BookingModal: React.FC<BookingModalProps> = ({
       }
     }
 
-    const finalBooking = Object.fromEntries(
+    return Object.fromEntries(
       Object.entries(rawBooking).filter(([_, value]) => value !== undefined && value !== null)
     ) as unknown as Booking;
-    
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!formData.isSpecialNote && !formData.rankName) {
+      alert("Please enter Rank and Name.");
+      return;
+    }
+    if (!formData.startDate) {
+      alert("Please select a date.");
+      return;
+    }
+
+    const finalBooking = prepareBookingData();
     onSave(finalBooking);
   };
 
   const handleConfirmPending = () => {
-    // We reuse the same logic as handleSubmit but force confirmed status
-    const rawBooking: any = {
-      ...formData,
-      id: existingBooking?.id || formData.id || '',
-      status: 'confirmed'
-    };
-
-    if (formData.isFuelEntry && !formData.isSpecialNote) {
-      if (formData.fuelPurchases && formData.fuelPurchases.length > 0) {
-        const cleanedPurchases = formData.fuelPurchases
-          .filter(p => p.purchasedFuel !== undefined || p.fuelRate !== undefined || p.totalFuelPrice !== undefined)
-          .map(p => {
-            const cleaned: any = { id: p.id };
-            if (p.purchasedFuel !== undefined) cleaned.purchasedFuel = p.purchasedFuel;
-            if (p.fuelRate !== undefined) cleaned.fuelRate = p.fuelRate;
-            if (p.totalFuelPrice !== undefined) cleaned.totalFuelPrice = p.totalFuelPrice;
-            if (p.fuelType) cleaned.fuelType = p.fuelType;
-            return cleaned;
-          });
-        
-        if (cleanedPurchases.length > 0) {
-          rawBooking.fuelPurchases = cleanedPurchases;
-        } else {
-          delete rawBooking.fuelPurchases;
-        }
-      }
-    }
-
-    const finalBooking = Object.fromEntries(
-      Object.entries(rawBooking).filter(([_, value]) => value !== undefined && value !== null)
-    ) as unknown as Booking;
-    
+    const finalBooking = prepareBookingData('confirmed');
     onSave(finalBooking);
   };
 
