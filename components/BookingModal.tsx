@@ -408,14 +408,16 @@ const BookingModal: React.FC<BookingModalProps> = ({
     if (e) e.preventDefault();
     
     if (isPublicMode) {
-      if (!formData.startDate) { alert("অনুগ্রহ করে তারিখ নির্বাচন করুন।"); return; }
-      if (!formData.rankName) { alert("অনুগ্রহ করে নাম লিখুন।"); return; }
-      if (!formData.rankStatus) { alert("অনুগ্রহ করে পদবী/স্ট্যাটাস নির্বাচন করুন।"); return; }
-      if (!formData.unit) { alert("অনুগ্রহ করে ইউনিট লিখুন।"); return; }
-      if (!formData.reason) { alert("অনুগ্রহ করে ভ্রমণের উদ্দেশ্য লিখুন।"); return; }
-      if (!formData.destination) { alert("অনুগ্রহপূর্বক গন্তব্যস্থল উল্লেখ করুন"); return; }
-      if (!formData.mobileNumber) { alert("অনুগ্রহ করে মোবাইল নাম্বার দিন"); return; }
-      if (!formData.duration) { alert("অনুগ্রহ করে সময়কাল (Full Day/Half Day) নির্বাচন করুন।"); return; }
+      const requiredFields = ['startDate', 'rankName', 'rankStatus', 'unit', 'remarks', 'destination', 'mobileNumber', 'duration'];
+      const isAnyEmpty = requiredFields.some(field => {
+        const val = formData[field as keyof Partial<Booking>];
+        return val === undefined || val === null || val === '';
+      });
+
+      if (isAnyEmpty) {
+        alert("অনুগ্রহ করে সকল তথ্য প্রদান করুন।");
+        return;
+      }
     } else {
       if (!formData.isSpecialNote && !formData.rankName) {
         alert("Please enter Rank and Name.");
@@ -716,13 +718,20 @@ const BookingModal: React.FC<BookingModalProps> = ({
           </div>
         )}
 
-        {/* Remarks Section - Always visible */}
-        {!isPublicMode && (
-          <div className="relative">
-            <label className={labelClasses}><AlignLeft size={12} className="text-emerald-500" /> Remarks / Notes</label>
-            <textarea name="remarks" value={formData.remarks || ''} onChange={handleChange} className={`${inputClasses} min-h-[80px] py-3 resize-none`} placeholder="Additional information..." />
-          </div>
-        )}
+        {/* Remarks Section */}
+        <div className="relative">
+          <label className={labelClasses}>
+            <AlignLeft size={12} className="text-emerald-500" /> 
+            {isPublicMode ? "ভ্রমণের উদ্দেশ্য" : "Remarks / Notes"}
+          </label>
+          <textarea 
+            name="remarks" 
+            value={formData.remarks || ''} 
+            onChange={handleChange} 
+            className={`${inputClasses} min-h-[80px] py-3 resize-none`} 
+            placeholder={isPublicMode ? "ভ্রমণের উদ্দেশ্য লিখুন..." : "Additional information..."} 
+          />
+        </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 pt-6 border-t border-white/5">

@@ -264,7 +264,8 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const footerLines = settings.branding.footerLines || [settings.branding.footerText, settings.branding.footerPhone];
+  const footerLines = (settings.branding.footerLines || [settings.branding.footerText, settings.branding.footerPhone])
+    .filter(line => !isPublicBookingMode || !line.toUpperCase().includes('VERSION'));
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -652,7 +653,7 @@ const App: React.FC = () => {
           </div>
         </main>
 
-        {view === 'calendar' && (
+        {(view === 'calendar' || isPublicBookingMode) && (
           <footer 
             className="px-6 h-10 md:h-12 border-t border-white/10 backdrop-blur-md flex items-center justify-center overflow-hidden shrink-0 z-50 print-hide glass-container border-b-0 border-x-0 rounded-none"
           >
