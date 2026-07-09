@@ -188,6 +188,7 @@ const Sidebar: React.FC<{
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPublicBookingMode, setIsPublicBookingMode] = useState(false);
+  const [publicBookingSuccess, setPublicBookingSuccess] = useState(false);
   const [view, setView] = useState<'calendar' | 'reports' | 'attendance'>('calendar');
   const [reportInitialStep, setReportInitialStep] = useState<any>('dashboard');
   const [reportKey, setReportKey] = useState(0);
@@ -295,6 +296,27 @@ const App: React.FC = () => {
       // If admin, keep existing status or default to confirmed
       const finalStatus = isPublicBookingMode ? 'pending' : (booking.status || 'confirmed');
 
+      // Check for existing bookings on these dates in public mode
+      if (isPublicBookingMode) {
+        const start = parseISO(booking.startDate);
+        const end = parseISO(booking.endDate || booking.startDate);
+        
+        const isDateTaken = bookings.some(b => {
+          const bStart = parseISO(b.startDate);
+          const bEnd = parseISO(b.endDate || b.startDate);
+          return (
+            isWithinInterval(start, { start: bStart, end: bEnd }) ||
+            isWithinInterval(end, { start: bStart, end: bEnd }) ||
+            (start <= bStart && end >= bEnd)
+          );
+        });
+
+        if (isDateTaken) {
+          alert("দুঃখিত, এই তারিখে ইতিমধ্যেই একটি বুকিং রয়েছে। অনুগ্রহ করে অন্য তারিখ নির্বাচন করুন।");
+          return;
+        }
+      }
+
       await set(ref(db, `bookings/${id}`), { 
         ...booking, 
         id, 
@@ -302,8 +324,7 @@ const App: React.FC = () => {
       });
 
       if (isPublicBookingMode) {
-        alert("আপনার রিজার্ভেশনটি সফলভাবে পাঠানো হয়েছে। এডমিন যাচাই করে কনফার্ম করলে মূল ক্যালেন্ডারে দেখা যাবে।");
-        setShowBookingModal(false);
+        setPublicBookingSuccess(true);
       } else {
         closeBookingModal();
         setView('calendar');
@@ -563,17 +584,40 @@ const App: React.FC = () => {
               {isPublicBookingMode ? (
                 <div className="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar">
                   <div className="max-w-2xl mx-auto">
-                    <div className="mb-8 text-center">
-                      <h2 className="text-2xl font-black text-off-white uppercase tracking-tight">New Reservation</h2>
-                      <p className="text-silver/60 text-xs font-bold uppercase tracking-widest mt-1">Please fill in the details below</p>
-                    </div>
-                    <BookingModal 
-                      isOpen={true} 
-                      onClose={() => {}} 
-                      onSave={handleSaveBooking} 
-                      bookings={bookings} 
-                      appSettings={settings}
-                    />
+                    {publicBookingSuccess ? (
+                      <div className="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in-95 duration-500">
+                        <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(16,185,129,0.4)] animate-bounce">
+                          <Check size={48} className="text-white" strokeWidth={4} />
+                        </div>
+                        <h2 className="text-3xl font-black text-emerald-400 text-center uppercase tracking-tighter mb-4">Success!</h2>
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-3xl text-center max-w-md">
+                          <p className="text-off-white font-bold leading-relaxed uppercase tracking-tight text-sm">
+                            YOUR BOOKING HAS BEEN FORWARDED FOR APPROVAL. <br />
+                            <span className="text-emerald-400 mt-2 block">PLEASE CONTRACT WITH AUTHORIZED PERSON FOR FURTHER DETAILS</span>
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => window.location.reload()}
+                          className="mt-12 px-8 py-4 bg-white/5 border border-white/10 text-silver rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white/10 hover:text-off-white transition-all"
+                        >
+                          Submit Another Booking
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-8 text-center">
+                          <h2 className="text-2xl font-black text-off-white uppercase tracking-tight">New Reservation</h2>
+                          <p className="text-silver/60 text-xs font-bold uppercase tracking-widest mt-1">Please fill in the details below</p>
+                        </div>
+                        <BookingModal 
+                          isOpen={true} 
+                          onClose={() => {}} 
+                          onSave={handleSaveBooking} 
+                          bookings={bookings} 
+                          appSettings={settings}
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               ) : view === 'calendar' ? (

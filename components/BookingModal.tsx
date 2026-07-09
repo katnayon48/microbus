@@ -433,10 +433,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
   return (
     <div className="relative">
       {/* Mode Toggles */}
-      <div className="flex bg-black/20 p-1 rounded-2xl mb-8 border border-white/5 shadow-inner">
-        <button type="button" onClick={() => setMode('reservation')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[10px] ${!formData.isSpecialNote ? 'bg-emerald-600 text-off-white shadow-lg' : 'text-silver hover:bg-white/5 hover:text-off-white'}`}>Reservation</button>
-        <button type="button" onClick={() => setMode('special')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[10px] ${formData.isSpecialNote ? 'bg-amber-500 text-off-white shadow-lg' : 'text-silver hover:bg-white/5 hover:text-amber-500'}`}>Special Note</button>
-      </div>
+      {!isPublicMode && (
+        <div className="flex bg-black/20 p-1 rounded-2xl mb-8 border border-white/5 shadow-inner">
+          <button type="button" onClick={() => setMode('reservation')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[10px] ${!formData.isSpecialNote ? 'bg-emerald-600 text-off-white shadow-lg' : 'text-silver hover:bg-white/5 hover:text-off-white'}`}>Reservation</button>
+          <button type="button" onClick={() => setMode('special')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all duration-300 font-black uppercase tracking-widest text-[10px] ${formData.isSpecialNote ? 'bg-amber-500 text-off-white shadow-lg' : 'text-silver hover:bg-white/5 hover:text-amber-500'}`}>Special Note</button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6 pb-2" noValidate>
         {/* Date Section - Always visible and in 2-column grid */}
@@ -529,177 +531,187 @@ const BookingModal: React.FC<BookingModalProps> = ({
               </div>
             </div>
 
-            <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-5">
-              <div>
-                <label className={labelClasses}>Duration</label>
-                <div className="flex gap-4">
-                  {(['Full Day', 'Half Day'] as DurationType[]).map((d) => (
-                    <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-off-white shadow-sm' : 'bg-transparent border-white/10 text-silver hover:border-emerald-500/50'}`}>
-                      <input type="radio" name="duration" checked={formData.duration === d} onChange={() => handleToggle('duration', d)} className="hidden" />
-                      <span className="text-xs font-bold">{d}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-5">
                 <div>
-                  <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> Out Time</label>
-                  <input type="time" name="outTime" value={formData.outTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-off-white" />
-                </div>
-                <div>
-                  <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> In Time</label>
-                  <input type="time" name="inTime" value={formData.inTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-off-white" />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
-              <div className="relative">
-                <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Fare Amount</label>
-                <div className="relative group">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm pointer-events-none">৳</span>
-                  {formData.isExempt ? (
-                    <div className="w-full pl-8 pr-4 py-2.5 bg-emerald-900/20 border border-emerald-500/20 rounded-xl text-sm font-black text-emerald-400">Exempted</div>
-                  ) : (
-                    <input type="number" name="fare" value={formData.fare === undefined ? '' : formData.fare} onChange={handleChange} className={`${inputClasses} pl-8 font-black text-emerald-400`} />
-                  )}
-                </div>
-              </div>
-              <div className="relative">
-                <label className={labelClasses}><Wallet size={12} className="text-emerald-500" /> Status</label>
-                <select name="fareStatus" value={formData.fareStatus || 'Unpaid'} onChange={handleChange} disabled={formData.isExempt} className={`${inputClasses} ${formData.isExempt ? 'opacity-50 grayscale' : ''}`}>
-                  <option value="Paid" className="bg-[#062c1e]">Paid</option>
-                  <option value="Unpaid" className="bg-[#062c1e]">Unpaid</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-start">
-              <label className="flex items-center gap-2 cursor-pointer bg-emerald-950/20 border border-emerald-500/20 px-4 py-2.5 rounded-xl hover:bg-emerald-600/10 transition-all">
-                <input type="checkbox" checked={formData.isExempt} onChange={e => handleToggle('isExempt', e.target.checked)} className="w-4 h-4 rounded border-white/10 accent-emerald-500" />
-                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Exempt Fare</span>
-              </label>
-            </div>
-
-            {/* Fuel consumption button - ONLY for reservation */}
-            <div className="pt-4 space-y-4">
-              <button type="button" onClick={() => handleToggle('isFuelEntry', !formData.isFuelEntry)} className={`flex items-center gap-3 w-full p-4 rounded-xl border transition-all ${formData.isFuelEntry ? 'bg-emerald-600/20 border-emerald-500/50 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${formData.isFuelEntry ? 'bg-emerald-500 border-emerald-400' : 'border-slate-600'}`}>
-                  {formData.isFuelEntry && <Check size={14} className="text-off-white" />}
-                </div>
-                <div className="flex-1 text-left">
-                  <span className={`text-xs font-black uppercase tracking-widest ${formData.isFuelEntry ? 'text-emerald-400' : 'text-slate-500'}`}>Add Fuel Consumption Details</span>
-                </div>
-                <Fuel size={18} className={formData.isFuelEntry ? 'text-emerald-400' : 'text-slate-600'} />
-              </button>
-
-              {formData.isFuelEntry && (
-                <div className="bg-emerald-950/20 p-5 rounded-2xl border border-emerald-500/10 space-y-5 animate-in slide-in-from-top-2 duration-300">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <div className="relative">
-                      <label className={labelClasses}><Gauge size={12} className="text-emerald-500" /> Kilometer Start</label>
-                      <div className="relative group">
-                        <Gauge className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
-                        <input type="number" step="0.01" name="kmStart" value={formData.kmStart === undefined ? '' : formData.kmStart} onChange={handleChange} className={inputClasses} placeholder="0" />
-                        <button type="button" onClick={handleSyncKmStart} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-white/10 rounded-lg transition-all" title="Sync with previous KM End">
-                          <RotateCw size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <label className={labelClasses}><Gauge size={12} className="text-emerald-500" /> Kilometer End</label>
-                      <div className="relative group">
-                        <Gauge className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
-                        <input type="number" step="0.01" name="kmEnd" value={formData.kmEnd === undefined ? '' : formData.kmEnd} onChange={handleChange} className={inputClasses} placeholder="Optional" />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <label className={labelClasses}><Gauge size={12} className="text-emerald-500" /> Total Kilometer</label>
-                      <div className="relative group">
-                        <Gauge className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" size={16} />
-                        <input type="number" step="0.01" name="totalKm" value={formData.totalKm === undefined ? '' : formData.totalKm} onChange={handleChange} className={`${inputClasses} bg-emerald-900/10 font-black text-emerald-400`} placeholder="Calculated" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center justify-between">
-                      <h6 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Fuel Purchase Entries</h6>
-                      <button type="button" onClick={addAnotherFuelPurchase} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 text-emerald-400 rounded-lg border border-emerald-500/30 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600/30 transition-all active:scale-95">
-                        <PlusCircle size={12} /> ADD ANOTHER FUEL PURCHASE
-                      </button>
-                    </div>
-
-                    {formData.fuelPurchases?.map((purchase, index) => (
-                      <div key={purchase.id} className="relative bg-black/40 p-4 rounded-xl border border-white/5 space-y-4 group/purchase animate-in slide-in-from-left-2">
-                        <div className="space-y-4">
-                          {/* Fuel Type Row */}
-                          <div className="grid grid-cols-1 gap-4 items-end">
-                            <div className="relative flex flex-col justify-end h-full">
-                              <label className={labelClasses}><Fuel size={12} className="text-emerald-500" /> Fuel Type</label>
-                              <div className="relative group mt-auto">
-                                <Fuel className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                                <select 
-                                  value={purchase.fuelType || ''} 
-                                  onChange={(e) => handleFuelPurchaseChange(index, 'fuelType', e.target.value)} 
-                                  className={`${inputClasses} pl-10`}
-                                >
-                                  <option value="" disabled className="bg-[#062c1e]">Select Type</option>
-                                  <option value="LPG" className="bg-[#062c1e]">LPG</option>
-                                  <option value="Octane" className="bg-[#062c1e]">Octane</option>
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Data Row */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                            <div className="relative flex flex-col justify-end h-full">
-                              <label className={labelClasses}><Droplets size={12} className="text-emerald-500" /> Purchased Fuel</label>
-                              <div className="relative group mt-auto">
-                                <Droplets className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                                <input type="number" step="0.01" value={purchase.purchasedFuel === undefined ? '' : purchase.purchasedFuel} onChange={(e) => handleFuelPurchaseChange(index, 'purchasedFuel', e.target.value)} className={inputClasses} placeholder="Liters" />
-                              </div>
-                            </div>
-                            <div className="relative flex flex-col justify-end h-full">
-                              <label className={labelClasses}><CircleDollarSign size={12} className="text-emerald-500" /> Rate</label>
-                              <div className="relative group mt-auto">
-                                <CircleDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                                <input type="number" step="0.01" value={purchase.fuelRate === undefined ? '' : purchase.fuelRate} onChange={(e) => handleFuelPurchaseChange(index, 'fuelRate', e.target.value)} className={inputClasses} placeholder="Rate" />
-                              </div>
-                            </div>
-                            <div className="relative flex flex-col justify-end h-full">
-                              <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Total Taka</label>
-                              <div className="relative group mt-auto">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-base pointer-events-none">৳</span>
-                                <input type="number" step="0.01" value={purchase.totalFuelPrice === undefined ? '' : purchase.totalFuelPrice} onChange={(e) => handleFuelPurchaseChange(index, 'totalFuelPrice', e.target.value)} className={`${inputClasses} pl-10 bg-emerald-900/10 font-black text-emerald-400`} placeholder="0.00" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button type="button" onClick={() => removeFuelPurchase(index)} className="absolute -right-2 -top-2 w-6 h-6 bg-rose-600 text-off-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/purchase:opacity-100 transition-all active:scale-[0.85] z-20">
-                          <X size={12} />
-                        </button>
-                      </div>
+                  <label className={labelClasses}>Duration</label>
+                  <div className="flex gap-4">
+                    {(['Full Day', 'Half Day'] as DurationType[]).map((d) => (
+                      <label key={d} className={`flex-1 flex items-center justify-center gap-2 cursor-pointer py-2.5 px-3 rounded-lg border transition-all ${formData.duration === d ? 'bg-emerald-600/20 border-emerald-500 text-off-white shadow-sm' : 'bg-transparent border-white/10 text-silver hover:border-emerald-500/50'}`}>
+                        <input type="radio" name="duration" checked={formData.duration === d} onChange={() => handleToggle('duration', d)} className="hidden" />
+                        <span className="text-xs font-bold">{d}</span>
+                      </label>
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
+                
+                {!isPublicMode && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                    <div>
+                      <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> Out Time</label>
+                      <input type="time" name="outTime" value={formData.outTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-off-white" />
+                    </div>
+                    <div>
+                      <label className={labelClasses}><Clock size={12} className="text-emerald-500" /> In Time</label>
+                      <input type="time" name="inTime" value={formData.inTime || ''} onChange={handleChange} className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg outline-none text-xs font-bold text-off-white" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            {!isPublicMode && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
+                  <div className="relative">
+                    <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Fare Amount</label>
+                    <div className="relative group">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm pointer-events-none">৳</span>
+                      {formData.isExempt ? (
+                        <div className="w-full pl-8 pr-4 py-2.5 bg-emerald-900/20 border border-emerald-500/20 rounded-xl text-sm font-black text-emerald-400">Exempted</div>
+                      ) : (
+                        <input type="number" name="fare" value={formData.fare === undefined ? '' : formData.fare} onChange={handleChange} className={`${inputClasses} pl-8 font-black text-emerald-400`} />
+                      )}
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <label className={labelClasses}><Wallet size={12} className="text-emerald-500" /> Status</label>
+                    <select name="fareStatus" value={formData.fareStatus || 'Unpaid'} onChange={handleChange} disabled={formData.isExempt} className={`${inputClasses} ${formData.isExempt ? 'opacity-50 grayscale' : ''}`}>
+                      <option value="Paid" className="bg-[#062c1e]">Paid</option>
+                      <option value="Unpaid" className="bg-[#062c1e]">Unpaid</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-start">
+                  <label className="flex items-center gap-2 cursor-pointer bg-emerald-950/20 border border-emerald-500/20 px-4 py-2.5 rounded-xl hover:bg-emerald-600/10 transition-all">
+                    <input type="checkbox" checked={formData.isExempt} onChange={e => handleToggle('isExempt', e.target.checked)} className="w-4 h-4 rounded border-white/10 accent-emerald-500" />
+                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Exempt Fare</span>
+                  </label>
+                </div>
+              </>
+            )}
+
+            {/* Fuel consumption button - ONLY for reservation */}
+            {!isPublicMode && (
+              <div className="pt-4 space-y-4">
+                <button type="button" onClick={() => handleToggle('isFuelEntry', !formData.isFuelEntry)} className={`flex items-center gap-3 w-full p-4 rounded-xl border transition-all ${formData.isFuelEntry ? 'bg-emerald-600/20 border-emerald-500/50 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-emerald-500/30'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${formData.isFuelEntry ? 'bg-emerald-500 border-emerald-400' : 'border-slate-600'}`}>
+                    {formData.isFuelEntry && <Check size={14} className="text-off-white" />}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <span className={`text-xs font-black uppercase tracking-widest ${formData.isFuelEntry ? 'text-emerald-400' : 'text-slate-500'}`}>Add Fuel Consumption Details</span>
+                  </div>
+                  <Fuel size={18} className={formData.isFuelEntry ? 'text-emerald-400' : 'text-slate-600'} />
+                </button>
+
+                {formData.isFuelEntry && (
+                  <div className="bg-emerald-950/20 p-5 rounded-2xl border border-emerald-500/10 space-y-5 animate-in slide-in-from-top-2 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                      <div className="relative">
+                        <label className={labelClasses}><Gauge size={12} className="text-emerald-500" /> Kilometer Start</label>
+                        <div className="relative group">
+                          <Gauge className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
+                          <input type="number" step="0.01" name="kmStart" value={formData.kmStart === undefined ? '' : formData.kmStart} onChange={handleChange} className={inputClasses} placeholder="0" />
+                          <button type="button" onClick={handleSyncKmStart} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-white/10 rounded-lg transition-all" title="Sync with previous KM End">
+                            <RotateCw size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <label className={labelClasses}><Gauge size={12} className="text-emerald-500" /> Kilometer End</label>
+                        <div className="relative group">
+                          <Gauge className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
+                          <input type="number" step="0.01" name="kmEnd" value={formData.kmEnd === undefined ? '' : formData.kmEnd} onChange={handleChange} className={inputClasses} placeholder="Optional" />
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <label className={labelClasses}><Gauge size={12} className="text-emerald-500" /> Total Kilometer</label>
+                        <div className="relative group">
+                          <Gauge className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" size={16} />
+                          <input type="number" step="0.01" name="totalKm" value={formData.totalKm === undefined ? '' : formData.totalKm} onChange={handleChange} className={`${inputClasses} bg-emerald-900/10 font-black text-emerald-400`} placeholder="Calculated" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                      <div className="flex items-center justify-between">
+                        <h6 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Fuel Purchase Entries</h6>
+                        <button type="button" onClick={addAnotherFuelPurchase} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 text-emerald-400 rounded-lg border border-emerald-500/30 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600/30 transition-all active:scale-95">
+                          <PlusCircle size={12} /> ADD ANOTHER FUEL PURCHASE
+                        </button>
+                      </div>
+
+                      {formData.fuelPurchases?.map((purchase, index) => (
+                        <div key={purchase.id} className="relative bg-black/40 p-4 rounded-xl border border-white/5 space-y-4 group/purchase animate-in slide-in-from-left-2">
+                          <div className="space-y-4">
+                            {/* Fuel Type Row */}
+                            <div className="grid grid-cols-1 gap-4 items-end">
+                              <div className="relative flex flex-col justify-end h-full">
+                                <label className={labelClasses}><Fuel size={12} className="text-emerald-500" /> Fuel Type</label>
+                                <div className="relative group mt-auto">
+                                  <Fuel className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                  <select 
+                                    value={purchase.fuelType || ''} 
+                                    onChange={(e) => handleFuelPurchaseChange(index, 'fuelType', e.target.value)} 
+                                    className={`${inputClasses} pl-10`}
+                                  >
+                                    <option value="" disabled className="bg-[#062c1e]">Select Type</option>
+                                    <option value="LPG" className="bg-[#062c1e]">LPG</option>
+                                    <option value="Octane" className="bg-[#062c1e]">Octane</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Data Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                              <div className="relative flex flex-col justify-end h-full">
+                                <label className={labelClasses}><Droplets size={12} className="text-emerald-500" /> Purchased Fuel</label>
+                                <div className="relative group mt-auto">
+                                  <Droplets className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                  <input type="number" step="0.01" value={purchase.purchasedFuel === undefined ? '' : purchase.purchasedFuel} onChange={(e) => handleFuelPurchaseChange(index, 'purchasedFuel', e.target.value)} className={inputClasses} placeholder="Liters" />
+                                </div>
+                              </div>
+                              <div className="relative flex flex-col justify-end h-full">
+                                <label className={labelClasses}><CircleDollarSign size={12} className="text-emerald-500" /> Rate</label>
+                                <div className="relative group mt-auto">
+                                  <CircleDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                  <input type="number" step="0.01" value={purchase.fuelRate === undefined ? '' : purchase.fuelRate} onChange={(e) => handleFuelPurchaseChange(index, 'fuelRate', e.target.value)} className={inputClasses} placeholder="Rate" />
+                                </div>
+                              </div>
+                              <div className="relative flex flex-col justify-end h-full">
+                                <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Total Taka</label>
+                                <div className="relative group mt-auto">
+                                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-base pointer-events-none">৳</span>
+                                  <input type="number" step="0.01" value={purchase.totalFuelPrice === undefined ? '' : purchase.totalFuelPrice} onChange={(e) => handleFuelPurchaseChange(index, 'totalFuelPrice', e.target.value)} className={`${inputClasses} pl-10 bg-emerald-900/10 font-black text-emerald-400`} placeholder="0.00" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <button type="button" onClick={() => removeFuelPurchase(index)} className="absolute -right-2 -top-2 w-6 h-6 bg-rose-600 text-off-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/purchase:opacity-100 transition-all active:scale-[0.85] z-20">
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {/* Remarks Section - Always visible */}
-        <div className="relative">
-          <label className={labelClasses}><AlignLeft size={12} className="text-emerald-500" /> Remarks / Notes</label>
-          <textarea name="remarks" value={formData.remarks || ''} onChange={handleChange} className={`${inputClasses} min-h-[80px] py-3 resize-none`} placeholder="Additional information..." />
-        </div>
+        {!isPublicMode && (
+          <div className="relative">
+            <label className={labelClasses}><AlignLeft size={12} className="text-emerald-500" /> Remarks / Notes</label>
+            <textarea name="remarks" value={formData.remarks || ''} onChange={handleChange} className={`${inputClasses} min-h-[80px] py-3 resize-none`} placeholder="Additional information..." />
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
-          {formData.status === 'pending' && !isConfirmingDelete && (
+          {formData.status === 'pending' && !isConfirmingDelete && !isPublicMode && (
             <button 
               type="button" 
               onClick={handleConfirmPending}
@@ -709,11 +721,11 @@ const BookingModal: React.FC<BookingModalProps> = ({
             </button>
           )}
 
-          <button type="submit" className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-emerald-600 hover:text-off-white transition-all active:scale-95">
-            <Check size={16} /> {existingBooking ? 'Update Reservation' : 'Confirm Reservation'}
+          <button type="submit" className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-600 text-off-white rounded-xl font-black uppercase text-[12px] tracking-widest shadow-xl hover:bg-emerald-500 transition-all active:scale-95">
+            <Check size={18} /> {existingBooking ? 'Update Reservation' : 'Confirm Reservation'}
           </button>
           
-          {!formData.isSpecialNote && (
+          {!formData.isSpecialNote && !isPublicMode && (
             <div className="flex flex-col gap-3">
               <button type="button" onClick={handleDownloadBookingInfo} disabled={!!downloadType} className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-off-white transition-all disabled:opacity-50">
                 {downloadType === 'info' ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
