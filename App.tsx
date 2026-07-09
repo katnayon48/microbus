@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, FileText, Loader2, ArrowLeft, Phone, Settings, ShieldAlert, Lock, FileSpreadsheet, Clock, Fuel, Database, BarChart3, Navigation } from 'lucide-react';
+import { LogOut, FileText, Loader2, ArrowLeft, Phone, Settings, ShieldAlert, Lock, FileSpreadsheet, Clock, Fuel, Database, BarChart3, Navigation, Check } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getDatabase, ref, onValue, set, push, remove, update } from 'firebase/database';
 
@@ -583,14 +583,14 @@ const App: React.FC = () => {
                   <div className="max-w-2xl mx-auto">
                     {publicBookingSuccess ? (
                       <div className="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in-95 duration-500">
-                        <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(16,185,129,0.4)] animate-bounce">
+                        <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(37,99,235,0.4)] animate-bounce">
                           <Check size={48} className="text-white" strokeWidth={4} />
                         </div>
-                        <h2 className="text-3xl font-black text-emerald-400 text-center uppercase tracking-tighter mb-4">Success!</h2>
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-3xl text-center max-w-md">
+                        <h2 className="text-3xl font-black text-blue-400 text-center uppercase tracking-tighter mb-4">Success!</h2>
+                        <div className="bg-blue-500/10 border border-blue-500/20 p-8 rounded-3xl text-center max-w-md">
                           <p className="text-off-white font-bold leading-relaxed uppercase tracking-tight text-sm">
                             YOUR BOOKING HAS BEEN FORWARDED FOR APPROVAL. <br />
-                            <span className="text-emerald-400 mt-2 block">PLEASE CONTRACT WITH AUTHORIZED PERSON FOR FURTHER DETAILS</span>
+                            <span className="text-blue-400 mt-2 block">PLEASE CONTRACT WITH AUTHORIZED PERSON FOR FURTHER DETAILS</span>
                           </p>
                         </div>
                         <button 
