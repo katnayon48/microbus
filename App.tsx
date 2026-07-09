@@ -64,7 +64,7 @@ const getInitialSettings = (): AppSettings => {
   return DEFAULT_SETTINGS;
 };
 
-const LoadingScreen: React.FC<{ bgColor: string }> = () => {
+const LoadingScreen: React.FC<{ bgColor?: string }> = ({ bgColor }) => {
   return (
     <div 
       className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300 backdrop-blur-xl"
@@ -186,8 +186,11 @@ const Sidebar: React.FC<{
 };
 
 const App: React.FC = () => {
+  const [isPublicBookingMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('mode') === 'booking';
+  });
   const [isLoading, setIsLoading] = useState(true);
-  const [isPublicBookingMode, setIsPublicBookingMode] = useState(false);
   const [publicBookingSuccess, setPublicBookingSuccess] = useState(false);
   const [view, setView] = useState<'calendar' | 'reports' | 'attendance'>('calendar');
   const [reportInitialStep, setReportInitialStep] = useState<any>('dashboard');
@@ -213,12 +216,6 @@ const App: React.FC = () => {
   useEffect(() => {
     const startTime = Date.now();
     
-    // Check for public booking mode
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('mode') === 'booking') {
-      setIsPublicBookingMode(true);
-    }
-
     if (!db) {
       console.error("Database connection not available");
       setTimeout(() => setIsLoading(false), 3000);
@@ -615,6 +612,7 @@ const App: React.FC = () => {
                           onSave={handleSaveBooking} 
                           bookings={bookings} 
                           appSettings={settings}
+                          isPublicMode={isPublicBookingMode}
                         />
                       </>
                     )}

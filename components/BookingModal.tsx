@@ -14,6 +14,7 @@ interface BookingModalProps {
   existingBooking?: Booking | null;
   bookings?: Booking[];
   appSettings: AppSettings;
+  isPublicMode?: boolean;
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ 
@@ -24,7 +25,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
   initialDate, 
   existingBooking,
   bookings = [],
-  appSettings
+  appSettings,
+  isPublicMode = false
 }) => {
   const [formData, setFormData] = useState<Partial<Booking>>({
     rankName: '',
