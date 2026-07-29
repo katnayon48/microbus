@@ -284,14 +284,14 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
         doc.setLineWidth(0.5);
         doc.line(sigX, sigY, sigX + 50, sigY);
         
-        // Add signature image - closer to the line
-        doc.addImage(booking.signatureImage, 'PNG', sigX + 5, sigY - 14, 40, 13.5);
+        // Add signature image - larger and properly positioned
+        doc.addImage(booking.signatureImage, 'PNG', sigX + 3, sigY - 13, 44, 12.5);
         
         // Label
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(0, 0, 0);
-        doc.text("PASSENGER'S SIGNATURE", sigX + 25, sigY + 5, { align: 'center' });
+        doc.text("PASSENGER'S SIGNATURE", sigX + 25, sigY + 4, { align: 'center' });
         
         signatureY += 22; // Increased space to push the red note box further down
       }
