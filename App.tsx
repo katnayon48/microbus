@@ -115,7 +115,7 @@ const LoadingScreen: React.FC<{ bgColor?: string; isPublicMode?: boolean }> = ({
               {isPublicMode ? (
                 <div className="flex flex-col items-center leading-tight">
                   <span className="text-white">DEVELOPED BY</span>
-                  <span className="text-white">CPL (CLK) BILLAL, ASC</span>
+                  <span className="text-white">1815124 CPL (CLK) BILLAL, ASC</span>
                 </div>
               ) : (
                 <>
