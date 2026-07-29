@@ -184,6 +184,22 @@
             animation: footer-wipe 3s ease-in-out infinite;
         }
 
+        @keyframes yellow-dot-blink {
+            0%, 100% { 
+                opacity: 0.3;
+                transform: scale(0.8);
+                box-shadow: 0 0 0 rgba(234, 179, 8, 0);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.1);
+                box-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
+            }
+        }
+        .animate-yellow-dot {
+            animation: yellow-dot-blink 1.5s ease-in-out infinite;
+        }
+
         @keyframes rotate-y-3d {
             0% { transform: perspective(1000px) rotateY(0deg); }
             80% { transform: perspective(1000px) rotateY(360deg); }

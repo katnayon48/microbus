@@ -463,20 +463,28 @@ const Calendar: React.FC<CalendarProps> = ({
                     style={isTodayDate ? { backgroundColor: themeColor } : {}}>
                     {format(day.date, 'd')}
                   </span>
-                  {isAdmin && day.isCurrentMonth && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onDateClick(day.date); }} 
-                      className="opacity-0 group-hover:opacity-100 transition-all p-0.5 hover:bg-white/10 rounded"
-                      style={{ color: themeColor }}
-                    >
-                       <Plus size={12} md:size={16} strokeWidth={3} />
-                    </button>
-                  )}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {day.bookings.length > 0 && (
+                      <div 
+                        className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-yellow-400 rounded-full animate-yellow-dot shadow-[0_0_10px_rgba(234,179,8,0.6)] print-hide" 
+                        title="Booking Present" 
+                      />
+                    )}
+                    {isAdmin && day.isCurrentMonth && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onDateClick(day.date); }} 
+                        className="opacity-0 group-hover:opacity-100 transition-all p-0.5 hover:bg-white/10 rounded"
+                        style={{ color: themeColor }}
+                      >
+                         <Plus size={12} md:size={16} strokeWidth={3} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-0.5 md:gap-1 flex-1 px-0.5 md:px-1 pb-1 justify-center relative z-20">
-                  {day.bookings.length > 0 && (
+                  {((isAdmin ? day.bookings : day.bookings.filter(b => b.status !== 'pending')).length > 0) && (
                     <BookingCycler 
-                      bookings={day.bookings}
+                      bookings={isAdmin ? day.bookings : day.bookings.filter(b => b.status !== 'pending')}
                       onBookingClick={(booking) => onDateClick(day.date, booking)}
                       renderContent={renderBookingContent}
                       isAppLoading={isAppLoading}

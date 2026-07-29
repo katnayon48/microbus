@@ -624,7 +624,7 @@ const App: React.FC = () => {
                 <Calendar 
                   currentDate={currentDate} 
                   setCurrentDate={setCurrentDate} 
-                  bookings={isAdmin ? bookings : bookings.filter(b => b.status !== 'pending')} 
+                  bookings={bookings} 
                   isAdmin={isAdmin} 
                   isMaster={isMaster}
                   onDateClick={handleDateClick} 
