@@ -346,6 +346,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
       ...formData,
       fare: formData.fare || 0,
       id: existingBooking?.id || 'TEMP',
+      signatureImage: signatureRef.current?.getSignatureData() || formData.signatureImage || '',
     } as Booking;
     setDownloadType('info');
     setShowBookingInfoModal(false);
@@ -745,7 +746,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             <Check size={12} className="text-emerald-500" /> 
             Digital Signature
           </label>
-          <SignaturePad ref={signatureRef} />
+          <SignaturePad ref={signatureRef} initialImage={formData.signatureImage} />
           <div className="flex justify-end">
             <button 
               type="button" 

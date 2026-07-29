@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useImperativeHandle, forwardRef } f
 
 interface SignaturePadProps {
   onClear?: () => void;
+  initialImage?: string;
 }
 
 export interface SignaturePadHandle {
@@ -10,7 +11,7 @@ export interface SignaturePadHandle {
   isEmpty: () => boolean;
 }
 
-const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(({ onClear }, ref) => {
+const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(({ onClear, initialImage }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isEmpty, setIsEmpty] = useState(true);
@@ -29,27 +30,53 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(({ onClea
       const resizeCanvas = () => {
         const parent = canvas.parentElement;
         if (parent) {
-          // Keep drawing data on resize if needed, but for simple form it's usually okay to clear or scale
-          // Here we just set the width/height once based on container
           const rect = parent.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) return; // Wait until visible
+
           canvas.width = rect.width;
           canvas.height = rect.height;
           
-          // Re-set context properties after resize as they get reset
           if (ctx) {
             ctx.strokeStyle = '#000000';
             ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
+            
+            // Clear canvas first
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            setIsEmpty(true);
+            
+            // If there's an initial image, draw it after resize
+            if (initialImage) {
+              const img = new Image();
+              img.crossOrigin = "anonymous"; // Added for safety
+              img.onload = () => {
+                ctx.drawImage(img, 0, 0);
+                setIsEmpty(false);
+              };
+              img.src = initialImage;
+            }
           }
         }
       };
       
       resizeCanvas();
+      
+      // Use ResizeObserver for more reliable size updates
+      const resizeObserver = new ResizeObserver(() => {
+        resizeCanvas();
+      });
+      if (canvas.parentElement) {
+        resizeObserver.observe(canvas.parentElement);
+      }
+
       window.addEventListener('resize', resizeCanvas);
-      return () => window.removeEventListener('resize', resizeCanvas);
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+        resizeObserver.disconnect();
+      };
     }
-  }, []);
+  }, [initialImage]);
 
   useImperativeHandle(ref, () => ({
     clear: () => {
