@@ -744,7 +744,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         <div className="space-y-2 animate-in fade-in duration-500">
           <label className={labelClasses}>
             <Check size={12} className="text-emerald-500" /> 
-            Digital Signature (নিচের সাদা বক্সে আপনার স্বাক্ষর দিন)
+            {isPublicMode ? "Digital Signature (নিচের সাদা বক্সে আপনার স্বাক্ষর দিন)" : "Digital Signature"}
           </label>
           <SignaturePad ref={signatureRef} initialImage={formData.signatureImage} />
           <div className="flex justify-end">
