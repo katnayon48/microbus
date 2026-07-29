@@ -4,6 +4,7 @@ import { Trash2, User, Landmark, MapPin, Calendar, Clock, Banknote, Wallet, Alig
 import { generateIndividualPaymentSlip } from '../services/pdfService';
 import { differenceInDays, parseISO, format, isBefore } from 'date-fns';
 import Modal from './Modal';
+import SignaturePad, { SignaturePadHandle } from './SignaturePad';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -62,6 +63,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
   const [showBookingInfoModal, setShowBookingInfoModal] = useState(false);
   const [receivedByName, setReceivedByName] = useState('');
   const [bookingInfoStatus, setBookingInfoStatus] = useState<'CONFIRM' | 'PENDING' | 'CANCEL'>('CONFIRM');
+
+  const signatureRef = React.useRef<SignaturePadHandle>(null);
 
   const getLastKmEnd = (currentStartDateStr: string) => {
     if (!currentStartDateStr || !bookings || bookings.length === 0) return 0;
@@ -370,6 +373,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
       isExempt: !!formData.isExempt,
       isSpecialNote: !!formData.isSpecialNote,
       isFuelEntry: !!formData.isFuelEntry,
+      signatureImage: signatureRef.current?.getSignatureData() || formData.signatureImage || '',
       status: statusOverride || formData.status || 'confirmed'
     };
 
@@ -734,6 +738,24 @@ const BookingModal: React.FC<BookingModalProps> = ({
             />
           </div>
         )}
+
+        {/* Signature Pad */}
+        <div className="space-y-2 animate-in fade-in duration-500">
+          <label className={labelClasses}>
+            <Check size={12} className="text-emerald-500" /> 
+            Digital Signature
+          </label>
+          <SignaturePad ref={signatureRef} />
+          <div className="flex justify-end">
+            <button 
+              type="button" 
+              onClick={() => signatureRef.current?.clear()} 
+              className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-rose-500/10 active:scale-95 transition-all"
+            >
+              <RotateCw size={12} /> Clear Signature
+            </button>
+          </div>
+        </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 pt-6 border-t border-white/5">

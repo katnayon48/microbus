@@ -100,6 +100,7 @@ export interface Booking {
   purchasedFuel?: number;
   fuelRate?: number;
   totalFuelPrice?: number;
+  signatureImage?: string;
   status?: 'pending' | 'confirmed';
 }
 
