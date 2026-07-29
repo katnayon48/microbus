@@ -112,14 +112,16 @@ const LoadingScreen: React.FC<{ bgColor?: string; isPublicMode?: boolean }> = ({
               <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 animate-progress-fill shadow-[0_0_15px_rgba(16,185,129,0.8)]"></div>
             </div>
             <div className="flex items-center justify-center gap-2.5 text-[11px] font-black text-white uppercase tracking-[0.2em] pt-1">
-              <Loader2 size={14} className="animate-spin text-emerald-500" /> 
               {isPublicMode ? (
                 <div className="flex flex-col items-center leading-tight">
                   <span className="text-white">DEVELOPED BY</span>
                   <span className="text-white">CPL (CLK) BILLAL, ASC</span>
                 </div>
               ) : (
-                <span>Synchronizing Data</span>
+                <>
+                  <Loader2 size={14} className="animate-spin text-emerald-500" /> 
+                  <span>Synchronizing Data</span>
+                </>
               )}
             </div>
           </div>
