@@ -509,23 +509,26 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
       doc.text('TOTAL', totalsX - 55, finalY + 28);
       const fareDisplayText = booking.isExempt ? 'EXEMPTED' : `BDT ${formatCurrency(totalWithTax)}`;
       doc.text(fareDisplayText, totalsX, finalY + 28, { align: 'right' });
-    } else if (booking.signatureImage) {
-      const sigX = pageWidth - margin - 50;
-      const sigY = finalY + 10;
+    }
+
+    // --- CUSTOMER SIGNATURE (For Booking Info only) ---
+    if (type === 'info' && booking.signatureImage) {
+      const sigX = pageWidth - margin - 55;
+      const sigY = finalY + 32; // Positioned below status, above the red note
       
       // Draw line
       doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.5);
-      doc.line(sigX, sigY + 15, sigX + 50, sigY + 15);
+      doc.line(sigX, sigY, sigX + 50, sigY);
       
-      // Add signature image
-      doc.addImage(booking.signatureImage, 'PNG', sigX + 5, sigY - 5, 40, 18);
+      // Add signature image - closer to the line
+      doc.addImage(booking.signatureImage, 'PNG', sigX + 5, sigY - 14, 40, 13.5);
       
       // Label
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text("CUSTOMER'S SIGNATURE", sigX + 25, sigY + 20, { align: 'center' });
+      doc.text("CUSTOMER'S SIGNATURE", sigX + 25, sigY + 5, { align: 'center' });
     }
 
     // --- SEAL ---
