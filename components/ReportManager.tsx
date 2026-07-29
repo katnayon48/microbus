@@ -619,12 +619,12 @@ const ReportManager: React.FC<ReportManagerProps> = ({ bookings, appSettings, on
                    </div>
                    <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar w-full box-border">
                       <table className="w-full text-left border-collapse table-fixed min-w-[320px] box-border">
-                         <thead className="sticky top-0 z-20 bg-white/10 backdrop-blur-md">
+                         <thead className="sticky top-0 z-20">
                             <tr className="border-b border-white/10">
-                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">Date</th>
-                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">In</th>
-                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">Out</th>
-                               <th className="p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest text-center w-[25%]">Edit</th>
+                               <th className="sticky top-0 bg-[#0f0f1a] p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">Date</th>
+                               <th className="sticky top-0 bg-[#0f0f1a] p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">In</th>
+                               <th className="sticky top-0 bg-[#0f0f1a] p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%]">Out</th>
+                               <th className="sticky top-0 bg-[#0f0f1a] p-2 md:p-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest text-center w-[25%]">Edit</th>
                             </tr>
                          </thead>
                          <tbody className="divide-y divide-white/5">

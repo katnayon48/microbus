@@ -413,7 +413,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     if (e) e.preventDefault();
     
     if (isPublicMode) {
-      const requiredFields = ['startDate', 'rankName', 'rankStatus', 'unit', 'destination', 'mobileNumber', 'duration'];
+      const requiredFields = ['startDate', 'endDate', 'rankName', 'rankStatus', 'unit', 'destination', 'mobileNumber', 'duration', 'garrisonStatus'];
       const isAnyEmpty = requiredFields.some(field => {
         const val = formData[field as keyof Partial<Booking>];
         return val === undefined || val === null || val === '';
@@ -744,7 +744,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         <div className="space-y-2 animate-in fade-in duration-500">
           <label className={labelClasses}>
             <Check size={12} className="text-emerald-500" /> 
-            Digital Signature
+            Digital Signature (নিচের সাদা বক্সে আপনার স্বাক্ষর দিন)
           </label>
           <SignaturePad ref={signatureRef} initialImage={formData.signatureImage} />
           <div className="flex justify-end">

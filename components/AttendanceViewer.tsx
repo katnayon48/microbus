@@ -92,14 +92,14 @@ const AttendanceViewer: React.FC<AttendanceViewerProps> = ({ isAdmin, onLoginCli
           {filteredAttendance.length > 0 ? (
             <div className="w-full h-full overflow-y-auto custom-scrollbar">
               <table className="w-full text-left border-collapse table-fixed min-w-full">
-                <thead className="sticky top-0 z-30 bg-[#0a0a14]">
+                <thead className="sticky top-0 z-30">
                   <tr className="border-b border-white/10">
-                    <th className="p-2 md:py-2.5 md:px-4 text-[7px] md:text-[12px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[30%] md:w-[12%]">Date</th>
-                    <th className="p-2 md:py-2.5 md:px-4 text-[7px] md:text-[12px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%] md:w-[10%]">Day</th>
-                    <th className="p-2 md:py-2.5 md:px-4 text-[7px] md:text-[12px] font-black text-off-white uppercase tracking-widest text-center border-r border-white/5 w-[22.5%] md:w-[10%]">In</th>
-                    <th className="p-2 md:py-2.5 md:px-4 text-[7px] md:text-[12px] font-black text-off-white uppercase tracking-widest text-center border-r border-white/5 w-[22.5%] md:w-[10%]">Out</th>
-                    <th className="hidden md:table-cell py-2.5 px-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[28%] text-center leading-tight">Last Day Microbus Entry Time<br/>(To Cantonment)</th>
-                    <th className="hidden md:table-cell py-2.5 px-4 md:text-[12px] font-black text-off-white uppercase tracking-widest w-[30%]">Remarks</th>
+                    <th className="sticky top-0 bg-[#0a0a14] p-2 md:py-2.5 md:px-4 text-[7px] md:text-[12px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[30%] md:w-[12%]">Date</th>
+                    <th className="sticky top-0 bg-[#0a0a14] p-2 md:py-2.5 md:px-4 text-[7px] md:text-[12px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[25%] md:w-[10%]">Day</th>
+                    <th className="sticky top-0 bg-[#0a0a14] p-2 md:py-2.5 md:px-4 text-[7px] md:text-[12px] font-black text-off-white uppercase tracking-widest text-center border-r border-white/5 w-[22.5%] md:w-[10%]">In</th>
+                    <th className="sticky top-0 bg-[#0a0a14] p-2 md:py-2.5 md:px-4 text-[7px] md:text-[12px] font-black text-off-white uppercase tracking-widest text-center border-r border-white/5 w-[22.5%] md:w-[10%]">Out</th>
+                    <th className="sticky top-0 bg-[#0a0a14] hidden md:table-cell py-2.5 px-4 text-[7px] md:text-[10px] font-black text-off-white uppercase tracking-widest border-r border-white/5 w-[28%] text-center leading-tight">Last Day Microbus Entry Time<br/>(To Cantonment)</th>
+                    <th className="sticky top-0 bg-[#0a0a14] hidden md:table-cell py-2.5 px-4 md:text-[12px] font-black text-off-white uppercase tracking-widest w-[30%]">Remarks</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">

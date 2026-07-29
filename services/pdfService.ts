@@ -273,8 +273,31 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
         doc.setTextColor(0, 0, 0);
       });
       
-      // Add Note Box below Booking Status
-      const noteY = detailsY + (infoDetails.length * 7) + 10;
+      // --- PASSENGER'S SIGNATURE (For Booking Info only) ---
+      let signatureY = detailsY + (infoDetails.length * 7) + 5;
+      if (booking.signatureImage) {
+        const sigX = pageWidth - margin - 55;
+        const sigY = signatureY + 7; // Moved up slightly from 10
+        
+        // Draw line
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.5);
+        doc.line(sigX, sigY, sigX + 50, sigY);
+        
+        // Add signature image - closer to the line
+        doc.addImage(booking.signatureImage, 'PNG', sigX + 5, sigY - 14, 40, 13.5);
+        
+        // Label
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text("PASSENGER'S SIGNATURE", sigX + 25, sigY + 5, { align: 'center' });
+        
+        signatureY += 22; // Increased space to push the red note box further down
+      }
+      
+      // Add Note Box below Booking Status (and signature if exists)
+      const noteY = signatureY + 5;
       const noteText = 'NOTE: AREA HQ BARISHAL RESERVES THE RIGHT TO CANCEL THE BOOKING AT ANY TIME';
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
@@ -509,26 +532,6 @@ export const generateIndividualPaymentSlip = async (booking: Booking, appSetting
       doc.text('TOTAL', totalsX - 55, finalY + 28);
       const fareDisplayText = booking.isExempt ? 'EXEMPTED' : `BDT ${formatCurrency(totalWithTax)}`;
       doc.text(fareDisplayText, totalsX, finalY + 28, { align: 'right' });
-    }
-
-    // --- CUSTOMER SIGNATURE (For Booking Info only) ---
-    if (type === 'info' && booking.signatureImage) {
-      const sigX = pageWidth - margin - 55;
-      const sigY = finalY + 32; // Positioned below status, above the red note
-      
-      // Draw line
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.5);
-      doc.line(sigX, sigY, sigX + 50, sigY);
-      
-      // Add signature image - closer to the line
-      doc.addImage(booking.signatureImage, 'PNG', sigX + 5, sigY - 14, 40, 13.5);
-      
-      // Label
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text("CUSTOMER'S SIGNATURE", sigX + 25, sigY + 5, { align: 'center' });
     }
 
     // --- SEAL ---
