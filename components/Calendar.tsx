@@ -464,10 +464,10 @@ const Calendar: React.FC<CalendarProps> = ({
                     {format(day.date, 'd')}
                   </span>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {day.bookings.length > 0 && (
+                    {day.bookings.some(b => b.status === 'pending') && (
                       <div 
                         className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-yellow-400 rounded-full animate-yellow-dot shadow-[0_0_10px_rgba(234,179,8,0.6)] print-hide" 
-                        title="Booking Present" 
+                        title="Pending Booking Request" 
                       />
                     )}
                     {isAdmin && day.isCurrentMonth && (
