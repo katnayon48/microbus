@@ -64,7 +64,7 @@ const getInitialSettings = (): AppSettings => {
   return DEFAULT_SETTINGS;
 };
 
-const LoadingScreen: React.FC<{ bgColor?: string }> = ({ bgColor }) => {
+const LoadingScreen: React.FC<{ bgColor?: string; isPublicMode?: boolean }> = ({ bgColor, isPublicMode }) => {
   return (
     <div 
       className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300 backdrop-blur-xl"
@@ -113,7 +113,14 @@ const LoadingScreen: React.FC<{ bgColor?: string }> = ({ bgColor }) => {
             </div>
             <div className="flex items-center justify-center gap-2.5 text-[11px] font-black text-white uppercase tracking-[0.2em] pt-1">
               <Loader2 size={14} className="animate-spin text-emerald-500" /> 
-              <span>Synchronizing Data</span>
+              {isPublicMode ? (
+                <div className="flex flex-col items-center leading-tight">
+                  <span className="text-white">DEVELOPED BY</span>
+                  <span className="text-white">CPL (CLK) BILLAL, ASC</span>
+                </div>
+              ) : (
+                <span>Synchronizing Data</span>
+              )}
             </div>
           </div>
         </div>
@@ -512,7 +519,7 @@ const App: React.FC = () => {
   return (
     <>
       <CanvasBackground speedFactor={isLoading ? 1 : 0.6} />
-      {isLoading && <LoadingScreen />}
+      {isLoading && <LoadingScreen isPublicMode={isPublicBookingMode} />}
       
       <div 
         className={`flex flex-col text-off-white font-inter h-[100dvh] overflow-hidden transition-all duration-300 sm:shadow-none print-bg-white print-text-black ${isLoading ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}
