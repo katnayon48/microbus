@@ -58,6 +58,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
   });
 
   const [downloadType, setDownloadType] = useState<'info' | 'slip' | null>(null);
+  const [lastCalculatedTriggers, setLastCalculatedTriggers] = useState<string>('');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [showReceivedByModal, setShowReceivedByModal] = useState(false);
   const [showBookingInfoModal, setShowBookingInfoModal] = useState(false);
@@ -108,6 +109,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
           ...existingBooking,
           fuelPurchases: existingBooking.fuelPurchases || [{ id: Math.random().toString(), purchasedFuel: undefined, fuelRate: undefined, totalFuelPrice: undefined }]
         });
+        // Important: set triggers to current values so we don't auto-recalc on load
+        const triggers = `${existingBooking.startDate}-${existingBooking.endDate}-${existingBooking.garrisonStatus}-${existingBooking.duration}-${existingBooking.rankStatus}-${!!existingBooking.isExempt}-${!!existingBooking.isSpecialNote}`;
+        setLastCalculatedTriggers(triggers);
       } else if (initialDate) {
         const dateStr = format(initialDate, 'yyyy-MM-dd');
         const autoKmStart = getLastKmEnd(dateStr);
@@ -137,11 +141,16 @@ const BookingModal: React.FC<BookingModalProps> = ({
           fuelRate: undefined,
           totalFuelPrice: undefined
         });
+        setLastCalculatedTriggers('');
       }
     }
   }, [existingBooking, initialDate, isOpen, bookings]);
 
   useEffect(() => {
+    const triggers = `${formData.startDate}-${formData.endDate}-${formData.garrisonStatus}-${formData.duration}-${formData.rankStatus}-${!!formData.isExempt}-${!!formData.isSpecialNote}`;
+    
+    if (triggers === lastCalculatedTriggers) return;
+
     if (!formData.isSpecialNote && !formData.isExempt && formData.startDate && formData.endDate && formData.garrisonStatus && formData.duration && formData.rankStatus) {
       try {
         const start = parseISO(formData.startDate);
@@ -170,19 +179,20 @@ const BookingModal: React.FC<BookingModalProps> = ({
           }
 
           const calculatedFare = rate * days;
-          if (formData.fare !== calculatedFare) {
-            setFormData(prev => ({ ...prev, fare: calculatedFare }));
-          }
+          setFormData(prev => ({ ...prev, fare: calculatedFare }));
+          setLastCalculatedTriggers(triggers);
         } else if (days <= 0 && formData.fare !== 0) {
           setFormData(prev => ({ ...prev, fare: 0 }));
+          setLastCalculatedTriggers(triggers);
         }
       } catch (e) {
         console.error("Fare calculation error:", e);
       }
     } else if (formData.isExempt && formData.fare !== 0) {
       setFormData(prev => ({ ...prev, fare: 0, fareStatus: 'Paid' }));
+      setLastCalculatedTriggers(triggers);
     }
-  }, [formData.startDate, formData.endDate, formData.garrisonStatus, formData.duration, formData.rankStatus, formData.isExempt, formData.isSpecialNote, appSettings]);
+  }, [formData.startDate, formData.endDate, formData.garrisonStatus, formData.duration, formData.rankStatus, formData.isExempt, formData.isSpecialNote, appSettings, lastCalculatedTriggers]);
 
   const calculateSummaries = (purchases: FuelPurchase[]) => {
     let totalFuel = 0;
@@ -587,11 +597,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
                     <label className={labelClasses}><Banknote size={12} className="text-emerald-500" /> Fare Amount</label>
                     <div className="relative group">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm pointer-events-none">৳</span>
-                      {formData.isExempt ? (
-                        <div className="w-full pl-8 pr-4 py-2.5 bg-emerald-900/20 border border-emerald-500/20 rounded-xl text-sm font-black text-emerald-400">Exempted</div>
-                      ) : (
-                        <input type="number" name="fare" value={formData.fare === undefined ? '' : formData.fare} onChange={handleChange} className={`${inputClasses} pl-8 font-black text-emerald-400`} />
-                      )}
+                      <input 
+                        type="number" 
+                        name="fare" 
+                        value={formData.fare === undefined ? '' : formData.fare} 
+                        onChange={handleChange} 
+                        className={`${inputClasses} pl-8 font-black text-emerald-400 ${formData.isExempt ? 'opacity-70 bg-emerald-900/10' : ''}`} 
+                        placeholder={formData.isExempt ? "Exempted" : "0"}
+                      />
                     </div>
                   </div>
                   <div className="relative">
